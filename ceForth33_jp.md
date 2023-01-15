@@ -5,235 +5,126 @@ July, 2019
 
 # Chapter 1. How to Write Forth in C
 
-In 1990, when Bill Muench and I developed eForth Model for microcontrollers, memory was scarce and the only way to implement eForth was assembly. At that time, there were several  Forth systems written in C, the most notable ones were Wil Baden’s thisForth, and Mitch  Bradley’s Forthmacs. However, these two implementations were targeted to large computers,  base on Unix environment. I studied them, but could not understand them in their convoluted  make processes. I did not have sufficient knowledge on C and Unix to build eForth from  scratch. 
-
 1990年、Bill Muenchと私がマイクロコントローラ用のeForthモデルを開発したとき、メモリは乏しく、eForthを実装する唯一の方法はアセンブラでした。当時、C言語で書かれたForthのシステムはいくつかあり、その代表的なものはWil BadenのthisForthとMitch BradleyのForthmacsでした。しかし、しかし、この2つの実装は、Unix環境をベースにした大型コンピュータ向けのもので、勉強はしたものの、その複雑なmake処理については理解することができなかった。eForthをゼロから作るには、C言語とUnixの知識が足りなかったのです。
 
-In Silicon Valley Forth Interest Group, we intermittently had long discussions on how to write  Forth in C. John Harbold, also an expert C programmer, assured me that it was possible to write  Forth in C, and showed me code on how to do it. But, they were way above my head. 
+シリコンバレーForth Interest Groupでは、C言語でForthをどう書くかという議論が断続的に行われていて、C言語のエキスパートでもあるJohn Harboldは、C言語でForthを書くことは可能だと断言し、その方法をコードで示してくれた。でも、それは私の頭のずっと上を飛び交っていました。
 
-シリコンバレーのForth Interest Groupでは、C言語でForthをどう書くかという議論が断続的に行われていて、C言語のエキスパートでもあるJohn Harboldは、C言語でForthを書くことは可能だと断言し、その方法をコードで示してくれた。でも、それは私の頭よりずっと上の話だったんです。
-
-In 2009, I started to think seriously on my problems with C, and problems in writing Forth in C.  I realized that a Virtual Forth Machine (VFM) could be written easily in C, just like in any  other assembly language. VFM was simply a set of Forth primitive words, very simple to write  in assembly of a particular microcontroller, or in C, which was designed for an idealized,  general purpose CPU, to emulate algebra. My problems were in the construction of a Forth  dictionary. Forth dictionary is a linked list of Forth words, in the form of records. Each record has 4 fields, a fixed length link field, a variable length name field, a fixed length code field, and  a variable length parameter field. The elementary C compiler, as I understood, did not have data  constructs for building and linking of these records. You needed the convoluted ways in  thisForth and Forthmac to build and link these records. 
-
-2009年、私はC言語の問題点、そしてC言語でForthを書くことの問題点を真剣に考え始めました。そして、Virtual Forth Machine（VFM）は、他のアセンブリ言語と同じようにC言語で簡単に書くことができることに気づきました。VFMは単にForthの原始的な言葉の集合で、特定のマイクロコントローラのアセンブリで書くのも、理想化された汎用CPU用に設計されたC言語で代数をエミュレートするのも非常に簡単であった。私が問題にしたのは、Forth辞書の構築である。Forth辞書は、Forthの単語をリンクしたリストで、レコードという形式になっている。各レコードは、固定長のリンクフィールド、可変長の名前フィールド、固定長のコードフィールド、可変長のパラメータフィールドの4つのフィールドを持っている。私が理解したところでは、初級Cコンパイラは、これらのレコードの構築とリンクのためのデータ構造を持っていなかった。このレコードの構築とリンクには、thisForthやForthmacにあるような複雑な方法が必要だったのだ。
-
-Chuck Moore showed me how to write assembler and how to build the dictionary in MuP21, in  a metacompiler. I had used his metacompiler to build eForth systems for P8, P24, eP16 and  eP32 chips. A Forth metacompiler was much more powerful than any macro assembler, and C.  All I had to do was to allocate a huge data array, and built the dictionary with all the records.  This data array could then be copied into VFM code in an assembly file, or in a C header file. If  I defined VFM with a set of byte code as its pseudo instructions, the dictionary would contain  only data and no executable C code. The beauty in byte code was that it completely isolated the  Forth system from the underlying microcontroller, and the Forth system could be ported to any  microcontroller with a C compiler. 
+2009年、C言語についての私自身の問題点、そしてC言語でForthを書くことの問題点を真剣に考え始めました。そして、Virtual Forth Machine（VFM）は、他のアセンブリ言語と同じようにC言語で簡単に書くことができることに気づきました。VFMは単にForthの原始的な言葉の集合で、特定のマイクロコントローラのアセンブリで書くのも、理想化された汎用CPU用に設計されたC言語で算術演算をエミュレートするのも非常に簡単であった。私が問題にしたのは、Forth辞書の構築である。Forth辞書は、Forthのワードをリンクしたリストで、レコードという形式になっている。各レコードは、固定長のリンクフィールド、可変長の名前フィールド、固定長のコードフィールド、可変長のパラメータフィールドの4つのフィールドを持っている。私が理解したところでは、初級Cコンパイラは、これらのレコードの構築とリンクのためのデータ構造を持っていなかった。このレコードの構築とリンクには、thisForthやForthmacにあるような複雑な方法が必要だったのだ。
 
 Chuck Mooreは私にアセンブラの書き方と、メタコンパイラでMuP21の辞書を構築する方法を教えてくれました。私は彼のメタコンパイラを使って、P8、P24、eP16、eP32チップ用のeForthシステムを構築したことがありました。Forthのメタコンパイラは、マクロアセンブラやC言語よりもずっと強力でした。私がしなければならなかったのは、巨大なデータ配列を割り当てて、すべてのレコードを含む辞書を構築することだけでした。 このデータ配列は、アセンブリファイルやCのヘッダーファイルの中でVFMのコードにコピーすることができる。VFMをバイトコードで定義すると、辞書の中身はデータだけとなり、実行可能なCコードはない。バイトコードの優れた点は、Forthシステムを基盤となるマイクロコントローラから完全に分離し、CコンパイラがあればどんなマイクロコントローラにもForthシステムを移植できることだ。
 
-In a direct threaded Forth model, a record of primitive word contains only byte code. A colon  word has one cell of byte code in its code field, and a token list in its parameter field. Tokens  are code field address of other Words. 
-
 直接スレッド型Forthモデルでは、プリミティブワードのレコードはバイトコードのみを含む。コロンワードは、コードフィールドにバイトコードのセルを1つ持ち、パラメータフィールドにトークンリストを持つ。トークンは、他のワードのコードフィールド・アドレスである。
 
-Embedding Forth dictionary into a data array fits nicely with the fundamental programming  model of C, in that executable C code are compiled into code segments, and data and variables  are compiled into data segments. C as a compiled language does not execute code in data  segments, and consider writing code or data into code segments illegal. Forth as an interpretive  language, does not distinguish code from data, and encourages user to add new code into its  dictionary. I made the compromise to put all VFM code in a code segment, and all Forth words  in a data segment. I accept the limitation that no new pseudo instruction will be added to the  baseline VFM, while new colon words can be added to the Forth dictionary freely. 
+Forthの辞書をデータ配列に埋め込むことは、C言語の基本的なプログラミングモデル、すなわち実行可能なCコードはコードセグメントに、データと変数はデータセグメントにコンパイルされる、ということにうまく適合する。C言語はコンパイル言語であるため、データセグメントでコードを実行することはなく、コードセグメントへのコードやデータの書き込みは違法とみなされます。Forthはインタプリタ型言語であり、コードとデータを区別せず、ユーザが新しいコードを辞書に追加することを推奨している。そこで、VFMのコードをコードセグメントに、Forthのワードをデータセグメントに書き込むという妥協策をとりました。VFMには新しい疑似命令を追加しないが、Forthの辞書には新しいコロン語を自由に追加できる、という制限を受け入れた。
 
-Forthの辞書をデータ配列に埋め込むことは、C言語の基本的なプログラミングモデル、すなわち実行可能なCコードはコードセグメントに、データと変数はデータセグメントにコンパイルされる、ということにうまく適合する。C言語はコンパイル言語であるため、データセグメントでコードを実行することはなく、コードセグメントへのコードやデータの書き込みは違法とみなされます。Forthはインタプリタ型言語であり、コードとデータを区別せず、ユーザが新しいコードを辞書に追加することを推奨している。そこで、VFMのコードをコードセグメントに、Forthの単語をデータセグメントに書き込むという妥協策をとりました。VFMには新しい疑似命令を追加しないが、Forthの辞書には新しいコロン語を自由に追加できる、という制限を受け入れた。
-
-The design of a Forth system can now be separated into two independent tasks: building a VFM  machine targeting to various microcontrollers, including C, and building a Forth dictionary.  You can use independent tools which are best suited for the particular task. I chose F# to build  the Forth dictionary, because I had used it for years. Currently, C, C++, and C#. in my  understanding, do not have the necessary tools to build the dictionary together with the VFM. 
-
-Forthシステムの設計は、Cを含む各種マイコンをターゲットとしたVFMマシンの構築と、Forth辞書の構築の2つの独立したタスクに分離できるようになりました。 その際、それぞれの作業に最適な独立したツールを使用することができます。Forth辞書の構築には、長年使ってきたF#を選びました。現在、私の理解では、C、C++、C#には、VFMと一緒に辞書を構築するのに必要なツールはありません。
-
-In 2009, I wrote two versions of eForth in C: ceForth 1.0 with 64 primitives, and ceForth 1.1  with 32 primitives. They were compiled by gcc under cygwin. I did them for my own ego,  just to show that I could. I did not expect they could be used for any practical purpose. 
+Forthシステムの設計は、Cを含む各種マイクロコントローラをターゲットとしたVFMマシンの構築と、Forth辞書の構築の2つの独立したタスクに分離できるようになりました。 その際、それぞれの作業に最適な独立したツールを使用することができます。Forth辞書の構築には、長年使ってきたF#を選びました。現在、私の理解では、C、C++、C#には、VFMと一緒に辞書を構築するのに必要なツールはありません。
 
 2009年、私はC言語で2種類のeForthを書きました。64プリミティブのceForth 1.0と、32プリミティブのceForth 1.1です。これらはcygwinの下でgccによってコンパイルされました。私は、自分のエゴのために、自分ができることを示すために、これらを実行しました。実用に耐えるとは思っていませんでした。
 
-In 2011, I was attracted to Arduino Uno Kit and ported eForth to it as 328eForth. One of the  problems with this implementation was that it was not compatible with the prevailing Arduino  IDE tool chain. I needed to add new Forth words to the dictionary in flash memory. Under  Arduino, you were not allowed to write to flash memory at run time. To get the privilege of  writing to flash memory, I had to take over the bootload section which was monopolized by  Arduino IDE to write to flash memory.  
+2011年、Arduino Uno Kitに惹かれ、eForthを328eForthとして移植しました。この実装の問題点は、一般的なArduino IDEのツールチェーンと互換性がないことでした。フラッシュメモリ内の辞書に新しいForthのワードを追加する必要があったのです。Arduinoでは、実行時にフラッシュメモリに書き込むことは許可されていませんでした。フラッシュメモリに書き込む特権を得るためには、Arduino IDEが独占しているブートロード部を置き換えてフラッシュメモリに書き込む必要がありました。 
 
-2011年、Arduino Uno Kitに惹かれ、eForthを328eForthとして移植しました。この実装の問題点は、一般的なArduino IDEのツールチェーンと互換性がないことでした。フラッシュメモリ内の辞書に新しいForthの単語を追加する必要があったのです。Arduinoでは、実行時にフラッシュメモリに書き込むことは許可されていませんでした。フラッシュメモリに書き込む特権を得るためには、Arduino IDEが独占しているブートロード部を引き継いでフラッシュメモリに書き込む必要がありました。 
-
-To accommodate Arduino, I ported ceForth 1.1 to Arduino Uno in the form of a sketch,  ceForth_328.cpp, which was essentially a C program. Observing the restriction that I could not  write anything into flash memory, I extended Forth dictionary in the RAM memory. It worked.  However, you had only 1.5KB of RAM memory left over for new Forth words, and you could  not save these new words before you lost power. As I stated then, it was only a teaser to entice  new people to try Forth on Arduino Uno. For real applications, you had to use 328eForth. 
-
-Arduinoに対応するため、ceForth 1.1をArduino Unoにスケッチ形式で移植しました。ceForth_328.cppは、基本的にはC言語プログラムです。フラッシュメモリには何も書き込めないという制約の中、RAMメモリにForth辞書を拡張した。すると、うまくいった。 しかし、新しいForth語のために残されたRAMメモリは1.5KBしかなく、電源が落ちる前に新しい単語を保存することはできなかった。このとき述べたように、これはArduino UnoでForthを試してみようという新しい人々を誘うためのお誘いにすぎませんでした。実際のアプリケーションでは、328eForthを使う必要があったのです。
-
-
-In 2016, a friend, Derek Lai, in the Taiwan FIG group gave me a couple of WiFiBoy Kits he  and his son Ricky built. It used an ESP8266 chip with an integrated WiFi radio. I found that a  simpler kit NodeMCU with the same chip cost only $3.18 on eBay. It was the cheapest and  most powerful microcontroller kit ever, with a 32 bit CPU at 160 MHz, 150 KB of RAM, 4 MB  of flash, and many IO devices. On top of all these, it is 802.11 WiFi ready. 
+Arduinoに対応するため、ceForth 1.1をArduino Unoにスケッチ形式で移植しました。ceForth_328.cppは、基本的にはC言語プログラムです。フラッシュメモリには何も書き込めないという制約の中、RAMメモリにForth辞書を拡張した。すると、うまくいった。 しかし、新しいForth語のために残されたRAMメモリは1.5KBしかなく、電源が落ちる前に新しいワードを保存することはできなかった。このとき述べたように、これはArduino UnoでForthを試してみようという新しい人々を誘うためのお誘いにすぎませんでした。実際のアプリケーションでは、328eForthを使う必要があったのです。
 
 2016年、台湾のFIGグループの友人、Derek Laiが、彼と彼の息子Rickyが作ったWiFiBoy Kitsをいくつかくれました。それは、WiFi無線機を内蔵したESP8266チップを使用していました。同じチップを使ったもっとシンプルなキットNodeMCUが、eBayでわずか3.18ドルで売られているのを発見しました。160MHzの32ビットCPU、150KBのRAM、4MBのフラッシュ、多数のIOデバイスを搭載した、これまでで最も安価で強力なマイクロコントローラキットだったのです。これらに加えて、802.11のWiFiに対応しています。
 
-The manufacturer of ESP8266, Espressif Systems in Shanghai, China, released a number of  Software Development Kits, and left it to the user community to provide software support for  this chip. Many engineers took up the challenge and supplied a wide range of programming  tools for the community. Espressif later hired a Russian engineer Ivan Grokhotkov to extend  Arduino IDE to compile ESP8266 code. This new Arduino IDE extension made it possible for  hobbyists like me to experiment with IoT. Large memories in ESP8266 solved the problems I  had with ATmega328 on Arduino Uno and made ESP8266 a good host for Forth. 
-
 ESP8266の製造元である中国上海のEspressif Systems社は、多数のソフトウェア開発キットをリリースし、このチップに対するソフトウェアのサポートをユーザーコミュニティに委ねました。多くのエンジニアがこの課題に取り組み、コミュニティ向けにさまざまなプログラミングツールを提供しました。Espressifはその後、ロシアのエンジニアIvan Grokhotkovを雇い、ESP8266のコードをコンパイルできるようにArduino IDEを拡張させました。この新しいArduino IDEの拡張により、私のようなホビーユーザーでもIoTの実験ができるようになりました。ESP8266の大容量メモリは、私がArduino UnoのATmega328で抱えていた問題を解決し、ESP8266をForthの良いホストにしてくれました。
 
-I was pleasantly surprised that ceForth was successfully ported to NodeMCU Kit in a couple of  hours. There were only very few changes to fit it into ESP8266, and the Forth dictionary  required no change at all. It was all because of the portability in C code. It generally took me  two weeks to port Forth to a new microcontroller. Most of this time was wasted in dealing with  quirks in a particular assembler, and to impose a VFM on an unyielding CPU architecture. Here  C behaved like a sweet universal assembler. 
+数時間でceForthがNodeMCU Kitにうまく移植されたのには、とても驚かされました。ESP8266に適合させるための変更はごくわずかで、Forthの辞書も全く変更する必要がありませんでした。全てはC言語のコードで移植できたからです。一般的に、新しいマイクロコントローラにForthを移植するのには、だいたい2週間くらいかかりました。この時間のほとんどは、特定のアセンブラの癖に対処したり、頑固なCPUアーキテクチャにVFMを無理やり合わせ込むために浪費されていた。ところが、C言語がまるで万能アセンブラのように振る舞ってくれるのだ。
 
-数時間でceForthがNodeMCU Kitにうまく移植されたのには、とても驚かされました。ESP8266に適合させるための変更はごくわずかで、Forthの辞書も全く変更する必要がありませんでした。全てはC言語のコードで移植できたからです。新しいマイコンにForthを移植するのには、だいたい2週間くらいかかりました。この時間のほとんどは、特定のアセンブラの癖に対処したり、不屈のCPUアーキテクチャにVFMを押し付けるために浪費されていた。ところが、C言語がまるで万能アセンブラのように振る舞ってくれるのだ。
-
-With a Forth written in C on Arduino IDE, I was able to get several NodeMCU Kits to talk to  one another over a WiFi network. I still did not understand the Tensilica L106 chip inside  ESP8266 at all, and I did not understand WiFi and all its protocols. What I did was to look up  library functions I needed to do the few things I had to do. IoT for Dummies!. It looks that a simple Forth written in C does have values. Therefore, I updated ceForth 1.0 to  ceForth 2.3, and hope that people will find some use of it. Several important improvements  were implemented, like circular buffers for stacks, and a stream-lined Finite State Machine to  run VFM. 
-
-Arduino IDE上でC言語で書かれたForthを使って、いくつかのNodeMCUキットをWiFiネットワーク上で互いに会話させることができました。私はまだESP8266に内蔵されているテンシリカのL106チップを全く理解していませんでしたし、WiFiやそのプロトコルも全て理解していませんでした。私がしたことは、いくつかのことをするために必要なライブラリ関数を調べることでした。IoT for Dummies！」です。C言語で書かれたシンプルなForthには価値があるようです。そこで、ceForth 1.0をceForth 2.3に更新し、人々が何らかの利用法を見出すことを期待します。スタックのための循環バッファや、VFMを実行するためのストリームライン化されたFinite State Machineのような、いくつかの重要な改良が行われました。
-
-It was moved to C++ under Microsoft Visual Studio Community 2017, so that one can compile  and test it on a modern Windows PC. espForth for ESP8266 was showcased in SVFIG booth in  2017 Bay Area Maker Faire. 
+Arduino IDE上でC言語で書かれたForthを使って、いくつかのNodeMCUキットをWiFiネットワーク上で互いに会話させることができました。私はまだESP8266に内蔵されているTensilicaのL106チップを全く理解していませんでしたし、WiFiやそのプロトコルも全て理解していませんでした。私がしたことは、いくつかのことをするために必要なライブラリ関数を調べることでした。IoT for Dummies! です。C言語で書かれたシンプルなForthには価値があるようです。そこで、ceForth 1.0をceForth 2.3に更新し、人々が何らかの利用法を見出すことを期待します。スタックのための循環バッファや、VFMを実行するためのストリームライン化されたFinite State Machineのような、いくつかの重要な改良が行われました。
 
 Microsoft Visual Studio Community 2017の下でC++に移行し、最新のWindows PCでコンパイルとテストができるようになりました。 espForth for ESP8266は2017 Bay Area Maker FaireでSVFIGブースで展示されました。
 
-Recently, ESP8266 was upgraded to ESP32, with 3 CPU cores and much bigger RAM memory.  Ron Golding in SVFIG decided to use it in his AIR (AI Robot), and I ported espForth to it, and  designated it is esp32forth. It was demonstrated in 2019 Bay Area Maker Faire. 
-
 最近、ESP8266がESP32にアップグレードされ、3つのCPUコアとはるかに大きなRAMメモリを持つようになりました。 SVFIGのRon GoldingがAIR（AIロボット）に使うことになったので、espForthを移植し、esp32forthとしました。2019年のBay Area Maker Faireでデモを行いました。
 
-Just when I was preparing for the Faire, my wife got a stroke, and I sent her to emergency room.  After the Faire she was sent to California Pacific Regional Rehabilitation Center. I went along  and set up camp along her hospital bed, forgetting to bring my computer. I proved to her that I  could survive without a computer. She had my undivided attention she rightfully deserved. I  had lots of time to think about my Forth in C.  
-
-ちょうどフェアーの準備をしているときに、妻が脳梗塞で倒れ、救急車で搬送しました。 フェアーの後、彼女はカリフォルニア・パシフィック・リージョナル・リハビリテーション・センターに送られました。私は、コンピュータを持ってくるのを忘れて、彼女の病院のベッドでキャンプをしました。私は、コンピュータがなくても生きていけることを彼女に証明したのです。私は、彼女が当然受けるべき、私の関心を一心に集めました。私は、自分のForth in Cについて考える時間がたくさんあった。 
-
-I pondered on my beautifully crafted Forth finite state machine: 
+ちょうどフェアーの準備をしているときに、妻が脳梗塞で倒れ、救急車で搬送されました。 フェアーの後、彼女はカリフォルニア・パシフィック・リージョナル・リハビリテーション・センターに送られました。私は、コンピュータを持ってくるのを忘れて、彼女の病院のベッドで泊まり込みました。私は、コンピュータがなくても生きていけることを彼女に証明したのです。私は、彼女が当然受けるべき、私の関心を一心に集めました。私は、自分のForth in Cについて考える時間がたくさんあった。 
 
 私は、私の美しく作られたForthの有限状態マシンについて熟考した。
-
-{primitives[cData[P++]]();}
-
-It reads consecutive byte code and executes them in sequence. If I could read consecutive bytes  from a data array, I certainly could write consecutive bytes back into a data array. C does not  have built-in variable length arrays, but it does not prevent me from writing variable length  records into a big data array. 
-
+```
+{ primitives[cData[P++]](); }
+```
 これは、連続したバイトコードを読み込んで、順番に実行するものだ。データ配列から連続したバイトを読むことができれば、データ配列に連続したバイトを書き戻すことができるはずだ。Cには可変長配列が組み込まれていないが、可変長レコードを大きなデータ配列に書き込むことを妨げるものではない。
 
-Two weeks later, my daughter brought my computer to the hospital, and I started to try writing  my own data records. I first tried it on Python, which allowed me to write things into a big array  and read them back. First I had writeByte(c) to append a byte to an array, and  writeInteger(n) to append an integer. From them I define macro functions CODE() to  assemble primitive Forth words, COLON() to assemble colon words, and LABEL() to  append token lists to colon words. They work like a macro assembler. Since I had nothing else  to do, I built the entire dictionary of esp32forth_54, and compared it byte-for-byte against the  header file rom_54.h produced by the Forth metacompiler in esp32forth_54. 
+2週間後、娘が私のパソコンを持ってきてくれたので、私は自分でデータレコードを書いてみるようになった。最初に試したのはPythonで、大きな配列にいろいろと書き込んで、それを読み出すことができた。まず、配列にバイトを追加する`writeByte(c)`と、整数を追加する`writeInteger(n)`を用意しました。そこから、Forthの原始的なワードを組み立てる`CODE()`、コロンのワードを組み立てる`COLON()`、コロンのワードにトークンリストを付加する`LABEL()`というマクロ関数を定義しました。これらはマクロアセンブラと同じような働きをする。他にやることもないので、esp32forth_54の辞書を全部作り、esp32forth_54のForthメタコンパイラが生成するヘッダーファイルrom_54.hとバイト単位で比較した。
 
-2週間後、娘が私のパソコンを持ってきてくれたので、私は自分でデータレコードを書いてみるようになった。最初に試したのはPythonで、大きな配列にいろいろと書き込んで、それを読み出すことができた。まず、配列にバイトを追加するwriteByte(c)と、整数を追加するwriteInteger(n)を用意しました。そこから、Forthの原始的な単語を組み立てるCODE()、コロンの単語を組み立てるCOLON()、コロンの単語にトークンリストを付加するLABEL()というマクロ関数を定義しました。これらはマクロアセンブラと同じような働きをする。他にやることもないので、esp32forth_54の辞書を全部作り、esp32forth_54のForthメタコンパイラが生成するヘッダーファイルrom_54.hとバイト単位で比較した。
-
-After my wife was discharged from the rehab center, I came back to my NodeMCU ESP32S  Kit, added the macro assembler to esp32forth, and I got rid of the rom_54.h header file. In this  new esp32forth_61 system, everything is in one esp32forth_61.ino file. A single C file  contained all the information necessary to bring up a complete Forth system on an ESP32 Kit. However, using labels in token lists to mark target addresses for branching and looping was not  satisfactory, because forward references had to be resolved manually. The macro assembler was  extended so that control structures could be built in a single pass, with all forward references  resolved automatically. This was esp32forth_62. 
-
-妻がリハビリセンターから退院した後、私はNodeMCU ESP32S Kitに戻り、esp32forthにマクロアセンブラを追加し、rom_54.hのヘッダファイルを取り除いたのです。この新しいesp32forth_61システムでは、すべてが1つのesp32forth_61.inoファイルに収められています。1つのCファイルには、ESP32キット上で完全なForthシステムを立ち上げるために必要なすべての情報が含まれていました。しかし、トークン・リストのラベルを使用して分岐やループのターゲット・アドレスをマークすることは、前方参照を手動で解決しなければならないため、満足できるものではありませんでした。マクロアセンブラは、すべての前方参照を自動的に解決して、制御構造を1回のパスで構築できるように拡張されました。これが esp32forth_62 です。
-
-Subsequently, ceForth_23 was upgraded to ceForth_33 with the new macro assembler. It is  very nice that I only have to distribute one file for people to try out a Forth system. It also saves  me the trouble of documenting the F# metacompiler, and explaining it to people who are not  familiar with Forth. It is silly to explain Forth in Forth. To explain Forth, you have to use some  other languages like C, or assembly. This was the intent of the original eForth Model. 
+妻がリハビリセンターから退院した後、私はNodeMCU ESP32S Kitに戻り、esp32forthにマクロアセンブラを追加し、rom_54.hのヘッダファイルを取り除いたのです。この新しいesp32forth_61システムでは、すべてが1つのesp32forth_61.inoファイルに収められています。1つのCファイルには、ESP32キット上で完全なForthシステムを立ち上げるために必要なすべての情報が含まれていました。しかし、トークン・リストのラベルを使用して分岐やループのターゲット・アドレスに印を付けて前方参照を手動で解決しなければならないため、満足できるものではありませんでした。マクロアセンブラを拡張して、すべての前方参照を自動的に解決して、制御構造を1回のパスで構築できるようにしました。これが esp32forth_62 です。
 
 その後、ceForth_23は新しいマクロアセンブラを搭載してceForth_33にバージョンアップしました。Forthシステムを試してもらうのに、1つのファイルを配布するだけで良いのはとても良いことです。また、F#のメタコンパイラをドキュメント化し、Forthに詳しくない人に説明する手間も省ける。ForthをForthで説明するのは愚かなことです。Forthを説明するためには、C言語やアセンブリなど、他の言語を使わなければならないのです。これが、当初のeForth Modelの意図でした。
 
 
 # Chapter 2. Running ceForth
 
-A couple of years ago, I was asked the availability of my earlier books and Forth  implementations. Paper copies were mostly gone. Electronic copies I saved on my computer  seemed outdated. They all cried out loud asking for new lives, with new formats on newer  computers.  
-
-数年前、私の以前の本やForthの実装の入手状況を尋ねられたことがあります。紙の本はほとんどなくなっていた。コンピュータに保存してある電子的なコピーは時代遅れになっているようでした。それらはすべて、新しいコンピュータで新しいフォーマットで、新しい命を求めて声高に叫んでいたのです。 
-
-My 86eForth 1.0 was the worst. It was compiled by MASM on a PC-DOS computer in 1990.  MASM was long discontinued and I had to find better ways to resurrect it. Then I learnt that  MASM was still available, but hidden behind C++ in Visual Studio. 
+2年前、私の以前の本やForthの実装の入手状況を尋ねられたことがあります。紙の本はほとんどなくなっていた。コンピュータに保存してある電子的なコピーは時代遅れになっているようでした。それらはすべて、新しいコンピュータで新しいフォーマットで、新しい命を求めて声高に叫んでいたのです。 
 
 私の86eForth 1.0は最悪でした。これは1990年にPC-DOSコンピュータ上でMASMによってコンパイルされたものです。 MASMはとっくに製造中止になっていたので、私はそれを復活させるためのより良い方法を見つけなければなりませんでした。そんなとき、MASMはまだ使えるが、Visual StudioのC++の陰に隠れていることを知りました。
 
-ceForth 1.0 and 1.1 were developed with gcc on cygwin. Cygwin was a crippled Linux running  on PC, but it was a foreign system to Windows. I had totally forgotten how to compile and run  it. Time to move on to Visual Studio. 
-
-ceForth 1.0と1.1はcygwin上のgccで開発されました。CygwinはPC上で動く不自由なLinuxでしたが、Windowsとは異質なシステムでした。コンパイルや実行の仕方をすっかり忘れていた。Visual Studioに移行する時期が来たのだ。
-
+ceForth 1.0と1.1はcygwin上のgccで開発されました。CygwinはPC上で動く不自由なLinuxでしたが、Windowsとは異質なシステムでした。コンパイルや実行の仕方をすっかり忘れていた。Visual Studioに移行する時期が来ました。
 
 ## Install Visual Studio 2019 Community 
 
-ceForth 1.0 was upgraded to ceForth_23 on Visual Studio 2017 Community. Then it is  upgraded to ceForth_33 on Visual Studio 2019 Community. 
-
 ceForth 1.0は、Visual Studio 2017 CommunityでceForth_23にバージョンアップされました。その後、Visual Studio 2019 CommunityでceForth_33にバージョンアップしています。
-
-ceForth_33.cpp is a Visual Studio C++ Windows Console Application. It is a streamlined C program to be compiled by Visual Studio C++, and then run under Windows. To run ceForth,  you have to first install Visual Studio IDE. Then you can copy ceForth_33.cpp to it and get it  running. 
 
 ceForth_33.cppは、Visual Studio C++のWindows Console Applicationです。Visual Studio C++でコンパイルし、Windows上で実行するための合理的なC言語プログラムです。ceForthを実行するには、まずVisual Studio IDEをインストールする必要があります。その後、ceForth_33.cppをコピーして、実行させることができます。
 
-Download Visual Studio 2019 Community from www.microsoft.com and install it on your PC.  Open Visual Studio, and you will see its logo page: 
-
 Visual Studio 2019 Communityをwww.microsoft.com からダウンロードし、PCにインストールします。 Visual Studioを開くと、そのロゴページが表示されます。
-
-After a while, you will see its start page: 
 
 しばらくすると、そのスタートページが表示されます。
 
-Click Create a new project 
-
-新しいプロジェクトを作成する]をクリックします。
-
-In the Create a new project Panel, select Console App. Then you will see the  Configure your project page: 
+"新しいプロジェクトを作成する"をクリックします。
 
 新しいプロジェクトを作成するパネルで、Console Appを選択します。すると、プロジェクトの設定ページが表示されます。
 
-In the Project name box, enter ceForth_33 for your project. In the Location box,  select a file folder or browse to a folder you like to store your project. 
-
-プロジェクト名]ボックスに、ceForth_33と入力します。Location（場所）］ボックスで、プロジェクトを保存するファイルフォルダを選択するか、または任意のフォルダをブラウズしてください。
-
-Click Create button at the lower right corner to create the new ceForth_33 project.  
+プロジェクト名]ボックスに、ceForth_33と入力します。Locationボックスで、プロジェクトを保存するファイルフォルダを選択するか、または任意のフォルダをブラウズしてください。
 
 右下の作成ボタンをクリックすると、新しいceForth_33プロジェクトが作成されます。 
-
-Visual Studio created a new project for you, and gives you a template file ceForth_33.cpp.  Copy the contents of ceForth_33.cpp supplied in ceForth_33.zip file, and paste them  into ceForth_33.cpp Edit Panel. 
 
 Visual Studioはあなたのために新しいプロジェクトを作成し、テンプレートファイルceForth_33.cppを提供します。 ceForth_33.zipファイルに入っているceForth_33.cppの内容をコピーし、ceForth_33.cpp編集パネルに貼り付けてください。
 
 ## Compile ceForth
 
-Now we have ceForth_33.cpp in the Edit Panel:
-
 これで、ceForth_33.cppがEdit Panelに表示されました。
-
-Click Build>Rebuild Solution, and Visual Studio goes to work. After a while, in the  Output Panel, it will report a few lines of progress, and end with this message: 
 
 Build>Rebuild Solution をクリックすると、Visual Studio は作業を開始します。しばらくすると、出力パネルに進捗状況が数行表示され、このメッセージで終了します。
 
 ===== Rebuild All, 1 succeeded, 0 failed, 0 skipped =====
 
-All is well. Ready to test. 
-
 すべて順調です。テストの準備ができました。
 
 ## Test ceForth
 
-Click Debug>Start without debugging. Wait some more. Finally, you will see the  Debug window: 
-
 Debug>Start without debuggingをクリック。もう少し待ちます。最後に、Debug ウィンドウが表示されます。
-
-On top of it, you have the Console Window:
 
 その上に、Console Windowがあります。
 
-Success! ceForth is running.
-
 成功！ceForthは実行されています。
-
-Press Enter key a number of times. ceForth displays an empty stack with ‘ok>’ prompts. 
 
 Enterキーを何回か押すと、ceForthは空のスタックを表示し、'ok>'のプロンプを表示します。
 
-Type WORDS, and you get a screen of word names representing a complete ceForth system: 
-
-WORDSと入力すると、ceForthの完全なシステムを表す単語名の画面が表示されます。
-
-Now, enter this universal greeting word:
+WORDSと入力すると、ceForthの完全なシステムを表すワード名の画面が表示されます。
 
 さて、この世界共通の挨拶語を入力してください。
-
+```
 : TEST CR .” HELLO, WORLD!” ;
-
-and then type TEST:
-ceForth is now fully functional.
-
+```
 と入力し、TESTと入力します。
+
 これでceForthは完全に機能するようになりました。
 
 # Chapter 3. ceForth Virtual Forth Engine
 
 ## ceForth_33.cpp
 
-The file ceForth_33.cpp is a C++ program which can be compiled by Visual Studio IDE, and  run as a Windows Console Application. This file serves perfectly as a specification of a Virtual  Forth Engine, in terms of C functions. 
-
 ファイルceForth_33.cppは、Visual Studio IDEでコンパイルし、Windowsコンソールアプリケーションとして実行することができるC++プログラムです。このファイルは、Virtual Forth Engineの仕様として、C関数の観点から完璧に機能しています。
 
-Before diving directly into ceForth, I would like to give you an overview of a Forth system with  a Virtual Firth Machine (VFM) under it, so you can better understand how the whole thing is  implemented. 
-
-CeForthに直接入る前に、Virtual Firth Machine (VFM)を配したForthシステムの概要を説明し、全体がどのように実装されているかをより良く理解していただきたいと思います。
-
-* A VFM executes a set of pseudo instructions, in the form byte code. 
-* All Forth words or commands are stored in a large data array, called a dictionary. 
-* Each word has a record. All records are linked in the dictionary. 
-* Each word record contains 4 fields, a link field, a name field, a code field, and a  parameter field. The link field and name field allow the dictionary to be searched for a word  from its ASCII name. The code field contains executable byte code. The parameter field  contains optional code and data needed by the word. 
-* There are two types of words: primitive words containing executable byte code, and  colon words containing token lists. A token is a code field address pointing to code field of a  word. 
-* A sequencer executes byte code sequences stored in code fields of primitive words. 
-* An inner interpreter terminates a primitive word and executes the next token in a token  list. 
-* An address interpreter executes nested token lists.
-* A return stack is required to process nested token lists
-* A data stack is required to pass parameters among words
-* A text interpreter processes word lists entered from a terminal. 
-* A compiler turns word lists into new Forth words.
-
-The text interpreter interprets or executes a list of Forth words, separated by spaces: 
+ceForthに直接入る前に、Virtual Firth Machine (VFM)を配したForthシステムの概要を説明し、全体がどのように実装されているかをより良く理解していただきたいと思います。
 
 * VFMは、バイトコード形式の擬似命令群を実行します。
-* すべてのForthの単語やコマンドは、辞書と呼ばれる大きなデータ配列に格納されています。
-* 各単語はレコードを持つ。すべてのレコードは、辞書内でリンクされています。
-* 各単語のレコードは、リンクフィールド、名前フィールド、コードフィールド、パラメータフィールドの4つのフィールドを含んでいます。リンクフィールドと名前フィールドは、そのASCII名から辞書を検索することができる。コードフィールドは、実行可能なバイトコードを含む。パラメータフィールドには、そのワードが必要とするオプションのコードやデータが入ります。
-* 単語には、実行可能なバイトコードを含むプリミティブ単語と、トークン・リストを含むコロン単語の2種類があります。トークンは、ワードのコードフィールドを指すコードフィールドアドレスです。
+* すべてのForthのワードやコマンドは、辞書と呼ばれる大きなデータ配列に格納されています。
+* 各ワードはレコードを持つ。すべてのレコードは、辞書内でリンクされています。
+* 各ワードのレコードは、リンクフィールド、名前フィールド、コードフィールド、パラメータフィールドの4つのフィールドを含んでいます。リンクフィールドと名前フィールドは、そのASCII名から辞書を検索することができる。コードフィールドは、実行可能なバイトコードを含む。パラメータフィールドには、そのワードが必要とするオプションのコードやデータが入ります。
+* ワードには、実行可能なバイトコードを含むプリミティブワードと、トークン・リストを含むコロンワードの2種類があります。トークンは、ワードのコードフィールドを指すコードフィールドアドレスです。
 * シーケンサは、プリミティブ・ワードのコード・フィールドに格納されたバイト・コード・シーケンスを実行します。
-* 内部インタプリタは、原始ワードを終了させ、トークン・リストの次のトークンを実行する。
+* 内部インタプリタは、プリミティブ・ワードを終了させ、トークン・リストの次のトークンを実行する。
 * アドレスインタプリタは、ネストされたトークンリストを実行する。
 * トークンリストの入れ子処理には、リターンスタックが必要です。
 * ワード間のパラメータ受け渡しにデータスタックが必要
@@ -241,22 +132,16 @@ The text interpreter interprets or executes a list of Forth words, separated by 
 * コンパイラはワードリストを新しいForthワードに変換します。
 
 テキストインタープリタは、スペースで区切られたForth語のリストを解釈または実行します。
-
+```
 <list of words>
-
-It also functions like a compiler creating new words to replace lists of words: 
-
-また、単語のリストを置き換えるために新しい単語を作成するコンパイラのような機能もあります。
-
+```
+また、ワードのリストを置き換えるために新しいワードを作成するコンパイラのような機能もあります。
+```
 : <name> <list of words> ;
-
-These new words are called colon words, because compilation starts by colon ‘:’ and ends with  semicolon ‘;’. Colon ‘:’ and semicolon ‘;’ are also Forth words.  All computable problems can be solved by repeatedly creating new words to replace lists of  existing words. It is very similar to natural languages. New words are created to replace lists of  existing words. Thoughts and ideas are thus abstracted to a higher level. Real intelligence is  best represented by deeply nested lists. Forth is real intelligence, in contrast to artificial  intelligence. It is also the simplest and most efficient way to explore solution spaces far and  wide, and to arrive at optimized solutions for any computable problem. Now let’s read the source code in ceForth_33.cpp, to see how this VFM is actually  implemented. 
-
-コンパイルはコロン「:」で始まり、セミコロン「;」で終わるので、これらの新しい単語はコロン単語と呼ばれます。コロン「:」とセミコロン「;」もまたForthの単語である。 計算可能な問題はすべて、既存の単語のリストを置き換えるために新しい単語を繰り返し作ることで解くことができる。これは自然言語と非常によく似ている。新しい単語は、既存の単語のリストを置き換えるために作られる。思考やアイデアはこのようにしてより高いレベルへと抽象化される。本当の知性は、深くネストされたリストで表現するのが一番です。Forthは、人工知能とは対照的に、本物の知能である。また、Forthは、あらゆる計算可能な問題に対して、解の空間を広く探索し、最適な解に到達するための最も単純で最も効率的な方法である。では、このVFMが実際にどのように実装されているのか、ceForth_33.cppのソースコードを読んでみましょう。
+```
+コンパイルはコロン「:」で始まり、セミコロン「;」で終わるので、これらの新しいワードはコロンワードと呼ばれます。コロン「:」とセミコロン「;」もまたForthのワードである。 計算可能な問題はすべて、既存のワードのリストを置き換えるために新しいワードを繰り返し作ることで解くことができる。これは自然言語と非常によく似ている。新しいワードは、既存のワードのリストを置き換えるために作られる。思考やアイデアはこのようにしてより高いレベルへと抽象化される。本当の知性は、深くネストされたリストで表現するのが一番です。Forthは、人工知能とは対照的に、本物の知能である。また、Forthは、あらゆる計算可能な問題に対して、解の空間を広く探索し、最適な解に到達するための最も単純で最も効率的な方法である。では、このVFMが実際にどのように実装されているのか、ceForth_33.cppのソースコードを読んでみましょう。
 
 ## Preamble
-
-In the beginning of ceForth_33.cpp, I put in several comment lines to document the progressing  of ceForth implementation. After the comments, there are several include instructions to pull in  header files, and several macros to facilitate compilation the rest of C code. 
 
 ceForth_33.cppの冒頭には、ceForthの実装の進捗を記録するために、いくつかのコメント行を入れました。コメントの後に、ヘッダーファイルを取り込むためのinclude命令と、残りのCコードのコンパイルを容易にするためのマクロがいくつかあります。
 ```
@@ -275,35 +160,21 @@ ceForth_33.cppの冒頭には、ceForthの実装の進捗を記録するため�
 # define popR rack[(unsigned char)R--]
 # define pushR rack[(unsigned char)++R]
 ```
-`<stdlib.h>`, `<tchar.h>` and `<stdio.h>` are standard library header files needed by  ceForth. `<stdarg.h>` is needed for macro functions having variable parameter lists.  `<string.h>` file is needed for `strlen()` to determine lengths of strings. 
-
 `<stdlib.h>`、`<tchar.h>`、`<stdio.h>`は、ceForthが必要とする標準ライブラリのヘッダーファイルです。`<stdarg.h>`は、可変パラメータリストを持つマクロ関数のために必要です。 `<string.h>`は、文字列の長さを決定するstrlen()に必要なファイルである。
-
-Default value of a `FALSE` flag is 0, and of `TRUE`, -1. ceForth considers any non-zero number as  a TRUE flag. Nevertheless, all ceForth words which generate flags would return a -1 for TRUE. LOGICAL is a macro enforcing the above policy for logic words to return the correct TRUE and  FALSE flags. 
 
 FALSEフラグのデフォルトは0、TRUEフラグのデフォルトは-1です。ただし、フラグを生成するすべてのceForthワードは、TRUEの場合は-1を返します。LOGICALは、論理語に対して上記の方針を強制し、正しいTRUEとFALSEのフラグを返すようにしたマクロです。
 
-`LOWER(x,y)` returns a TRUE flag if `x<y`.
-
 `LOWER(x,y)` は `x<y` ならば TRUE フラグを返します。
-
-pop is a macros which stream-lines the often used operations to pop the data stack to a register  or a memory location. As the top element of the data tack is cached in register top, popping is  more complicated, and pop macro helps to clarify my intention. 
 
 popは、データスタックをレジスタやメモリ位置にポップするためによく使われる操作をストリームライン化したマクロです。データタックの先頭要素はレジスタ top にキャッシュされるため、pop はより複雑になりますが、pop マクロは私の意図を明確にするのに役立ちます。
 
-Similarly, push is a macro to push a register or contents in a memory location on the data stack.  Actually, the contents in top register must be pushed on the data stack, and the source data is  copied into top register. 
-
 同様に、pushはレジスタやメモリ上のコンテンツをデータスタックにプッシュするマクロです。 実際には、トップ・レジスタの内容をデータ・スタックにプッシュし、ソース・データをトップ・レジスタにコピーする必要があります。
-
-pushR is a macro to push a register or contents in a memory location on the return stack. popR does the reverse. The return stack is drafted to help compiling control structures in the token  lists of colon words at compile time. At run time, the return stack hosts nested return addresses  so tokens can call nested tokens.  
 
 pushR はレジスタやメモリ上のコンテンツをリターンスタックにプッシュするマクロで、popR はその逆を行います。リターンスタックは、コンパイル時にコロンワードのトークンリストにある制御構造をコンパイルしやすくするために作成されました。実行時には、トークンがネストしたトークンを呼び出すことができるように、リターンスタックはネストしたリターンアドレスをホストしています。 
 
 ## Registers and Arrays
 
-ceForth uses a large data array to hold its dictionary of words. There are lots of variables and  buffers declared in this array. Besides this data array, the VFM needs many registers and arrays  to hold data to support all its operations. Here is the list of these registers and arrays: 
-
-ceForthは、単語の辞書を保持するために大きなデータ配列を使っています。この配列には、たくさんの変数やバッファが宣言されています。このデータ配列の他に、VFMはすべての操作をサポートするために、データを保持する多くのレジスタと配列を必要とします。以下は、これらのレジスタと配列のリストです。
+ceForthは、ワードの辞書を保持するために大きなデータ配列を使っています。この配列には、たくさんの変数やバッファが宣言されています。このデータ配列の他に、VFMはすべての操作をサポートするために、データを保持する多くのレジスタと配列を必要とします。以下は、これらのレジスタと配列のリストです。
 ```
 long rack[256] = { 0 };
 long stack[256] = { 0 };
@@ -316,77 +187,46 @@ unsigned char c;
 long data[16000] = {};
 unsigned char* cData = (unsigned char*)data;
 ```
-The following table explains the functions of these registers and arrays: 
+これらのレジスタおよび配列の機能を次の表で説明します。
 
 |Register/Array|Functions|
 |--|--|
-|P|Program counter, pointing to pseudo instructions in data[].
-|IP|Instruction pointer for address interpreter
-|WP|Working register, usually pointing to a parameter field
-|rack[]|Return stack, a 256 cell circular buffer
-|stack[]|Data stack, a 256 cell circular buffer
-|R|One byte return stack pointer
-|S|One byte data stack pointer
-|top|Cached top element of the data stack
-|c|A 8 bit scratch register 
-|Data[]|A huge data array with 16000 integers
-|cData[]|Alias of data[] array to access bytes
+|`P`|プログラムカウンタ、data[]内の疑似命令を指し示す。
+|`IP`|アドレス・インタプリタ用の命令ポインタ
+|`WP`|作業レジスタ。通常はパラメータ・フィールドを指します。
+|`rack[]`|リターンスタック（256セルの循環バッファ)
+|`stack[]`|データスタック（256セルの循環バッファ)
+|`R`|1 バイトのリターン・スタック・ポインタ
+|`S`|1 バイトのデータスタックポインタ
+|`top`|データスタックのキャッシュされたトップエレメント
+|`c`|8ビットスクラッチレジスタ 
+|`data[]`|16000個の整数からなる巨大なデータ配列
+|`cData[]`|バイトアクセスするための data[] 配列のエイリアス
 
-|Register/Array|Functions|
-|--|--|
-|P|プログラムカウンタ、data[]内の疑似命令を指し示す。
-|IP|アドレス・インタプリタ用の命令ポインタ
-|WP|作業レジスタ。通常はパラメータ・フィールドを指します。
-|rack[]|リターンスタック（256セルの円形バッファ
-|stack[]|データスタック（256セルの円形バッファ
-|R|1 バイトのリターン・スタック・ポインタ
-|S|1 バイトのデータスタックポインタ
-|top|データスタックのキャッシュされたトップエレメント
-|c|8ビットスクラッチレジスタ 
-|Data[]|16000個の整数からなる巨大なデータ配列
-|cData[]|バイトアクセスするための data[] 配列のエイリアス
-
-In ceForth_33, I allocated 1KB memory for each stack, stack[256] and rack[256],  and used a byte pointer for each stack, S and R. The stacks are 256 cell circular buffers, and  will never underflow or overflow. However, the C compiler needs to be reminder constantly  that the stack pointers have 8-bit values and must not be leaked to integer. R and S pointers  must always be prefixed with (unsigned char) specification. Thus the stacks will never  overshoot their boundaries. No stack overflows or stack underflows 
-
-ceForth_33 では、stack[256] と rack[256] にそれぞれ 1KB のメモリを割り当て、S と R にそれぞれバイトポインタを使用しました。しかし、Cコンパイラは、スタックポインタが8ビット値であり、整数にリークしてはならないことを常に注意する必要がある。R と S のポインタは常に (unsigned char) 指定を前置しなければならない。このため、スタックが境界を越えることはありません。スタックオーバーフロー、スタックアンダーフローなし 
-
-ceForth_33 interpreter displays top 4 elements on data stack. Always seeing these 4 elements,  you do not need utility to dump or examine data stack. With circular buffers for stacks, I saved  4 byte code, about 10 stack managing words, and a ton of worrying. 
+ceForth_33 では、`stack[256]` と `rack[256]` にそれぞれ 1KB のメモリを割り当て、`S` と `R` にそれぞれバイトポインタを使用しました。しかし、Cコンパイラは、スタックポインタが8ビット値であり、整数にリークしてはならないことを常に注意する必要がある。`R` と `S` のポインタは常に (unsigned char) 指定を前置しなければならない。このため、スタックが境界を越えることはありません。スタックオーバーフロー、スタックアンダーフローは生じません。
 
 ceForth_33インタープリタは、データスタックの上位4要素を表示します。常にこの4つの要素を見ることができるので、データスタックをダンプしたり、調べたりするユーティリティは必要ありません。スタックに循環バッファを使うことで、4バイトのコード、約10個のスタック管理語、そして1トンの心配を省くことができました。
 
-All Forth words are stored in data[16000] array, as a linked list, and is generally called a  dictionary. Each record in this list contains 4 fields: a 32 bit link field, a variable length name  field, a 32 bit code field, and a variable length parameter field. In a primitive word, the  parameter field may contain additional byte code. In high level colon words, the code field has  a byte code 6, for nesting the token list in the subsequent parameter field. Tokens are code field  addresses, pointing to other Forth words. 
+Forthのワードはすべて`data[16000]`配列にリンクリストとして格納されており、一般に辞書と呼ばれる。このリストの各レコードは、32ビットのリンクフィールド、可変長の名前フィールド、32ビットのコードフィールド、可変長のパラメータフィールドの4つのフィールドを含んでいます。プリミティブワードでは、パラメータフィールドは追加のバイトコードを含むことができる。高レベルのコロンワードでは、コードフィールドは、後続のパラメータフィールドのトークンリストを入れ子にするためのバイトコード6を持つ。トークンはコードフィールドのアドレスであり、他のForthワードを指します。
 
-Forthの単語はすべてdata[16000]配列にリンクリストとして格納されており、一般に辞書と呼ばれる。このリストの各レコードは、32ビットのリンクフィールド、可変長の名前フィールド、32ビットのコードフィールド、可変長のパラメータフィールドの4つのフィールドを含んでいます。プリミティブワードでは、パラメータフィールドは追加のバイトコードを含むことができる。高レベルのコロンワードでは、コードフィールドは、後続のパラメータフィールドのトークンリストを入れ子にするためのバイトコード6を持つ。トークンはコードフィールドのアドレスであり、他のForthワードを指します。
+`data[]`配列の辞書は、マクロアセンブラによって埋められます。マクロアセンブラは可変長のバイトフィールドと可変長の整数フィールドの両方を埋める必要があるため、バイト配列の別名として`cData[]`を持っています。`P`はバイトコードプログラムカウンタであり、バイト配列`cData[]`のインデックスに使用されます。`IP`は命令ポインタまたは整数ポインタであり、整数配列`data[]`のインデックスに使用される。
 
-The dictionary in data[] array is filled in by a macro assembler. It has a byte array alias  cData[], because the macro assembler has to fill in both variable length byte fields and  variable length integer fields. P is a byte code program counter, used to index byte array  cData[]. IP is an instruction pointer or integer pointer, used to index integer array data[]. 
-
-data[]配列の辞書は、マクロアセンブラによって埋められます。マクロアセンブラは可変長のバイトフィールドと可変長の整数フィールドの両方を埋める必要があるため、バイト配列の別名としてcData[]を持っています。Pはバイトコードプログラムカウンタであり、バイト配列cData[]のインデックスに使用されます。IPは命令ポインタまたは整数ポインタであり、整数配列data[]のインデックスに使用される。
-
-Later, I will go through the macro assembler, and explain how this dictionary is constructed. 
-
-後ほど、マクロアセンブラを使用して、この辞書がどのように構築されるかを説明します。
-
+後ほど、マクロアセンブラを説明するとともに、この辞書がどのように構築されるかを説明します。
 
 ## Virtual Forth Machine (VFM)
-
-Then come all the VFM pseudo instructions, coded as C functions. Each pseudo instruction will  be assigned a byte code. A byte code sequencer or a Finite State Machine is designed to execute  byte code placed in code fields of primitive words in the dictionary. Byte code are machine  instructions of VFM, just like machine instructions of a real computer. 
 
 次に、C言語の関数としてコード化されたすべてのVFM疑似命令が出てきます。それぞれの擬似命令には、バイトコードが割り当てられます。バイトコードシーケンサや有限状態機械は、辞書にあるプリミティブワードのコードフィールドに置かれたバイトコードを実行するように設計されています。バイトコードはVFMの機械命令であり、実際のコンピュータの機械命令と同じである。
 
 // Virtual Forth Machine
 
-bye ( -- ) Return control from Forth back to Windows. Close the Windows Console opened for  Forth. 
-
-bye ( -- ) ForthからWindowsに制御を戻す。Forth用に開いたWindowsコンソールを閉じます。
+`bye ( -- )` ForthからWindowsに制御を戻す。Forth用に開いたWindowsコンソールを閉じます。
 ```
 void bye(void)
 {
     exit(0);
 }
 ```
-qrx ( -- c T|F ) Return a character and a true flag if the character has been received. If no  character was received, return a false flag 
-
-qrx ( -- c T|F ) 文字と、その文字が受信された場合の真旗を返す。文字を受信しなかった場合、falseフラグを返す 
+`qrx ( -- c T|F )` 文字と、その文字が受信された場合の真フラグを返す。文字を受信しなかった場合、falseフラグを返す 
 ```
 void qrx(void)
 {
@@ -394,9 +234,7 @@ void qrx(void)
     if (top != 0) push TRUE;
 }
 ```
-txsto ( c -- ) Send a character to the serial terminal.
-
-txsto ( c -- ) シリアルターミナルに文字を送信する。
+`txsto ( c -- )` シリアルターミナルに文字を送信する。
 ```
 void txsto(void)
 {
@@ -404,9 +242,7 @@ void txsto(void)
     pop;
 }
 ```
-next() is the inner interpreter of the Virtual Forth Machine. Execute the next token in a token  list. It reads the next token, which is a code field address, and deposits it into Program Counter  P. The sequencer then jumps to this address, and executes the byte code in it. It also deposits  P+4 into the Work Register WP, pointing to the parameter field of this word. WP helps  retrieving the token list of a colon word, or data stored in parameter field. 
-
-next()は、Virtual Forth Machineの内部インタプリタである。トークンリストの次のトークンを実行する。これはコード・フィールド・アドレスである次のトークンを読み、それをプログラム・カウンタ P にデポジットします。また、P+4をワークレジスタWPに格納し、このワードのパラメータフィールドを指し示す。WPは、コロンワードのトークンリストやパラメータフィールドに格納されているデータを取り出すのに役立つ。
+`next()`は、Virtual Forth Machineの内部インタプリタである。トークンリストの次のトークンを実行する。これはコード・フィールド・アドレスである次のトークンを読み、それをプログラム・カウンタ `P` にデポジットします。また、`P+4`をワークレジスタ`WP`に格納し、このワードのパラメータフィールドを指し示す。WPは、コロンワードのトークンリストやパラメータフィールドに格納されているデータを取り出すのに役立つ。
 ```
 void next(void)
 {
@@ -415,27 +251,21 @@ void next(void)
     IP += 4;
 }
 ```
-dovar( -- a ) Return the parameter field address saved in WP register. 
-
-dovar( -- a ) WP レジスタに保存されているパラメータフィールドアドレスを返します。
+`dovar( -- a )` WP レジスタに保存されているパラメータフィールドアドレスを返します。
 ```
 void dovar(void)
 {
     push WP;
 }
 ```
-docon ( -- n ) Return integer stores in the parameter field of a constant word. 
-
-docon ( -- n ) 定数ワードのパラメータフィールドに格納されている整数を返す。
+`docon ( -- n )` 定数ワードのパラメータフィールドに格納されている整数を返す。
 ```
 void docon(void)
 {
     push data[WP >> 2];
 }
 ```
-dolit ( -- w) Push the next token onto the data stack as an integer literal. It allows numbers to  be compiled as in-line literals, supplying data to data stack at run time.  
-
-dolit ( -- w) 次のトークンを整数リテラルとしてデータスタックにプッシュします。これにより、数値はインラインリテラルとしてコンパイルされ、実行時にデータスタックにデータを供給することができる。 
+`dolit ( -- w)` 次のトークンを整数リテラルとしてデータスタックにプッシュします。これにより、数値はインラインリテラルとしてコンパイルされ、実行時にデータスタックにデータを供給することができる。 
 ```
 void dolit(void)
 {
@@ -444,9 +274,7 @@ void dolit(void)
     next();
 }
 ```
-dolist ( -- ) Push the current Instruction Pointer (IP) the return stack and then pops the  Program Counter P into IP from the data stack. When next() is executed, the tokens in the  list are executed consecutively.  
-
-dolist ( -- ) 現在の命令ポインタ(IP)をリターンスタックにプッシュし、データスタックからIPにプログラムカウンタPをポッ プする。next()が実行されると、リスト内のトークンが連続実行される。 
+`dolist ( -- )` 現在の命令ポインタ(IP)をリターンスタックにプッシュし、データスタックからIPにプログラムカウンタPをポップする。next()が実行されると、リスト内のトークンが連続実行される。 
 ```
 void dolist(void)
 {
@@ -455,8 +283,6 @@ void dolist(void)
     next();
 }
 ```
-exitt ( -- ) Terminate all token lists in colon words. EXIT pops the execution address saved  on the return stack back into the IP register and thus restores the condition before the colon word was entered. Execution of the calling token list will continue. 
-
 `exitt ( -- )` コロン・ワードのトークン・リストをすべて終了させる。EXITは、リターンスタックに保存された実行アドレスをIPレジスタにポップバックし、コロン語が入力される前の状態を復元する。呼び出したトークンリストの実行は継続される。
 ```
 void exitt(void)
@@ -465,9 +291,7 @@ void exitt(void)
     next();
 }
 ```
-`execu ( a -- )` Take the execution address from data stack and executes that token. This  powerful word allows you to execute any token which is not a part of a token list. 
-
-`execu ( a -- )` データスタックから実行アドレスを取り出し、そのトークンを実行する。この強力な単語を使えば、トークン・リストにないトークンでも実行できる。
+`execu ( a -- )` データスタックから実行アドレスを取り出し、そのトークンを実行する。この強力なワードを使えば、トークン・リストにないトークンでも実行できる。
 ```
 void execu(void)
 {
@@ -476,8 +300,6 @@ void execu(void)
     pop;
 }
 ```
-`donext ( -- )` Terminate a FOR-NEXT loop. The loop count was pushed on return stack, and is  decremented by donext. If the count is not negative, jump to the address following donext;  otherwise, pop the count off return stack and exit the loop. 
-
 `donext ( -- )` FOR-NEXTループを終了させる。ループカウントはリターンスタックにプッシュされ、donextによってデクリメントされる。カウントが負でなければ、donext に続くアドレスにジャンプし、そうでなければ、リターンスタックからカウントをポップして、ループを抜ける。
 ```
 void donext(void)
@@ -493,8 +315,6 @@ void donext(void)
     next();
 }
 ```
-`qbran ( f -- )` Test top as a flag on data stack. If it is zero, branch to the address following  qbran; otherwise, continue execute the token list following the address.  
-
 `qbran ( f -- )` topをデータスタック上のフラグとしてテストする。0であればqbranに続くアドレスに分岐し、そうでなければそのアドレスに続くトークンリストの実行を継続する。 
 ```
 void qbran(void)
@@ -505,8 +325,6 @@ void qbran(void)
     next();
 }
 ```
-`bran ( -- )` Branch to the address following bran. 
-
 `bran ( -- )` bran の次のアドレスに分岐します。
 ```
 void bran(void)
@@ -515,8 +333,6 @@ void bran(void)
     next();
 }
 ```
-`store ( n a -- )` Store integer n into memory location a.
-
 `store ( n a -- )` 整数nをメモリ位置aに格納する。
 ```
 void store(void)
@@ -525,8 +341,6 @@ void store(void)
     pop;
 }
 ```
-`at ( a -- n )` Replace memory address a with its integer contents fetched from this location. 
-
 `at ( a -- n)` メモリアドレスaを、この位置から取り出した整数の内容で置き換える。
 ```
 void at(void)
@@ -534,8 +348,6 @@ void at(void)
     top = data[top >> 2];
 }
 ```
-`cstor ( c b -- )` Store a byte value c into memory location b.
-
 `cstor ( c b -- )` バイト値cをメモリ位置bに格納する。
 ```
 void cstor(void)
@@ -544,8 +356,6 @@ void cstor(void)
     pop;
 }
 ```
-`cat ( b -- n)` Replace byte memory address b with its byte contents fetched from this location. 
-
 `cat ( b -- n)` バイトメモリアドレスbを、この場所から取り出したバイトの内容で置き換える。
 ```
 void cat(void)
@@ -553,8 +363,6 @@ void cat(void)
     top = (long)cData[top];
 }
 ```
-`rfrom ( n -- )` Pop a number off the data stack and pushes it on the return stack.  
-
 `rfrom ( n -- )` データスタックから数値をポップし、リターンスタックにプッシュします。 
 ```
 void rfrom(void)
@@ -1056,30 +864,26 @@ if (top < stack[(char)S]) pop;
 else (char)S--;
 }
 
-minn ( n1 n2 -- n ) Return the smaller of top two stack items. 
-
-minn ( n1 n2 -- n ) スタックの上位2項目のうち小さい方を返す。
-
-
-
+`minn ( n1 n2 -- n )` スタックの上位2項目のうち小さい方を返す。
+```
 void min(void)
 {
-if (top < stack[(char)S]) (char) S--;
-else pop;
+    if (top < stack[(char)S]) (char) S--;
+    else pop;
 }
-
+```
 ## Byte Code Array
 
 There are 64 functions defined in VFM as shown before. Each of these functions is assigned a  unique byte code, which become the pseudo instructions of this VFM. In the dictionary, there  are primitive words which have these byte code in their code field. The byte code may spill  over into the subsequent parameter field, if a primitive word is very complicated. VFM has a  byte code sequencer, which will be discussed shortly, to sequence through byte code list. The  numbering of these byte code in the following primitives[] array does not follow any perceived  order.  
 
-Only 64 byte code are defined. You can extend them to 256 if you wanted. You have the  options to write more functions in C to extend the VFM, or to assemble more primitive words  using the metacompiler I will discuss later, or to compile more colon words in Forth, which is  far easier. The same function defined in different ways should behave identically. Only the  execution speed may differ, inversely proportional to the efforts in programming. 
-
 VFMには、先に示したように64個の関数が定義されています。これらの関数にはそれぞれ固有のバイトコードが割り当てられており、これがこのVFMの擬似命令となる。辞書には、このバイトコードをコードフィールドに持つプリミティブワードが存在します。このバイトコードは、プリミティブワードが非常に複雑な場合、後続のパラメータフィールドに波及することがあります。VFMには、後述するバイトコードシーケンサがあり、バイトコードリストを順番に表示します。プリミティブ[]配列の中のバイトコードの番号付けは、順序を意識していません。 
+
+Only 64 byte code are defined. You can extend them to 256 if you wanted. You have the  options to write more functions in C to extend the VFM, or to assemble more primitive words  using the metacompiler I will discuss later, or to compile more colon words in Forth, which is  far easier. The same function defined in different ways should behave identically. Only the  execution speed may differ, inversely proportional to the efforts in programming. 
 
 バイトコードは64個だけ定義されています。必要であれば256まで拡張することができます。VFMを拡張するためにC言語でさらに関数を書くか、後述するメタコンパイラを使ってさらにプリミティブワードを組み立てるか、あるいはForthでコロンワードを組み立てるかという選択肢がありますが、これははるかに簡単なことです。異なる方法で定義された同じ関数は、同じように動作するはずです。ただ、実行速度が違うだけで、プログラミングの労力に反比例する。
 
 
-
+```
 void(*primitives[64])(void) = {
 /* case 0 */ nop,
 /* case 1 */ bye,
@@ -1146,43 +950,37 @@ void(*primitives[64])(void) = {
 /* case 62 */ max,
 /* case 63 */ min,
 };
-
+```
 Let us skip over all the macro assembler and the dictionary it builds, to the end of  ceForth_33.cpp to see how the Virtual Forth Machine starts running. The following code sets  up the boot-up vector: 
 
 マクロアセンブラとそれが構築する辞書のすべてを飛ばして、ceForth_33.cppの終わりまで、Virtual Forth Machineがどのように実行を開始するかを見てみましょう。次のコードは、起動ベクタを設定しています。
-
-
-
+```
 IP = 0;
-
 int RESET = LABEL(2, 6, COLD);
-
+```
 It basically tells VFM to execute COLD word in Forth, which starts the Forth interpreter. To start the VFM running, registers P, WP, IP, S, R and top have to be initialized in the  main() function required by Visual Studio. As P is set to 0, execution starts by executing the  byte code stored in virtual memory location 0.  
 
 基本的にはVFMにForthのCOLDワードを実行するように指示し、Forthインタプリタを起動させます。VFMの実行を開始するには、Visual Studioが要求するmain()関数内で、レジスタP、WP、IP、S、R、topを初期化する必要があります。Pは0に設定されているので、仮想メモリ位置0に格納されているバイトコードを実行することで実行が開始されます。 
-
+```
 /*
-* Main Program
-*/
+ * Main Program
+ */
 int main(int ac, char* av[])
-{ P = 0;
-WP = 4;
-IP = 0;
-S = 0;
-R = 0;
-top = 0;
-printf("\nceForth v2.3, 13jul17cht\n");
-while (TRUE) {
-primitives[(unsigned char)cData[P++]]();
-} 
+{   P = 0;
+    WP = 4;
+    IP = 0;
+    S = 0;
+    R = 0;
+    top = 0;
+    printf("\nceForth v2.3, 13jul17cht\n");
+    while (TRUE) {
+        primitives[(unsigned char)cData[P++]]();
+    } 
 }
-
+```
 The while(TRUE) loop loops forever. Going through each loop, the finite state machine  reads the next byte code pointed to by P. The byte code is executed by  execute(bytecode). The next byte code is read and executed. And so forth. It behaves  just like a real computer sequencing through its machine instructions stored in memory. 
 
 while(TRUE)ループは永遠にループする。各ループを通過するごとに、有限状態マシンは P が指す次のバイトコードを読み込みます。次のバイトコードが読み込まれ、実行される。といった具合です。これは、メモリに格納された機械命令を順番に実行していく本物のコンピュータと同じように動作します。
-
-
-
 
 # Chapter 3. Forth Dictionary
 
@@ -1193,176 +991,144 @@ Forth is like a natural language, in which new words are defined in terms of exi
 A more detailed and precise description of Forth is as follows: 
 
 * Forth has a set of words or words.
-
 * Forth words are records stored in a computer memory area, called a dictionary. 
-
-
 * A Forth word has two representations: an external representation in the form of a name in  ASCII characters; and an internal representation in the form of a token, which invokes  executable code stored in memory. 
-
-
 * There are two principal types of Forth words: primitive words containing machine  instructions, and colon words containing token lists. 
-
 * Forth has a text interpreter, which scans a list of words, finds tokens of words and executes  the tokens in left to right order. 
-
-
 * Forth has a compiler, which compiles new words to replace lists of tokens. 
-
-
 * Tokens are often nested token lists. A return stack is thus required to nest and unnest token  lists. 
-
-
 * Forth words pass numeric parameters implicitly on a first-in-last-out data stack or parameter  stack, thus greatly simplify the language syntax. 
 
-Forthはコンピュータをプログラムするためのプログラミング言語ですが、英語のような自然言語に非常によく似ています。Forthには、英語の単語と同じような単語があります。したがって、Forthの単語はワードと呼ばれます。Forthの文法規則は非常に単純で、単語は空白で区切られます。Forthのコンピュータは、単語のリストを処理し、左から右へ単語を実行していく。英語と同じで、文章を左から右へ読んでいくのです。 
+Forthはコンピュータをプログラムするためのプログラミング言語ですが、英語のような自然言語に非常によく似ています。Forthには、英語のワードと同じようなワードがあります。したがって、Forthのワードはワードと呼ばれます。Forthの文法規則は非常に単純で、ワードは空白で区切られます。Forthのコンピュータは、ワードのリストを処理し、左から右へワードを実行していく。英語と同じで、文章を左から右へ読んでいくのです。 
 
-Forthは自然言語のようなもので、新しい単語は既存の単語を基準に定義されます。 新しい単語を追加することで言語が拡張され、より高い抽象度へと押し上げられ、最終的にはすべての計算可能な問題を解決することができるのです。これは最も単純で最も強力な知性の形態であり、本質的に人間が思考し、推論し、コミュニケーションし、知識を蓄積する方法なのである。
+Forthは自然言語のようなもので、新しいワードは既存のワードを基準に定義されます。 新しいワードを追加することで言語が拡張され、より高い抽象度へと押し上げられ、最終的にはすべての計算可能な問題を解決することができるのです。これは最も単純で最も強力な知性の形態であり、本質的に人間が思考し、推論し、コミュニケーションし、知識を蓄積する方法なのである。
 
 Forthをより詳しく、正確に説明すると、以下のようになります。
 
-* Forthには、単語や言葉のセットがあります。
-
-* Forthの単語は、辞書と呼ばれるコンピュータのメモリ領域に格納された記録である。
-
-
-* Forthの単語は、ASCII文字による名前の外部表現と、メモリに格納された実行コードを呼び出すトークン形式の内部表現の2つの表現を持っています。
-
-
-* Forthの単語には、機械命令を含むプリミティブワードと、トークン・リストを含むコロンワードの2つの主要なタイプがあります。
-
-* Forthは、単語のリストをスキャンし、単語のトークンを見つけ、左から右の順序でトークンを実行するテキストインタプリタを備えています。
-
-
-* Forthにはコンパイラがあり、トークンのリストを置き換えるために新しい単語をコンパイルします。
-
-
+* Forthには、ワードや言葉のセットがあります。
+* Forthのワードは、辞書と呼ばれるコンピュータのメモリ領域に格納された記録である。
+* Forthのワードは、ASCII文字による名前の外部表現と、メモリに格納された実行コードを呼び出すトークン形式の内部表現の2つの表現を持っています。
+* Forthのワードには、機械命令を含むプリミティブワードと、トークン・リストを含むコロンワードの2つの主要なタイプがあります。
+* Forthは、ワードのリストをスキャンし、ワードのトークンを見つけ、左から右の順序でトークンを実行するテキストインタプリタを備えています。
+* Forthにはコンパイラがあり、トークンのリストを置き換えるために新しいワードをコンパイルします。
 * トークンはしばしばネストされたトークンリストになる。このため、トークン・リストのネストやアンネストには、リターン・スタックが必要である。
-
-
-* Forthの単語は、数値パラメータを先入れ先出しのデータスタックまたはパラメータスタックで暗黙的に渡すので、言語構文が大幅に簡素化される。
-
-
+* Forthのワードは、数値パラメータを先入れ先出しのデータスタックまたはパラメータスタックで暗黙的に渡すので、言語構文が大幅に簡素化される。
 
 In many Forth systems, a token is an address of executable code. However, a token can take  other forms depending on implementation. In ceForth_33, tokens are 32-bit code field  addresses for Forth words. 
 
 多くのForthシステムにおいて、トークンは実行可能なコードのアドレスです。しかし、トークンは実装によって他の形式をとることができます。ceForth_33では、トークンはForthワードのための32ビットコードフィールドアドレスです。
 
-
-
-
 ## Forth Dictionary
 
 ceForth_33 allocates a big array data[16000] for the Virtual Forth Engine to use. This array is  used mostly to store the Forth dictionary, along with several buffers for other information. The  most important areas in this data array are show in the following figure: 
 
-Reset vector is stored at location 0. 128 bytes are reserved for user to put his own system  initialization code here. Then, 128 bytes are used to store user variables, which store pointers  needed by Forth text interpreter to run. A big Terminal Input Buffer is allocated from 0x100 to  0c1FF. It used to be 80 bytes long to read a single punch card. 
-
-Area about 0x200 is the Forth dictionary. First come the primitive kernel words, and then all  the colon word. This implementation has 80 primitive words and 110 colon words. The  dictionary has 7984 bytes. 
-
 ceForth_33 は、Virtual Forth Engine が使用する大きな配列 data[16000] を割り当てています。この配列は主にForth辞書を格納するために使用され、他の情報のためにいくつかのバッファがあります。このデータ配列の中で最も重要な領域は、次の図のとおりです。
+
+Reset vector is stored at location 0. 128 bytes are reserved for user to put his own system  initialization code here. Then, 128 bytes are used to store user variables, which store pointers  needed by Forth text interpreter to run. A big Terminal Input Buffer is allocated from 0x100 to  0c1FF. It used to be 80 bytes long to read a single punch card. 
 
 0番にはリセットベクターが格納され、128バイトはユーザーが独自のシステム初期化コードを格納するために確保されています。そして、128バイトはユーザー変数の格納に使用され、Forthテキストインタプリタが実行するために必要なポインタを格納します。0x100から0c1FFまでは、大きな端末入力バッファが割り当てられています。以前はパンチカード1枚を読み込むのに80バイトもあった。
 
+Area about 0x200 is the Forth dictionary. First come the primitive kernel words, and then all  the colon word. This implementation has 80 primitive words and 110 colon words. The  dictionary has 7984 bytes. 
+
 0x200付近は、Forthの辞書です。最初にプリミティブカーネルワードが来て、その後にすべてのコロンワードが来ます。この実装では、プリミティブワードが80個、コロンワードが110個です。辞書は7984バイトあります。
-
-
 
 ## Word Records
 
 Predefined Forth words, both primitive words and colon words, are assembled into a linearly  linked dictionary in memory. New colon words are added to the dictionary, and extends the  capability of Forth system. 
 
+プリミティブ語とコロン語の両方を含む定義済みForth語は、メモリ上で線形にリンクされた辞書に組み立てられる。この辞書には、新しいコロン語が追加され、Forthシステムの機能を拡張している。
+
 Each word is a record with 4 fields: 
+
+各ワードは4つのフィールドからなるレコードである。
 
  Field Length Function 
 
+ フィールド長 機能 
+
 Link 4 bytes name field of previous word 
+
+リンク 前のワードの4バイトの名前フィールド 
 
 Name Variable name of word and lexicon byte
 
+名前 ワードの変数名と辞書バイト
+
 Code 4 byte executable byte code 
-
-Parameter Variable instructions, tokens, data
-
-In colon words, the parameter field contains a list of tokens, In primitive words, the parameter  field is an extension of code field. Following figure shows the structure of word records: 
-
-The addresses of the first bytes in these fields are called, respectively, link field address (lfa),  name field address (nfa), code field address (cfa), and parameter field address (pfa). Abbreviations of these field addresses will be used throughout this book.  
-
-Words have names of variable length. The name field is null-filled to the 32-bit word boundary.  Code field may also have variable number of byte code, and code field is also null-filled to the  word boundary. Tokens are 32-bit integers, and therefore the parameter field is always  terminated on word boundary. 
-
-All word records are linked in a uni-direction linked list, called a dictionary. The link field  contains a pointer pointing to the name field of the prior word. The link list starts at the last  word IMMEDIATE assembled in the dictionary. It is pointed to by a user variable CONTEXT.  
-
-プリミティブ語とコロン語の両方を含む定義済みForth語は、メモリ上で線形にリンクされた辞書に組み立てられる。この辞書には、新しいコロン語が追加され、Forthシステムの機能を拡張している。
-
-各単語は4つのフィールドからなるレコードである。
-
- フィールド長 機能 
-
-リンク 前の単語の4バイトの名前フィールド 
-
-名前 単語の変数名と辞書バイト
 
 コード 4バイト 実行可能バイトコード 
 
+Parameter Variable instructions, tokens, data
+
 パラメータ 変数 命令、トークン、データ
+
+In colon words, the parameter field contains a list of tokens, In primitive words, the parameter  field is an extension of code field. Following figure shows the structure of word records: 
 
 原始的な言い方をすれば、コードフィールドを拡張したものがパラメータフィールドである。下図は、ワードレコードの構造を示している。
 
+The addresses of the first bytes in these fields are called, respectively, link field address (lfa),  name field address (nfa), code field address (cfa), and parameter field address (pfa). Abbreviations of these field addresses will be used throughout this book.  
+
 これらのフィールドの先頭バイトのアドレスをそれぞれ、リンクフィールドアドレス（lfa）、ネームフィールドアドレス（nfa）、コードフィールドアドレス（cfa）、パラメータフィールドアドレス（pfa）と呼ぶ。本書では、これらのフィールドアドレスの略称を使用します。 
 
-単語は可変長の名前を持つ。名前フィールドは32ビットのワード境界までヌルフィルされます。 コードフィールドも可変長のバイトコードを持つことができ、コードフィールドもワード境界までヌルフィルされる。トークンは32ビット整数であるため、パラメータフィールドは常にワード境界で終端される。
+Words have names of variable length. The name field is null-filled to the 32-bit word boundary.  Code field may also have variable number of byte code, and code field is also null-filled to the  word boundary. Tokens are 32-bit integers, and therefore the parameter field is always  terminated on word boundary. 
 
-すべてのワードレコードは、辞書と呼ばれる一方向リンクリストにリンクされる。リンクフィールドには、前のワードの名前フィールドを指すポインタが含まれる。リンクリストは、辞書に最後に組まれた単語IMMEDIATEから始まる。これは、ユーザ変数CONTEXTによって指される。 
+ワードは可変長の名前を持つ。名前フィールドは32ビットのワード境界までヌルフィルされます。 コードフィールドも可変長のバイトコードを持つことができ、コードフィールドもワード境界までヌルフィルされる。トークンは32ビット整数であるため、パラメータフィールドは常にワード境界で終端される。
+
+All word records are linked in a uni-direction linked list, called a dictionary. The link field  contains a pointer pointing to the name field of the prior word. The link list starts at the last  word IMMEDIATE assembled in the dictionary. It is pointed to by a user variable CONTEXT.  
+
+すべてのワードレコードは、辞書と呼ばれる一方向リンクリストにリンクされる。リンクフィールドには、前のワードの名前フィールドを指すポインタが含まれる。リンクリストは、辞書に最後に組まれたワードIMMEDIATEから始まる。これは、ユーザ変数CONTEXTによって指される。 
 
 Word searching also starts here. The first word HLD, which terminates the list and stops  dictionary searching, has a zero in its link field, indicating the end of list. The threading of  records in a dictionary is shown in the following figure: 
 
+ワード検索もここから始まる。リストを終了させ、辞書検索を停止させる最初のワードHLDは、そのリンクフィールドに0を持ち、リストの終了を意味する。辞書内のレコードのスレッド化は、次の図に示すとおりである。
+
 ceForth_33 uses the 'Direct Thread Model'. Each word has a code field in its record. The code  field address (cfa) is considered the token of this word. The code field contains executable byte  code. In a primitive word, the code field contains a list of byte code, which may extends into  the parameter field, terminated by a special byte code next, which fetches the next token from  a token list and executes that token.  
+
+ceForth_33は「ダイレクト・スレッド・モデル」を使用している。各ワードは、そのレコードにコードフィールドを持つ。コードフィールドのアドレス（cfa）は、このワードのトークンとみなされる。コードフィールドには、実行可能なバイトコードが格納されています。プリミティブワードでは、コードフィールドは、パラメータフィールドに伸びる可能性のあるバイトコードのリストを含み、特別なバイトコードnextで終了し、トークン一覧から次のトークンをフェッチしてそのトークンを実行する。 
 
 In a colon word, the code field contains a DOLST byte code, which process the contents of the  parameter field as a token list. The token list is generally terminated by a primitive word EXIT,  which un-nests a token list started by DOLST. The code fields and parameter fields of these  words are shown as the following figure: 
 
-In the parameter field of a colon word, the token list generally contains tokens which are 32-bit  code field addresses of other words. However, there are many other kinds of information  embedded in a token list. In ceForth_33, there are integer literals, address literals, and string  literals. An integer literal is a token DOLIT followed by a 32-bit integer value. This integer will  be pushed on the data stack at run time. An address literal starts with a token BRAN, QBRAN or  DONXT, followed by a 32-bit address. This address will be used by BRAN, QBRAN oe DONXT to  branch to a new location in the token list containing these branching tokens. 
-
-The integer literal and address literals are shown in the following figure: 
-
-The address literals are used to build control structures in token lists. The following figure  shows how they are used in structures like IF-ELSE-THEN and BEGIN-WHILE-REPEAT. 
-
-A string literal starts with a token, DOTQP, STRQP, or ABORQP, followed by a counted string  of ASCII characters, null-filled to the word boundary. They are used to print a string in runtime,  or make the string available for other words to use. They are used in the following ways: 
-
-単語検索もここから始まる。リストを終了させ、辞書検索を停止させる最初の単語HLDは、そのリンクフィールドに0を持ち、リストの終了を意味する。辞書内のレコードのスレッド化は、次の図に示すとおりである。
-
-ceForth_33は「ダイレクト・スレッド・モデル」を使用している。各単語は、そのレコードにコードフィールドを持つ。コードフィールドのアドレス（cfa）は、この単語のトークンとみなされる。コードフィールドには、実行可能なバイトコードが格納されています。プリミティブワードでは、コードフィールドは、パラメータフィールドに伸びる可能性のあるバイトコードのリストを含み、特別なバイトコードnextで終了し、トークン一覧から次のトークンをフェッチしてそのトークンを実行する。 
-
 コロンワードでは、コードフィールドはDOLSTバイトコードを含み、これはパラメータフィールドの内容をトークンリストとして処理します。トークンリストは一般にプリミティブワードEXITで終了し、DOLSTで開始したトークンリストをアンネストする。これらのワードのコードフィールドとパラメータフィールドは、次の図のようになる。
+
+In the parameter field of a colon word, the token list generally contains tokens which are 32-bit  code field addresses of other words. However, there are many other kinds of information  embedded in a token list. In ceForth_33, there are integer literals, address literals, and string  literals. An integer literal is a token DOLIT followed by a 32-bit integer value. This integer will  be pushed on the data stack at run time. An address literal starts with a token BRAN, QBRAN or  DONXT, followed by a 32-bit address. This address will be used by BRAN, QBRAN oe DONXT to  branch to a new location in the token list containing these branching tokens. 
 
 コロンワードのパラメータフィールドには，一般に他のワードの32ビットコードフィールドアドレスであるトークンが含まれる。しかし、トークン・リストには、他の多くの種類の情報が埋め込まれている。ceForth_33では、整数リテラル、アドレス・リテラル、文字列リテラルがある。整数リテラルは、トークンDOLITの後に32ビットの整数値が続くものである。この整数は、実行時にデータスタックにプッシュされる。アドレスリテラルは、BRAN、QBRAN、DONXTのいずれかのトークンと、32ビットアドレスで始まります。このアドレスは、BRAN、QBRAN、DONXTによって、これらの分岐トークンを含むトークンリスト内の新しい場所に分岐するために使用されます。
 
+The integer literal and address literals are shown in the following figure: 
+
 整数リテラルとアドレスリテラルを次の図に示します。
+
+The address literals are used to build control structures in token lists. The following figure  shows how they are used in structures like IF-ELSE-THEN and BEGIN-WHILE-REPEAT. 
 
 アドレス・リテラルは、トークン・リスト内の制御構造を構築するために使用される。次の図は、IF-ELSE-THEN や BEGIN-WHILE-REPEAT などの構造で使用される様子を示しています。
 
-文字列リテラルは、DOTQP、STRQP、ABORQPのいずれかのトークンで始まり、その後にASCII文字のカウント文字列が続き、ワード境界までヌルフィルされています。これらは、実行時に文字列を表示したり、他の単語が使用できるように文字列を作成するために使用されます。これらは次のように使用される。
+A string literal starts with a token, DOTQP, STRQP, or ABORQP, followed by a counted string  of ASCII characters, null-filled to the word boundary. They are used to print a string in runtime,  or make the string available for other words to use. They are used in the following ways: 
 
+文字列リテラルは、DOTQP、STRQP、ABORQPのいずれかのトークンで始まり、その後にASCII文字のカウント文字列が続き、ワード境界までヌルフィルされています。これらは、実行時に文字列を表示したり、他のワードが使用できるように文字列を作成するために使用されます。これらは次のように使用される。
+```
 .” print this message”
 $” push address of this string on stack”
 ABORT” compile only”
-
+```
 These string literals are shown in the following figure:
-
-In ceForth_33, we have to build the entire Forth dictionary to work with the Virtual Forth  Machine. Native C compilers do not provide good tools to build variable length fields required  by an interpretive system like Forth. However, a set of macros can be defined in C as functions  to assemble all fields in all Forth words, and link them all into a searchable dictionary. In the  following Chapter, I will go through these macros and show you how to construct a dictionary  for a Virtual Forth Machine to run in Visual Studio 2019 Community. 
 
 これらの文字列リテラルを下図に示します。
 
-ceForth_33では、Virtual Forth Machineで動作させるために、Forth辞書全体を構築する必要があります。ネイティブのCコンパイラは、Forthのようなインタプリタ型システムで必要とされる可変長フィールドを構築するための優れたツールを提供しません。しかし、C言語では、すべてのForth語のすべてのフィールドを組み立て、それらをすべて検索可能な辞書にリンクする関数として、一連のマクロを定義することができます。次のChapterでは、これらのマクロを確認しながら、Visual Studio 2019 Communityで実行するVirtual Forth Machineの辞書を構築する方法を紹介します。
+In ceForth_33, we have to build the entire Forth dictionary to work with the Virtual Forth  Machine. Native C compilers do not provide good tools to build variable length fields required  by an interpretive system like Forth. However, a set of macros can be defined in C as functions  to assemble all fields in all Forth words, and link them all into a searchable dictionary. In the  following Chapter, I will go through these macros and show you how to construct a dictionary  for a Virtual Forth Machine to run in Visual Studio 2019 Community. 
 
+ceForth_33では、Virtual Forth Machineで動作させるために、Forth辞書全体を構築する必要があります。ネイティブのCコンパイラは、Forthのようなインタプリタ型システムで必要とされる可変長フィールドを構築するための優れたツールを提供しません。しかし、C言語では、すべてのForth語のすべてのフィールドを組み立て、それらをすべて検索可能な辞書にリンクする関数として、一連のマクロを定義することができます。次のChapterでは、これらのマクロを確認しながら、Visual Studio 2019 Communityで実行するVirtual Forth Machineの辞書を構築する方法を紹介します。
 
 # Chapter 4. Macro Assembler for Forth in C
 
 For a long time, my Forth in C had to import the Forth dictionary as a header file. The header  file was produced by a Forth metacompiler, because I did not know how to generate the  dictionary in a C program. Although C does not provide data structures for variable length and  variable length parameter fields, one can write C code to place arbitrary byte and integer values  in a data array. Placing bytes and integers into consecutive locations in an array can be  orchestrated to build various fields and recorder in a dictionary. 
 
-Way back when, before Windows, Microsoft gave us a macro assembler called MASM, which I  used to build the first eForth Model. I had a few macros to construct all 4 fields in a word  record, and linked all word records into a linked dictionary. This mechanism of macro  assembler can be realized in C to build my Forth dictionary. I first tried out this idea in Python,  because Python is interactive, and I could see the dictionary as I was building it. I wrote three  macros to build primitive words, colon worlds, and labels for partial token lists to allow  branching and looping. Once verified in Python, these macros were ported to C  straightforwardly. 
-
-Label macros allow branching and looping. However, it was difficult to make forward  referencing working properly. MASM, as most other compilers, used 2 passes to resolve  forward referencing. On the other hand, Chuck Moore designed Forth with a beautiful one pass  compiler. It was not difficult to extend my macro assembler so that everything is compiled in a  single pass. This is the macro assembler you will see as I go through the C code in ceForth_33. 
-
 長い間、私のForth in Cは、Forthの辞書をヘッダーファイルとしてインポートしなければなりませんでした。このヘッダーファイルは、Forthのメタコンパイラが生成したもので、Cプログラムで辞書を生成する方法がわからなかったからです。C言語では、可変長や可変長のパラメータフィールドのデータ構造は提供されていないが、任意のバイトや整数の値をデータ配列に配置するC言語のコードを書くことができる。バイトや整数を配列の連続した位置に配置することで、辞書にさまざまなフィールドやレコーダを構築することができる。
 
-昔、Windowsの前に、MicrosoftはMASMというマクロアセンブラを提供してくれましたが、私はそれを使って最初のeForth Modelを作りました。私はいくつかのマクロで単語レコードの4つのフィールドをすべて構築し、すべての単語レコードをリンク辞書にリンクしていました。このマクロアセンブラの仕組みはC言語で実現でき、私のForth辞書を構築することができます。Pythonは対話的で、辞書を構築しながら見ることができるので、私はまずPythonでこのアイデアを試してみました。原始語、コロンワールド、部分トークンリストのラベルの3つのマクロを書き、分岐やループを可能にしました。Pythonで検証した後、これらのマクロは素直にCに移植しました。
+Way back when, before Windows, Microsoft gave us a macro assembler called MASM, which I  used to build the first eForth Model. I had a few macros to construct all 4 fields in a word  record, and linked all word records into a linked dictionary. This mechanism of macro  assembler can be realized in C to build my Forth dictionary. I first tried out this idea in Python,  because Python is interactive, and I could see the dictionary as I was building it. I wrote three  macros to build primitive words, colon worlds, and labels for partial token lists to allow  branching and looping. Once verified in Python, these macros were ported to C  straightforwardly. 
+
+昔、Windowsの前に、MicrosoftはMASMというマクロアセンブラを提供してくれましたが、私はそれを使って最初のeForth Modelを作りました。私はいくつかのマクロでワードレコードの4つのフィールドをすべて構築し、すべてのワードレコードをリンク辞書にリンクしていました。このマクロアセンブラの仕組みはC言語で実現でき、私のForth辞書を構築することができます。Pythonは対話的で、辞書を構築しながら見ることができるので、私はまずPythonでこのアイデアを試してみました。原始語、コロンワールド、部分トークンリストのラベルの3つのマクロを書き、分岐やループを可能にしました。Pythonで検証した後、これらのマクロは素直にCに移植しました。
+
+Label macros allow branching and looping. However, it was difficult to make forward  referencing working properly. MASM, as most other compilers, used 2 passes to resolve  forward referencing. On the other hand, Chuck Moore designed Forth with a beautiful one pass  compiler. It was not difficult to extend my macro assembler so that everything is compiled in a  single pass. This is the macro assembler you will see as I go through the C code in ceForth_33. 
 
 ラベルマクロは分岐やループを可能にする。しかし、前方参照を正しく動作させるのは困難でした。MASMは他の多くのコンパイラと同様、前方参照を解決するために2パスを使っていました。一方、Chuck Mooreは美しい1パスコンパイラでForthを設計しました。私のマクロアセンブラを拡張して、すべてが1パスでコンパイルされるようにするのは難しいことではありませんでした。これは、私がceForth_33のCコードを見ていくときに見るマクロアセンブラです。
 
@@ -1372,120 +1138,110 @@ Label macros allow branching and looping. However, it was difficult to make forw
 In the Virtual Forth Machine, the dictionary is stored in an integer array data[IP]. It is  aliased to a byte array cData[P], where IP is an integer pointer and P is a byte pointer. To  point to the same location in the dictionary, IP=P/4. To write consecutive bytes into the  dictionary, we can do the following: 
 
 Virtual Forth Machineでは、辞書は整数配列data[IP]に格納されます。これはバイト配列cData[P]にエイリアスされており、IPは整数ポインター、Pはバイトポインターである。辞書の同じ位置を指すには、IP=P/4である。連続したバイトを辞書に書き込むには、次のようにすればよい。
-
-
-
+```
 cData[P++]= char c;
-
+```
 To write consecutive integers, do the following:
 
 連続した整数を書くには、次のようにします。
-
-
-
-Data[IP++]=int n;
-
+```
+data[IP++]=int n;
+```
 Synchronizing IP=P/4, we can write anything and everything to build a Forth dictionary. 
-
-I first coded a simple macro assembler to build word records in the Forth dictionary. It  consisted of four macros: HEADER() to build link fields and name fields, CODE() to build  code fields for primitive words, COLON() to build code and parameter fields for colon words,  and LABEL() to extend token lists in colon words for branching and looping. These four  macros are as follows: 
 
 IP=P/4を同期させれば、Forthの辞書を構築するために何でも書くことができる。
 
-私はまず、Forth辞書の単語レコードを構築するための簡単なマクロアセンブラをコーディングした。それは、4つのマクロで構成されていた。HEADER()はリンクフィールドと名前フィールドを、CODE()は原始語のコードフィールドを、COLON()はコロン語のコードとパラメータフィールドを、LABEL()はコロン語のトークンリストを分岐やループのために拡張するためのものである。これら4つのマクロは次の通りである。
+I first coded a simple macro assembler to build word records in the Forth dictionary. It  consisted of four macros: HEADER() to build link fields and name fields, CODE() to build  code fields for primitive words, COLON() to build code and parameter fields for colon words,  and LABEL() to extend token lists in colon words for branching and looping. These four  macros are as follows: 
 
-
-
+私はまず、Forth辞書のワードレコードを構築するための簡単なマクロアセンブラをコーディングした。それは、4つのマクロで構成されていた。HEADER()はリンクフィールドと名前フィールドを、CODE()は原始語のコードフィールドを、COLON()はコロン語のコードとパラメータフィールドを、LABEL()はコロン語のトークンリストを分岐やループのために拡張するためのものである。これら4つのマクロは次の通りである。
+```
 // Macro Assembler
 int IMEDD = 0x80;
 int COMPO = 0x40;
-
+```
 IMEDD and COMPO designate lexicon bits in the length byte of name field. IMEDD as bit 7 is  called immediate bit, and it forces Forth compiler to execute this word instead of compiling its  token into the dictionary. All Forth words building control structures are immediate words.  COMPO as bit 6 is called compile-only bit. Many Forth words are dangerous. They may crash  the system if executed by Forth interpreter. These words are marked by COMPO as compile-only,  and they are only used by Forth compiler. 
 
+IMEDDとCOMPOは、名前フィールドの長さバイトの辞書ビットを指定する。IMEDDはビット7として即時ビットと呼ばれ、Forthコンパイラにそのトークンを辞書にコンパイルする代わりに、このワードを実行するように強制します。制御構造を構築するすべてのForth語は即時ワードである。 第6ビットのCOMPOは、コンパイル専用ビットと呼ばれる。多くのForth語は危険である。Forthインタプリタによって実行されると、システムをクラッシュさせる可能性があります。これらのワードは、COMPOによってコンパイル専用とマークされ、Forthコンパイラによってのみ使用されます。
+
+```
 int BRAN=0, QBRAN=0, DONXT=0, DOTQP=0, STRQP=0, TOR=0, ABORQP=0; 
-
+```
 BRAN, QBRAN, DONXT, DOTQP, STRQP, ABRQP, and TOR are forward references to  primitive words the macro assembler needs to build control structures and string structures in  colon words. They are initialized to 0 here, but will be resolved when these primitives are  assembled. 
-
-HEADER() builds a link field and a name field for either a primitive or a colon word. A global  variable thread contains the name field address (nfa) of the prior word in the dictionary. This  address is first assembled as a 32-bit integer with data[IP++]=thread;. Now, P is  pointing at the name field of the current word. This P is saved back to thread.  In the name field, the first byte is a lexicon byte, in which the lower 5 bits stores the length of  the name, bit 6 indicates a compile-only word, and bit 7 indicates an immediate word. This  lexicon byte is assembled first in the name field, and then the name string. The name field is  then null-filled to the next 32-bit word boundary. Now, P is pointing to the code field, ready to  assemble byte code. 
-
-IMEDDとCOMPOは、名前フィールドの長さバイトの辞書ビットを指定する。IMEDDはビット7として即時ビットと呼ばれ、Forthコンパイラにそのトークンを辞書にコンパイルする代わりに、この単語を実行するように強制します。制御構造を構築するすべてのForth語は即時ワードである。 第6ビットのCOMPOは、コンパイル専用ビットと呼ばれる。多くのForth語は危険である。Forthインタプリタによって実行されると、システムをクラッシュさせる可能性があります。これらのワードは、COMPOによってコンパイル専用とマークされ、Forthコンパイラによってのみ使用されます。
-
-int BRAN=0, QBRAN=0, DONXT=0, DOTQP=0, STRQP=0, TOR=0, ABORQP=0.BRAN, QBRAN, DONXT, STRQP=0, TOR=0, ABORQP=0; 
 
 BRAN、QBRAN、DONXT、DOTQP、STRQP、ABRQP、TORは、マクロアセンブラがコロンワードで制御構造や文字列構造を構築するために必要なプリミティブワードへの前方参照である。ここでは0に初期化されていますが、これらのプリミティブがアセンブルされるときに解決されます。
 
-HEADER()はプリミティブまたはコロンワードのリンクフィールドとネームフィールドを構築する。グローバル変数threadには、辞書にある先行ワードの名前フィールドアドレス（nfa）が格納される。このアドレスは、まずdata[IP++]=thread;で32ビット整数として組み立てられる。さて、Pは現在の単語の名前フィールドを指している。このPは、threadに戻して保存される。 nameフィールドでは、最初のバイトがレキシコンバイトで、下位5ビットが名前の長さ、ビット6がコンパイル専用ワード、ビット7が即時ワードを格納します。このレキシコンバイトをまず名前フィールドに組み入れてから、名前文字列を作成する。そして、nameフィールドは次の32ビットワード境界までヌルフィルされます。さて、Pはコードフィールドを指しており、バイトコードをアセンブルする準備ができています。
+HEADER() builds a link field and a name field for either a primitive or a colon word. A global  variable thread contains the name field address (nfa) of the prior word in the dictionary. This  address is first assembled as a 32-bit integer with data[IP++]=thread;. Now, P is  pointing at the name field of the current word. This P is saved back to thread.  In the name field, the first byte is a lexicon byte, in which the lower 5 bits stores the length of  the name, bit 6 indicates a compile-only word, and bit 7 indicates an immediate word. This  lexicon byte is assembled first in the name field, and then the name string. The name field is  then null-filled to the next 32-bit word boundary. Now, P is pointing to the code field, ready to  assemble byte code. 
 
+HEADER()はプリミティブまたはコロンワードのリンクフィールドとネームフィールドを構築する。グローバル変数threadには、辞書にある先行ワードの名前フィールドアドレス（nfa）が格納される。このアドレスは、まずdata[IP++]=thread;で32ビット整数として組み立てられる。さて、Pは現在のワードの名前フィールドを指している。このPは、threadに戻して保存される。 nameフィールドでは、最初のバイトがレキシコンバイトで、下位5ビットが名前の長さ、ビット6がコンパイル専用ワード、ビット7が即時ワードを格納します。このレキシコンバイトをまず名前フィールドに組み入れてから、名前文字列を作成する。そして、nameフィールドは次の32ビットワード境界までヌルフィルされます。さて、Pはコードフィールドを指しており、バイトコードをアセンブルする準備ができています。
 
+```
 void HEADER(int lex, const char seq[]) {
-IP = P >> 2;
-int i;
-int len = lex & 31;
-data[IP++] = thread;
-P = IP << 2;
-//printf("\n%X",thread);
-//for (i = thread >> 2; i < IP; i++)
-//{ printf(" %X",data[i]); }
-thread = P;
-cData[P++] = lex;
-for (i = 0; i < len; i++)
-{
-cData[P++] = seq[i];
+    IP = P >> 2;
+    int i;
+    int len = lex & 31;
+    data[IP++] = thread;
+    P = IP << 2;
+    //printf("\n%X",thread);
+    //for (i = thread >> 2; i < IP; i++)
+    //{ printf(" %X",data[i]); }
+    thread = P;
+    cData[P++] = lex;
+    for (i = 0; i < len; i++)
+    {
+        cData[P++] = seq[i];
+    }
+    while (P & 3) { cData[P++] = 0; }
+    printf("\n");
+    printf(seq);
+    printf(" %X", P);
 }
-while (P & 3) { cData[P++] = 0; }
-printf("\n");
-printf(seq);
-printf(" %X", P);
-}
-
+```
 CODE() builds a code field for a primitive word. After HEADER()finishes building a name  field, P has the code field address (cfa). This cfa is return and saved as an integer, which will be  used as a parameter by macro COLON()as a token. A sequence of byte code can now be  assembled by cData[P++]=c;. CODE() has a variable number of byte code as parameters.  This number must be the first parameter int len. In this implementation, the length len is  either 4 or 8. The code field will always be either 4 byte long or 8 byte long, and is always  aligned to 32-bit word boundary. 
-
-CODE(), together with HEADER(), builds a record for a primitive word in Forth dictionary.  It returns a cfa to be assigned as an integer token to construct token lists in colon words. 
 
 CODE()は、プリミティブワードのコードフィールドを構築する。HEADER()が名前フィールドを構築し終えると、Pはコードフィールドアドレス(cfa)を持つ。このcfaは整数値として返され、マクロCOLON()のパラメータとしてトークンとして使用されることになる。これで、cData[P++]=c; でバイトコード列を組み立てることができる。CODE()はパラメータとして可変長のバイトコードを持っています。 この数は、最初のパラメータint lenでなければならない。この実装では、長さlenは4または8のいずれかである。コードフィールドは、常に4バイト長または8バイト長であり、常に32ビットワード境界にアラインされる。
 
+CODE(), together with HEADER(), builds a record for a primitive word in Forth dictionary.  It returns a cfa to be assigned as an integer token to construct token lists in colon words. 
+
 CODE()は、HEADER()と共に、Forth辞書にプリミティブワードのレコードを構築する。 これは、コロン語のトークン・リストを構築するための整数トークンとして割り当てられるCFAを返します。
-
-
+```
 int CODE(int len, ...) {
-int addr = P;
-va_list argList;
-va_start(argList, len);
-for (; len; len--) {
-int j = va_arg(argList, int);
-cData[P++] = j;
-//printf(" %X",j);
+    int addr = P;
+    va_list argList;
+    va_start(argList, len);
+    for (; len; len--) {
+        int j = va_arg(argList, int);
+        cData[P++] = j;
+        //printf(" %X",j);
+    }
+    va_end(argList);
+    return addr;
 }
-va_end(argList);
-return addr;
-}
-
+```
 COLON() builds a code field and a parameter field for a colon word. P has the code field  address (cfa). This cfa is and saved as an integer, which will be used as a parameter by other  COLON()macros as a token. A DOLST byte code with value 6 is assembled as an integer by  data[IP++]=6;. It then assembles a variable number of integer tokens as parameters. This  number must be the first parameter int len.  
-
-COLON(), together with HEADER(), builds a record for a colon word in Forth dictionary. It  returns a cfa to be assigned as an integer token to construct token lists in later colon words. 
 
 COLON()は、コロン語のコードフィールドとパラメータフィールドを構築する。Pはコード・フィールド・アドレス(cfa)を持つ。このcfaは整数として保存され、他のCOLON()マクロでトークンとしてパラメータに使われる。値6のDOLSTバイトコードは、data[IP++]=6;で整数として組み立てられる。そして、パラメータとして可変数の整数トークンを組み立てる。この数値は、最初のパラメータ int len でなければならない。 
 
+COLON(), together with HEADER(), builds a record for a colon word in Forth dictionary. It  returns a cfa to be assigned as an integer token to construct token lists in later colon words. 
+
 COLON()は、HEADER()と共に、Forth辞書にコロン語のレコードを構築する。これは、後のコロン語のトークンリストを構築するための整数トークンとして割り当てられるcfaを返します。
-
-
-
+```
 int COLON(int len, ...) {
-int addr = P;
-IP = P >> 2;
-data[IP++] = 6; // dolist
-va_list argList;
-va_start(argList, len);
-//printf(" %X ",6);
-for (; len; len--) {
-int j = va_arg(argList, int);
-data[IP++] = j;
-//printf(" %X",j);
+    int addr = P;
+    IP = P >> 2;
+    data[IP++] = 6; // dolist
+    va_list argList;
+    va_start(argList, len);
+    //printf(" %X ",6);
+    for (; len; len--) {
+        int j = va_arg(argList, int);
+        data[IP++] = j;
+    //printf(" %X",j);
+    }
+    P = IP << 2;
+    va_end(argList);
+    return addr;
 }
-P = IP << 2;
-va_end(argList);
-return addr;
-}
-
+```
 LABEL() builds a partial token list in a colon word for branching and looping. P has the  current token address. This address is return and saved as an integer, which will be used as a  address following a branching token. It then assembles a variable number of integer tokens as  parameters. This number must be the first parameter int len.  LABEL()builds a partial token list in a colon word. It returns an address for branching tokens  as their target addresses. 
 
 LABEL()cannot handle forward reference. All references in its parameter list must be valid.  Not-yet-defined label must be initialized to a value like 0. After a first pass of macro assembler,  all references are resolved, and the valid addresses must be copied to replace the 0 initially  assigned. This second pass must be done manually. 
@@ -1533,15 +1289,15 @@ Earlier I defined two replacement macros to clarify the return stack operations:
 先に、リターンスタックの操作を明確にするために、2つの置換マクロを定義した。
 
 
-
+```
 # define popR rack[(unsigned char)R--]
 # define pushR rack[(unsigned char)++R]
-
+```
 BEGIN()starts an indefinite loop. It first pushes the current word address IP on the return  stack, so that the loop terminating branch token can assemble the correct return address. It then  assemble a token list with the parameters passing to BEGIN() macro. Number of parameters is  indicated by the first parameter int len. 
 
 BEGIN()は不定形ループを開始します。ループを終了する分岐トークンが正しいリターンアドレスを組み立てられるように、まず、現在のワードアドレスIPをリターンスタックにプッシュします。次に、BEGIN()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 
-
+```
 void BEGIN(int len, ...) {
 IP = P >> 2;
 //printf("\n%X BEGIN ",P);
@@ -1556,13 +1312,13 @@ data[IP++] = j;
 P = IP << 2;
 va_end(argList);
 }
-
+```
 AGAIN()closes an indefinite loop. It first assembles a BRAN token, and then assembles the  address BEGIN() left on the return stack to complete the loop structure. It then assemble a  token list with the parameters passing to AGAIN() macro. Number of parameters is indicated  by the first parameter int len. 
 
 AGAIN()は、不定形ループを閉じる。まず、BRAN トークンを組み立て、リターンスタックに残っている BEGIN() アドレスを組み立てて、ループ構造を完成させる。そして、AGAIN()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 
 
-
+```
 void AGAIN(int len, ...) {
 IP = P >> 2;
 //printf("\n%X AGAIN ",P);
@@ -1578,12 +1334,12 @@ data[IP++] = j;
 P = IP << 2;
 va_end(argList);
 }
-
+```
 UNTIL()closes an indefinite loop. It first assembles a QBRAN token, and then assembles the  address BEGIN()left on the return stack to complete the loop structure. It then assemble a  token list with the parameters passing to AGAIN()macro. Number of parameters is indicated  by the first parameter int len. 
 
 UNTIL()は不定形ループを閉じる。最初にQBRANトークンを組み立て、次にリターンスタックに残されたアドレスBEGIN()を組み立てて、ループ構造を完成させる。そして、AGAIN()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 
-
+```
 void UNTIL(int len, ...) {
 IP = P >> 2;
 //printf("\n%X UNTIL ",P);
@@ -1599,12 +1355,12 @@ data[IP++] = j;
 P = IP << 2;
 va_end(argList);
 }
-
+```
 WHILE()closes a always clause and starts a true clause in an indefinite loop. It first assembles  a QBRAN token with a null address. The words address after the null address is now pushed on  the return stack under the address left by BEGIN(). Two address on the return stack will be  used by REPEAT() macro to close the loop, and to resolve the address after QBRAN(). It then  assemble a token list with the parameters passing to WHILE()macro. Number of parameters is  indicated by the first parameter int len. 
 
 WHILE()は、always節を閉じ、true節を開始する不定形ループである。これは最初にヌルアドレスを持つQBRANトークンを組み立てる。NULLアドレスの後のワードアドレスは、BEGIN()によって残されたアドレスの下のリターンスタックにプッシュされる。リターンスタック上の2つのアドレスは、ループを閉じるためにREPEAT()マクロによって使用され、 QBRAN()の後のアドレスを解決する。そして、WHILE()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 
-
+```
 void WHILE(int len, ...) {
 IP = P >> 2;
 int k;
@@ -1624,12 +1380,12 @@ data[IP++] = j;
 P = IP << 2;
 va_end(argList);
 }
-
+```
 REPEAT()closes a BEGIN-WHILE-REPEAT indefinite loop. It first assembles a BRAN token  with the address left by BEGIN(). The words address after the BEGIN address is now stored  into the location whose address was left by WHILE() on the return stack. It then assemble a  token list with the parameters passing to REPEAT()macro. Number of parameters is indicated  by the first parameter int len. 
 
 REPEAT()は、BEGIN-WHILE-REPEATの不定形ループを閉じます。まず、BEGIN()が残したアドレスでBRANトークンを組み立てる。BEGINアドレスの後のワードアドレスは、リターンスタック上のWHILE()によって残されたアドレスの場所に格納されるようになりました。次に、REPEAT()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 
-
+```
 void REPEAT(int len, ...) {
 IP = P >> 2;
 //printf("\n%X REPEAT ",P);
@@ -1646,13 +1402,13 @@ data[IP++] = j;
 P = IP << 2;
 va_end(argList);
 }
-
+```
 IF()starts a true clause in a branch structure. It first assembles a QBRAN token with a null  address. The words address of the null address field is now pushed on the return stack. The null  address field will be filled by ELSE() or THEN(), when they resolve the branch address. It  then assemble a token list with the parameters passing to IF()macro. Number of parameters is  indicated by the first parameter int len. 
 
 IF()は、分岐構造内の真節を開始する。それは最初にヌルアドレスを持つQBRANトークンを組み立てる。ヌルアドレスフィールドのワードアドレスは、現在リターンスタックにプッシュされています。ヌルアドレスフィールドは、ELSE()またはTHEN()が分岐アドレスを解決するときに埋められる。次に、IF()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 
 
-
+```
 void IF(int len, ...) {
 IP = P >> 2;
 //printf("\n%X IF ",P);
@@ -1669,13 +1425,12 @@ data[IP++] = j;
 P = IP << 2;
 va_end(argList);
 }
-
+```
 ELSE()closes a true clause and starts a false clause in an IF-ELSE-THEN branch structure. It  first assembles a BRAN token with a null address. The words address after the null address is  now used to resolve the branch address assembled by IF(). The address of the null address  field is pushed on the return stack to be used by THEN(). It then assemble a token list with the  parameters passing to ELSE()macro. Number of parameters is indicated by the first parameter  int len. 
 
 
 ELSE()は、IF-ELSE-THEN分岐構造で真節を閉じ、偽節を開始します。まず、ヌルアドレスを持つBRANトークンを組み立てる。ヌル・アドレスの後のワード・アドレスは、IF()で組み立てられたブランチ・アドレスを解決するために使用されます。ヌルアドレスフィールドのアドレスは、THEN()で使用するために、リターンスタックにプッシュされる。そして、ELSE()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
-
-
+```
 void ELSE(int len, ...) {
 IP = P >> 2;
 //printf("\n%X ELSE ",P);
@@ -1693,7 +1448,7 @@ data[IP++] = j;
 P = IP << 2;
 va_end(argList);
 }
-
+```
 THEN()closes an IF-THEN or IF-ELSE-THEN branch structure. It resolved the null address  assembled by IF() or ELSE() with the current word address after THEN(). It then assemble  a token list with the parameters passing to THEN()macro. Number of parameters is indicated  by the first parameter int len. 
 
 THEN()は、IF-THENまたはIF-ELSE-THEN分岐構造を閉じます。IF()またはELSE()で組み立てたNULLアドレスをTHEN()の後の現在のワードアドレスで解決する。そして、THEN()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
@@ -2565,11 +2320,11 @@ HEADER() assembles link field and name field for colon words. COLON() adds a dol
 
 Complicated colon words contain control structures, integer literals, and string literals. The  macro assembler has all the macros to build these structures automatically in token lists. These  macros allowed me to transcribe almost literally original Forth code into listing in C. Common Words 
 
-HEADER()は、リンクフィールドと名前フィールドをコロンワードに組み立てる。COLON()は、ドルストバイトコードを追加してコードフィールドを形成する。COLON() は、可変長のトークンリストを作成する。トークンは、他の単語の模範となるものである。
+HEADER()は、リンクフィールドと名前フィールドをコロンワードに組み立てる。COLON()は、ドルストバイトコードを追加してコードフィールドを形成する。COLON() は、可変長のトークンリストを作成する。トークンは、他のワードの模範となるものである。
 
 複雑なコロン語には、制御構造、整数リテラル、文字列リテラルが含まれます。マクロアセンブラは、これらの構造を自動的にトークンリストに構築するためのマクロをすべて備えている。これらのマクロのおかげで、ほとんど文字通りオリジナルのForthのコードをCのリストに書き写すことができた。
 
- 一般的な単語 
+ 一般的なワード 
 
 // Common Colon Words
 
@@ -2624,7 +2379,7 @@ int ALIGN = COLON(7, DOLIT, 3, PLUS, DOLIT, 0XFFFFFFFC, ANDD, EXITT);
 
 HERE ( -- a ) returns the address of the first free location above the code dictionary, where  new words are compiled.  
 
-HERE ( -- a ) は、新しい単語がコンパイルされる、コード辞書の上の最初の空き場所のアドレスを返します。 
+HERE ( -- a ) は、新しいワードがコンパイルされる、コード辞書の上の最初の空き場所のアドレスを返します。 
 
 HEADER(4, "HERE");
 int HERE = COLON(3, CP, AT, EXITT);
@@ -2880,7 +2635,7 @@ int CR = COLON(7, DOLIT, 10, DOLIT, 13, EMIT, EMIT, EXITT);
 
 do$ ( -- $adr )retrieves the address of a string stored as the second item on the return stack.  do$ is a bit difficult to understand, because the starting address of the following string is the  second item on the return stack. This address is pushed on the data stack so that the string can  be accessed. This address must be changed so that the address interpreter will return to the  token right after the compiled string. This address will allow the address interpreter to skip over  the string literal and continue to execute the token list as intended. Both $"| and ."| use the word do$, 
 
-do$ ( -- $adr )は、リターンスタックの2番目の項目として格納されている文字列のアドレスを取得します。 do$が少しわかりにくいのは、次の文字列の開始アドレスがリターンスタックの2番目の項目であることです。このアドレスは、文字列にアクセスできるように、データスタックにプッシュされている。このアドレスは、アドレスインタプリタがコンパイルされた文字列の直後のトークンに戻るように変更する必要があります。このアドレスによって、アドレス・インタープリタは文字列リテラルをスキップして、意図したとおりにトークン・リストを実行し続けることができるようになります。$"| と ."| は両方とも do$ という単語を使用します。
+do$ ( -- $adr )は、リターンスタックの2番目の項目として格納されている文字列のアドレスを取得します。 do$が少しわかりにくいのは、次の文字列の開始アドレスがリターンスタックの2番目の項目であることです。このアドレスは、文字列にアクセスできるように、データスタックにプッシュされている。このアドレスは、アドレスインタプリタがコンパイルされた文字列の直後のトークンに戻るように変更する必要があります。このアドレスによって、アドレス・インタープリタは文字列リテラルをスキップして、意図したとおりにトークン・リストを実行し続けることができるようになります。$"| と ."| は両方とも do$ というワードを使用します。
 
 HEADER(3, "do$");
 
@@ -2943,15 +2698,15 @@ Parsing is always thought of as a very advanced topic in computer sciences. Howe
 
 PARSE scans the source string in the terminal input buffer from where >IN points to till the  end of the buffer, for a word delimited by character c. It returns the address and length of the  word parsed out. PARSE calls (parse) to do the dirty work.  
 
-構文解析はコンピュータサイエンスにおいて非常に高度なトピックであると常に考えられています。しかし、Forthは非常にシンプルな構文規則を使用しているため、構文解析は容易です。Forthのソースコードは、単語というASCII文字列を、スペースやタブ、キャリッジリターン、ラインフィードなどの空白文字で区切って構成されています。テキストインタープリタは、ソースコードをスキャンして単語を分離し、順番に解釈していく。入力テキストストリームから単語が解析された後、テキストインタープリタはそれを「解釈」します--それがトークンであれば実行し、テキストインタープリタがコンパイルモードであればコンパイルし、その単語がForthトークンでなければ数値に変換します。 
+構文解析はコンピュータサイエンスにおいて非常に高度なトピックであると常に考えられています。しかし、Forthは非常にシンプルな構文規則を使用しているため、構文解析は容易です。Forthのソースコードは、ワードというASCII文字列を、スペースやタブ、キャリッジリターン、ラインフィードなどの空白文字で区切って構成されています。テキストインタープリタは、ソースコードをスキャンしてワードを分離し、順番に解釈していく。入力テキストストリームからワードが解析された後、テキストインタープリタはそれを「解釈」します--それがトークンであれば実行し、テキストインタープリタがコンパイルモードであればコンパイルし、そのワードがForthトークンでなければ数値に変換します。 
 
-PARSE は、端末の入力バッファ内のソース文字列を >IN が指す位置からバッファの終わりまで走査して、文字 c で区切られた単語を探します。PARSE は (parse) を呼び出して汚れ仕事をさせます。 
+PARSE は、端末の入力バッファ内のソース文字列を >IN が指す位置からバッファの終わりまで走査して、文字 c で区切られたワードを探します。PARSE は (parse) を呼び出して汚れ仕事をさせます。 
 
 // Parser
 
 (parse) ( b1 u1 c --b2 u2 n ) From the source string starting at b1 and of u1 characters long,  parse out the first word delimited by character c. Return the address b2 and length u2 of the  word just parsed out and the difference n between b1 and b2. Leading delimiters are skipped  over. (parse) is used by PARSE.  
 
-(parse) ( b1 u1 c --b2 u2 n ) b1 で始まり u1 文字の長さのソース文字列から、文字 c で区切られた最初の単語をパースアウトします。先頭の区切り文字は読み飛ばされます。(parse)はPARSEで使用されます。 
+(parse) ( b1 u1 c --b2 u2 n ) b1 で始まり u1 文字の長さのソース文字列から、文字 c で区切られた最初のワードをパースアウトします。先頭の区切り文字は読み飛ばされます。(parse)はPARSEで使用されます。 
 
 HEADER(7, "(parse)");
 int PARS = COLON(5, TEMP, CSTOR, OVER, TOR, DUPP);
@@ -2980,7 +2735,7 @@ int PACKS = COLON(18, DUPP, TOR, DDUP, PLUS, DOLIT, 0xFFFFFFFC, ANDD, DOLIT, 0, 
 
 PARSE ( c -- b u ; <string> )scans the source string in the terminal input buffer from  where >IN points to till the end of the buffer, for a word delimited by character c. It returns the  address and length of the word parsed out. PARSE calls (parse) to do the dirty work.  
 
-PARSE ( c -- b u ; <string> )は、端末の入力バッファの >IN が指す位置からバッファの終わりまで、文字 c で区切られた単語のソース文字列をスキャンします。PARSE は (parse) を呼び出して汚れ仕事をさせます。 
+PARSE ( c -- b u ; <string> )は、端末の入力バッファの >IN が指す位置からバッファの終わりまで、文字 c で区切られたワードのソース文字列をスキャンします。PARSE は (parse) を呼び出して汚れ仕事をさせます。 
 
 HEADER(5, "PARSE");
 
@@ -2988,13 +2743,13 @@ int PARSE = COLON(15, TOR, TIB, INN, AT, PLUS, NTIB, AT, INN, AT, SUBBB, RFROM, 
 
 TOKEN ( -- a ;; <string> ) parses the next word from the input buffer and copy the  counted string to the top of the name dictionary. Return the address of this counted string.  HEADER(5, "TOKEN"); 
 
-TOKEN ( -- a ;; <string> ) は、入力バッファから次の単語を解析し、カウントされた文字列を名前辞書の先頭にコピーする。このカウントされた文字列のアドレスを返す。 header(5, "token")。
+TOKEN ( -- a ;; <string> ) は、入力バッファから次のワードを解析し、カウントされた文字列を名前辞書の先頭にコピーする。このカウントされた文字列のアドレスを返す。 header(5, "token")。
 
 int TOKEN = COLON(9, BLANK, PARSE, DOLIT, 0x1F, MIN, HERE, CELLP, PACKS, EXITT); 
 
 WORD ( c -- a ; <string> )parses out the next word delimited by the ASCII character c.  Copy the word to the top of the code dictionary and return the address of this counted string.  
 
-WORD ( c -- a ; <string> )は、ASCII文字cで区切られた次の単語を解析し、その単語をコード辞書の先頭にコピーし、このカウントされた文字列のアドレスを返します。 
+WORD ( c -- a ; <string> )は、ASCII文字cで区切られた次のワードを解析し、そのワードをコード辞書の先頭にコピーし、このカウントされた文字列のアドレスを返します。 
 
 HEADER(4, "WORD");
 int WORDD = COLON(5, PARSE, HERE, CELLP, PACKS, EXITT);
@@ -3003,7 +2758,7 @@ int WORDD = COLON(5, PARSE, HERE, CELLP, PACKS, EXITT);
 
 In Forth, word records are linked into a dictionary which can be searched to find valid words. A  header contains four fields: a link field holding the name field address of the previous header, a  name field holding the name as a counted string, a code field holding execution address of the  word, and a parameter field holding data to be processed. The dictionary is a list linked through  the link fields and the name fields. The basic searching function is performed by the word  find. find scans the linked list to find a name which matches an input text string, and returns  the code field address and the name field address of an executable token, if a match is found.  
 
-Forthでは、単語レコードは辞書にリンクされ、検索して有効な単語を見つけることができる。ヘッダは、前のヘッダの名前フィールドのアドレスを保持するリンクフィールド、名前をカウントした文字列を保持する名前フィールド、単語の実行アドレスを保持するコードフィールド、および処理するデータを保持するパラメータフィールドの4つのフィールドを含む。辞書は、リンクフィールドと名前フィールドを経由してリンクされたリストである。findはリンクリストを走査して入力文字列と一致する名前を探し、一致するものがあればコードフィールドのアドレスと実行トークンの名前フィールドのアドレスを返すという基本的な検索機能を持つ。 
+Forthでは、ワードレコードは辞書にリンクされ、検索して有効なワードを見つけることができる。ヘッダは、前のヘッダの名前フィールドのアドレスを保持するリンクフィールド、名前をカウントした文字列を保持する名前フィールド、ワードの実行アドレスを保持するコードフィールド、および処理するデータを保持するパラメータフィールドの4つのフィールドを含む。辞書は、リンクフィールドと名前フィールドを経由してリンクされたリストである。findはリンクリストを走査して入力文字列と一致する名前を探し、一致するものがあればコードフィールドのアドレスと実行トークンの名前フィールドのアドレスを返すという基本的な検索機能を持つ。 
 
 NAME> ( nfa – cfa) Return a code field address from the name field address of a word. 
 
@@ -3015,7 +2770,7 @@ int NAMET = COLON(7, COUNT, DOLIT, 0x1F, ANDD, PLUS, ALIGN, EXITT);
 
 SAME? ( a1 a2 n – a1 a2 f) Compare n/4 words in strings at a1 and a2. If the strings  are the same, return a 0. If string at a1 is higher than that at a2, return a positive number;  otherwise, return a negative number. FIND compares the 1st word input string and a name. If  these two words are the same, SAME? is called to compare the rest of two strings 
 
-SAME? ( a1 a2 n - a1 a2 f) a1 と a2 の文字列中の n/4 個の単語を比較する。もし文字列が同じなら0を返す。もしa1の文字列がa2の文字列より大きければ正の数を返し、そうでなければ負の数を返す。FINDは、1語目の入力文字列と名前を比較する。この2つの単語が同じであれば、SAME? が呼ばれ、残りの2つの文字列が比較される。
+SAME? ( a1 a2 n - a1 a2 f) a1 と a2 の文字列中の n/4 個のワードを比較する。もし文字列が同じなら0を返す。もしa1の文字列がa2の文字列より大きければ正の数を返し、そうでなければ負の数を返す。FINDは、1語目の入力文字列と名前を比較する。この2つのワードが同じであれば、SAME? が呼ばれ、残りの2つの文字列が比較される。
 
 HEADER(5, "SAME?");
 int SAMEQ = COLON(4, DOLIT, 0x1F, ANDD, CELLD);
@@ -3029,7 +2784,7 @@ NEXT(3, DOLIT, 0, EXITT);
 
 find ( a va --cfa nfa, a F) searches the dictionary for a word. A counted string at  a is the name of a token to be looked up in the dictionary. The last name field address of the  dictionary is stored in location va. If the string is found, both the code field address and the  name field address are returned. If the string is not the name a token, the string address and a  false flag are returned.  
 
-find ( a va --cfa nfa, a F) は、ある単語について辞書を検索する。aでカウントされる文字列は、辞書で検索するトークンの名前である。辞書の最後の名前フィールドのアドレスは、場所vaに格納される。文字列が見つかった場合、コードフィールドのアドレスと名前フィールドのアドレスの両方が返される。文字列がトークンの名前でない場合、文字列アドレスと偽フラグが返される。 
+find ( a va --cfa nfa, a F) は、あるワードについて辞書を検索する。aでカウントされる文字列は、辞書で検索するトークンの名前である。辞書の最後の名前フィールドのアドレスは、場所vaに格納される。文字列が見つかった場合、コードフィールドのアドレスと名前フィールドのアドレスの両方が返される。文字列がトークンの名前でない場合、文字列アドレスと偽フラグが返される。 
 
 HEADER(4, "find");
 int FIND = COLON(10, SWAP, DUPP, AT, TEMP, STORE, DUPP, AT, TOR, CELLP, SWAP); 
@@ -3052,7 +2807,7 @@ int NAMEQ = COLON(3, CNTXT, FIND, EXITT);
 
 The text interpreter interprets input text stream stored in the terminal input buffer. None of us  can type perfectly. We have to allow mistyped characters and give us opportunities to back up  and correct mistakes. To allow some minimal editing, we need three special words to deal with  backspaces and carriage return thus received: ^H, TAP and KTAP. These words are hard to  understand because they manipulate three addresses on data stack: bot is bottom of terminal  buffer, eot is end of terminal buffer, and cur is current character pointer. 
 
-テキストインタープリタは、端末の入力バッファに格納された入力テキストストリームを解釈する。私たちは誰も完璧にタイプすることはできない。誤入力を許容し、バックアップや訂正の機会を与えなければならない。最低限の編集を可能にするために、このように受け取ったバックスペースとキャリッジリターンを処理するための3つの特別な言葉が必要である。^H、TAP、KTAPである。これらの単語はデータスタック上の3つのアドレスを操作するため、理解するのは難しい。
+テキストインタープリタは、端末の入力バッファに格納された入力テキストストリームを解釈する。私たちは誰も完璧にタイプすることはできない。誤入力を許容し、バックアップや訂正の機会を与えなければならない。最低限の編集を可能にするために、このように受け取ったバックスペースとキャリッジリターンを処理するための3つの特別な言葉が必要である。^H、TAP、KTAPである。これらのワードはデータスタック上の3つのアドレスを操作するため、理解するのは難しい。
 
 // Terminal Input
 
@@ -3120,11 +2875,11 @@ In Forth, the text interpreter is encoded in the word QUIT. QUIT contains an inf
 
 One of the unique features in Forth is its error handling mechanism. While EVAL is interpreting a line of text, it could encounter many error conditions: a word is not found in the  dictionary and it is not a number, a compile-only word is accidentally executed interpretively,  and the interpretive process may be interrupted by the words ABORT or abort". Wherever  the error occurs, the text interpreter resets and starts over at ABORT. 
 
-テキストインタープリタは、Forthの心臓部です。コンピュータのオペレーティングシステムのようなものです。あなたとコンピュータの間の主要なインターフェイスです。Forthでは、単語はスペースで区切るという非常にシンプルな構文ルールを採用しているので、テキスト・インタープリタも非常にシンプルなものとなっています。端末のキーボードから入力されたテキストを受け取り、スペースで区切られた単語を解析し、その単語のトークンを辞書で検索し、実行する。この処理は、テキスト行がなくなるまで繰り返される。次にテキストインタープリタは、別の行のテキストを待って、それを再び解釈する。このサイクルは、疲れ果ててコンピュータの電源を切るまで繰り返される。 
+テキストインタープリタは、Forthの心臓部です。コンピュータのオペレーティングシステムのようなものです。あなたとコンピュータの間の主要なインターフェイスです。Forthでは、ワードはスペースで区切るという非常にシンプルな構文ルールを採用しているので、テキスト・インタープリタも非常にシンプルなものとなっています。端末のキーボードから入力されたテキストを受け取り、スペースで区切られたワードを解析し、そのワードのトークンを辞書で検索し、実行する。この処理は、テキスト行がなくなるまで繰り返される。次にテキストインタープリタは、別の行のテキストを待って、それを再び解釈する。このサイクルは、疲れ果ててコンピュータの電源を切るまで繰り返される。 
 
-Forthでは、テキスト・インタープリタはQUITという言葉でエンコードされています。QUITは、QUERYとEVALコマンドを繰り返す無限ループを含んでいます。QUERYはターミナルからテキスト行を受け取り、そのテキストをターミナルインプットバッファ（TIB）にコピーします。EVALは、行の終わりまで一度に1単語ずつテキストを解釈する。 
+Forthでは、テキスト・インタープリタはQUITという言葉でエンコードされています。QUITは、QUERYとEVALコマンドを繰り返す無限ループを含んでいます。QUERYはターミナルからテキスト行を受け取り、そのテキストをターミナルインプットバッファ（TIB）にコピーします。EVALは、行の終わりまで一度に1ワードずつテキストを解釈する。 
 
-Forthのユニークな機能の1つは、そのエラー処理メカニズムです。EVALがテキスト行を解釈している間、多くのエラー状態に遭遇する可能性があります：単語が辞書で見つからず、それが数字でない、コンパイル専用の単語が誤って解釈的に実行された、解釈プロセスがABORTまたはabortという単語によって中断されるかもしれません". どこでエラーが発生しても、テキストインタープリタはリセットされ、ABORTでやり直される。
+Forthのユニークな機能の1つは、そのエラー処理メカニズムです。EVALがテキスト行を解釈している間、多くのエラー状態に遭遇する可能性があります：ワードが辞書で見つからず、それが数字でない、コンパイル専用のワードが誤って解釈的に実行された、解釈プロセスがABORTまたはabortというワードによって中断されるかもしれません". どこでエラーが発生しても、テキストインタープリタはリセットされ、ABORTでやり直される。
 
 
 // Text Interpreter
@@ -3138,7 +2893,7 @@ int ABORT = COLON(2, TABRT, ATEXE);
 
 abort”| ( f -- ) A runtime string word compiled in front of a string of error message. If  flag f is true, display the following string and jump to ABORT. If flag f is false, ignore the  following string and continue executing tokens after the error message. 
 
-abort"| ( f -- ) エラーメッセージの文字列の前にコンパイルされる実行時文字列の単語です。フラグfが真の場合、以下の文字列を表示し、ABORTにジャンプする。フラグfが偽の場合、以下の文字列を無視し、エラーメッセージの後のトークンを実行し続ける。
+abort"| ( f -- ) エラーメッセージの文字列の前にコンパイルされる実行時文字列のワードです。フラグfが真の場合、以下の文字列を表示し、ABORTにジャンプする。フラグfが偽の場合、以下の文字列を無視し、エラーメッセージの後のトークンを実行し続ける。
 
 HEADER(6, "abort\"");
 ABORQP = COLON(0);
@@ -3204,7 +2959,7 @@ AGAIN(0);
 
 After wading through the text interpreter, the Forth compiler will be an easy piece of cake,  because the compiler uses almost all the modules used by the text interpreter. What the compile  does, over and above the text interpreter, is to build various structures required by the new  words you add to the .data segment. Here is a list of these structures:  
 
-テキスト・インタープリタを渉猟した後では、Forthコンパイラは楽勝でしょう。なぜなら、コンパイラはテキスト・インタープリタが使用するモジュールをほとんどすべて使用しているからです。なぜなら、コンパイラはテキスト・インタプリタが使用するモジュールをほとんどすべて使用しているからです。コンパイルがテキスト・インタプリタ以上に行うことは、あなたが.dataセグメントに追加した新しい単語が必要とするさまざまな構造を構築することです。以下は、これらの構造のリストである。 
+テキスト・インタープリタを渉猟した後では、Forthコンパイラは楽勝でしょう。なぜなら、コンパイラはテキスト・インタープリタが使用するモジュールをほとんどすべて使用しているからです。なぜなら、コンパイラはテキスト・インタプリタが使用するモジュールをほとんどすべて使用しているからです。コンパイルがテキスト・インタプリタ以上に行うことは、あなたが.dataセグメントに追加した新しいワードが必要とするさまざまな構造を構築することです。以下は、これらの構造のリストである。 
 
 * Colon words 
 * Constants 
@@ -3227,13 +2982,13 @@ Forthコンパイラは、Forthテキスト・インタープリタの双子の�
 
 EVALでは@EXECUTEがテキスト行からパースされたトークンを処理するために使われるので、'EVAL内の内容がテキストインタプリタの動作を決定する。EVALに$INTERPRETを格納すると、[ と同様に、トークンが実行または解釈されます。 EVALに$COMPILEを格納するために[ を呼び出すと、トークンは実行されず、辞書の先頭にコンパイルされます。これはまさに、コロン語コンパイラが辞書の新しいコロン語のパラメータ・フィールドにトークンのリストを構築する際に望む動作である。 
 
-通常、$COMPILEはトークンを辞書に追加します。しかし、2つの例外を処理する必要があります。入力ストリームから解析された文字列が辞書内の単語でない場合、その文字列は数値に変換されます。文字列が整数に変換できる場合、その整数は、特別なトークンDOLITと整数の続きからなる整数リテラルとして辞書にコンパイルされる。もう1つの例外は、辞書で見つかったトークンが、辞書にコンパイルされずにすぐに実行されなければならない即時ワードである可能性があることです。 即値語は、コロン語の構造をコンパイルするために使用されます。 
+通常、$COMPILEはトークンを辞書に追加します。しかし、2つの例外を処理する必要があります。入力ストリームから解析された文字列が辞書内のワードでない場合、その文字列は数値に変換されます。文字列が整数に変換できる場合、その整数は、特別なトークンDOLITと整数の続きからなる整数リテラルとして辞書にコンパイルされる。もう1つの例外は、辞書で見つかったトークンが、辞書にコンパイルされずにすぐに実行されなければならない即時ワードである可能性があることです。 即値語は、コロン語の構造をコンパイルするために使用されます。 
 
 // Colon Word Compiler
 
 , (comma) ( w -- ) adds the execution address of a token on the top of the data stack to  the code dictionary, and thus compiles a token to the growing token list of the word currently  under construction.  
 
-, (コンマ) ( w -- ) は、データスタックの一番上にあるトークンの実行アドレスをコード辞書に追加し、それによって、現在構築中の単語の成長するトークンリストにトークンをコンパイルします。 
+, (コンマ) ( w -- ) は、データスタックの一番上にあるトークンの実行アドレスをコード辞書に追加し、それによって、現在構築中のワードの成長するトークンリストにトークンをコンパイルします。 
 
 HEADER(1, ",");
 int COMMA = COLON(7, HERE, DUPP, CELLP, CP, STORE, STORE, EXITT); 
@@ -3247,21 +3002,21 @@ int LITER = COLON(5, DOLIT, DOLIT, COMMA, COMMA, EXITT);
 
 ALLOT ( n -- ) allocates n bytes of memory on the top of the dictionary. Once allocated,  the compiler will not touch the memory locations. It is possible to allocate and initialize this  array using the word’, (comma)’. 
 
-ALLOT ( n -- ) は、辞書の先頭にnバイトのメモリを確保する。一度割り当てられたら、コンパイラはそのメモリ位置に触れない。この配列の確保と初期化は、',(コンマ)'という単語を使って行うことができる。
+ALLOT ( n -- ) は、辞書の先頭にnバイトのメモリを確保する。一度割り当てられたら、コンパイラはそのメモリ位置に触れない。この配列の確保と初期化は、',(コンマ)'というワードを使って行うことができる。
 
 HEADER(5, "ALLOT");
 int ALLOT = COLON(4, ALIGN, CP, PSTOR, EXITT);
 
 $,” ( -- ) extracts next word delimited by double quote. Compile it as a string literal. 
 
-$," ( -- ) は、二重引用符で区切られた次の単語を取り出す。文字列リテラルとしてコンパイルする。
+$," ( -- ) は、二重引用符で区切られた次のワードを取り出す。文字列リテラルとしてコンパイルする。
 
 HEADER(3, "$,\"");
 int STRCQ = COLON(9, DOLIT, 0X22, WORDD, COUNT, PLUS, ALIGN, CP, STORE, EXITT); 
 
 ?UNIQUE ( a -- a )is used to display a warning message to show that the name of a new  word already existing in dictionary. Forth does not mind your reusing the same name for  different words. However, giving many words the same name is a potential cause of problems  in maintaining software projects. It is to be avoided if possible and ?UNIQUE reminds you of it.  HEADER(7, "?UNIQUE"); 
 
-?UNIQUE ( a -- a )は、新しい単語の名前がすでに辞書に存在することを示す警告メッセージを表示するために使用されます。Forthは、異なる単語に対して同じ名前を再利用することを気にしません。しかし、多くの単語に同じ名前をつけることは、ソフトウェア・プロジェクトを維持する上で問題の原因となる可能性があります。可能であれば避けるべきことであり、?UNIQUEはそれを思い出させてくれるのです。 header(7, "?unique"); 
+?UNIQUE ( a -- a )は、新しいワードの名前がすでに辞書に存在することを示す警告メッセージを表示するために使用されます。Forthは、異なるワードに対して同じ名前を再利用することを気にしません。しかし、多くのワードに同じ名前をつけることは、ソフトウェア・プロジェクトを維持する上で問題の原因となる可能性があります。可能であれば避けるべきことであり、?UNIQUEはそれを思い出させてくれるのです。 header(7, "?unique"); 
 
 int UNIQU = COLON(3, DUPP, NAMEQ, QDUP);
 IF(6, COUNT, DOLIT, 0x1F, ANDD, SPACE, TYPES);
@@ -3279,7 +3034,7 @@ THEN(1, ERRORR);
 
 ' (tick) ( -- cfa )searches the next word in the input stream for a token in the  dictionary. It returns the code field address of the token if successful. Otherwise, it aborts and  displays an error message. 
 
-' (tick) ( -- cfa )は、入力ストリーム中の次の単語を、辞書中のトークンに対して検索します。成功すれば、トークンのコードフィールド・アドレスを返す。そうでなければ、エラーメッセージを表示する。
+' (tick) ( -- cfa )は、入力ストリーム中の次のワードを、辞書中のトークンに対して検索します。成功すれば、トークンのコードフィールド・アドレスを返す。そうでなければ、エラーメッセージを表示する。
 
 HEADER(1, "'");
 int TICK = COLON(2, TOKEN, NAMEQ);
@@ -3288,7 +3043,7 @@ THEN(1, ERRORR);
 
 [COMPILE] ( -- ; <string> )acts similarly, except that it compiles the next word immediately. It causes the following word to be compiled, even if the following word is usually  an immediate word which would otherwise be executed.  
 
-[COMPILE] ( -- ; <string> )は、次の単語を直ちにコンパイルすることを除いて、同じように動作する。次の単語が通常なら即座に実行される単語であっても、次の単語をコンパイルさせる。 
+[COMPILE] ( -- ; <string> )は、次のワードを直ちにコンパイルすることを除いて、同じように動作する。次のワードが通常なら即座に実行されるワードであっても、次のワードをコンパイルさせる。 
 
 HEADER(IMEDD + 9, "[COMPILE]");
 
@@ -3303,7 +3058,7 @@ int COMPI = COLON(7, RFROM, DUPP, AT, COMMA, CELLP, TOR, EXITT);
 
 $COMPILE ( a -- )builds the body of a new compound word. A complete compound word also requires a header in the name dictionary, and its code field must start with a dolist, byte code. These extra works are performed by : (colon). Compound words are the most  prevailing type of words in eForth. In addition, eForth has a few other defining words which  create other types of new words in the dictionary.  
 
-$COMPILE ( a -- )は、新しい複合語のボディを構築します。完全な複合語は、名前辞書のヘッダも必要で、そのコードフィールドはドーリスト、バイトコードで始まらなければなりません。これらの追加作業は : (コロン) によって行われる。複合語はeForthで最も一般的なタイプの単語である。さらに、eForthには、辞書に他のタイプの新しい単語を作成する定義語がいくつかある。 
+$COMPILE ( a -- )は、新しい複合語のボディを構築します。完全な複合語は、名前辞書のヘッダも必要で、そのコードフィールドはドーリスト、バイトコードで始まらなければなりません。これらの追加作業は : (コロン) によって行われる。複合語はeForthで最も一般的なタイプのワードである。さらに、eForthには、辞書に他のタイプの新しいワードを作成する定義語がいくつかある。 
 
 HEADER(8, "$COMPILE");
 int SCOMP = COLON(2, NAMEQ, QDUP);
@@ -3317,7 +3072,7 @@ THEN(1, ERRORR);
 
 OVERT ( -- ) links a new word to the dictionary and thus makes it available for dictionary  searches.  
 
-OVERT ( -- ) は、新しい単語を辞書にリンクし、辞書検索に利用できるようにします。 
+OVERT ( -- ) は、新しいワードを辞書にリンクし、辞書検索に利用できるようにします。 
 
 HEADER(5, "OVERT");
 int OVERT = COLON(5, LAST, AT, CNTXT, STORE, EXITT);
@@ -3327,14 +3082,14 @@ int RBRAC = COLON(5, DOLIT, SCOMP, TEVAL, STORE, EXITT);
 
 : (colon) ( -- ; <string> ) creates a new header and start a new compound word. It  takes the following string in the input stream to be the name of the new compound word, by  building a new header with this name in the name dictionary. It then compiles a dolist, byte  code at the beginning of the code field in the code dictionary. Now, the code dictionary is ready  to accept a token list. ] (right paren) is now invoked to turn the text interpreter into a  compiler, which will compile the following words in the input stream to a token list in the code  dictionary. The new compound word is terminated by ;, which compiles an EXIT to terminate  the token list, and executes [ (left paren) to turn the compiler back to text interpreter.  
 
-: (コロン) ( -- ; <文字列> ) は、新しいヘッダーを作成し、新しい複合語を開始します。入力ストリーム中の次の文字列を新しい複合語の名前とし、名前辞書にこの名前を持つ新しいヘッダを構築する。そして、コード辞書のコードフィールドの先頭にdolistというバイトコードをコンパイルする。これで、コード辞書はトークンリストを受け入れる準備が整った。ここで、[ ]（右括弧）が呼び出されて、テキスト インタープリタをコンパイラに変え、入力ストリーム内の次の単語をコード辞書内のトークン リストにコンパイルします。新しい複合語は ; で終了し、トークン・リストを終了させるために EXIT をコンパイルし、 [ (左の括弧) を実行してコンパイラをテキスト・インタープリタに戻した。 
+: (コロン) ( -- ; <文字列> ) は、新しいヘッダーを作成し、新しい複合語を開始します。入力ストリーム中の次の文字列を新しい複合語の名前とし、名前辞書にこの名前を持つ新しいヘッダを構築する。そして、コード辞書のコードフィールドの先頭にdolistというバイトコードをコンパイルする。これで、コード辞書はトークンリストを受け入れる準備が整った。ここで、[ ]（右括弧）が呼び出されて、テキスト インタープリタをコンパイラに変え、入力ストリーム内の次のワードをコード辞書内のトークン リストにコンパイルします。新しい複合語は ; で終了し、トークン・リストを終了させるために EXIT をコンパイルし、 [ (左の括弧) を実行してコンパイラをテキスト・インタープリタに戻した。 
 
 HEADER(1, ":");
 int COLN = COLON(7, TOKEN, SNAME, RBRAC, DOLIT, 0x6, COMMA, EXITT); 
 
 ; (semi-colon) ( -- ) terminates a compound word. It compiles an EXIT to the end of  the token list, links this new word to the dictionary, and then reactivates the interpreter.  
 
-; (セミコロン) ( -- ) は複合語を終了させる。トークン・リストの最後にEXITをコンパイルし、この新しい単語を辞書にリンクし、インタープリタを再アクティブ化する。 
+; (セミコロン) ( -- ) は複合語を終了させる。トークン・リストの最後にEXITをコンパイルし、この新しいワードを辞書にリンクし、インタープリタを再アクティブ化する。 
 
 HEADER(IMEDD + 1, ";");
 
@@ -3346,15 +3101,15 @@ eForth is a very small system and only a very small set of tools are provided in
 
 Generally, the tools presents the information stored in different parts of the memory in the  appropriate format to let the use inspect the results as he executes words in the eForth system  and words he defined himself. The tools are memory dump and dictionary dump.  
 
-eForthは非常に小さなシステムであり、システムには非常に小さなツールセットしか提供されていません。 とはいえ、このツールセットは、システムに追加した新しい言葉をデバッグするのに十分強力です。また、eForthの単語を使ってどのようにアプリケーションを構築するかについて、非常に興味深いプログラミングの例となっています。 
+eForthは非常に小さなシステムであり、システムには非常に小さなツールセットしか提供されていません。 とはいえ、このツールセットは、システムに追加した新しい言葉をデバッグするのに十分強力です。また、eForthのワードを使ってどのようにアプリケーションを構築するかについて、非常に興味深いプログラミングの例となっています。 
 
-一般に、ツールは、eForthシステム内の単語や自分で定義した単語を実行する際に、その結果を使用者が検査できるように、メモリの異なる部分に格納されている情報を適切な形式で提示する。メモリダンプと辞書ダンプがある。 
+一般に、ツールは、eForthシステム内のワードや自分で定義したワードを実行する際に、その結果を使用者が検査できるように、メモリの異なる部分に格納されている情報を適切な形式で提示する。メモリダンプと辞書ダンプがある。 
 
 // Debugging Tools
 
 dm+ ( b u – b+u )dumps u bytes starting at address b to the terminal. It dumps 8 words. A  line begins with the address of the first byte, followed by 8 words shown in hex, and the same  data shown in ASCII. Non-printable characters by replaced by underscores. A new address b+u  is returned to dump the next line. 
 
-dm+ ( b u - b+u )は、アドレスbから始まるuバイトを端末にダンプする。8個の単語がダンプされます。1行は、最初のバイトのアドレスで始まり、8ワードを16進数で表し、同じデータをASCIIで表します。印字不可能な文字はアンダースコアに置き換えられる。次の行をダンプするために新しいアドレスb+uが返される。
+dm+ ( b u - b+u )は、アドレスbから始まるuバイトを端末にダンプする。8個のワードがダンプされます。1行は、最初のバイトのアドレスで始まり、8ワードを16進数で表し、同じデータをASCIIで表します。印字不可能な文字はアンダースコアに置き換えられる。次の行をダンプするために新しいアドレスb+uが返される。
 
 HEADER(3, "dm+");
 int DMP = COLON(4, OVER, DOLIT, 6, UDOTR);
@@ -3399,7 +3154,7 @@ int DOTID = COLON(7, COUNT, DOLIT, 0x1F, ANDD, TYPES, SPACE, EXITT);
 
 WORDS ( -- )displays all the names in the dictionary. The order of words is reversed from the  compiled order. The last defined word is shown first.  
 
-WORDS ( -- )は、辞書に登録されているすべての名前を表示します。単語の順序は、コンパイルされた順序とは逆になる。最後に定義された単語が最初に表示される。 
+WORDS ( -- )は、辞書に登録されているすべての名前を表示します。ワードの順序は、コンパイルされた順序とは逆になる。最後に定義されたワードが最初に表示される。 
 
 HEADER(5, "WORDS");
 int WORDS = COLON(6, CR, CNTXT, DOLIT, 0, TEMP, STORE);
@@ -3413,7 +3168,7 @@ REPEAT(1, EXITT);
 
 FORGET ( -- , <name>)searches the dictionary for a name following it. If it is a valid word,  trim dictionary below this word. Display an error message if it is not a valid word. 
 
-FORGET ( -- , <name> )は、その後に続く名前を辞書で検索する。有効な単語であれば、この単語の下の辞書を切り詰める。有効な単語でない場合は、エラーメッセージを表示する。
+FORGET ( -- , <name> )は、その後に続く名前を辞書で検索する。有効なワードであれば、このワードの下の辞書を切り詰める。有効なワードでない場合は、エラーメッセージを表示する。
 
 HEADER(6, "FORGET");
 int FORGT = COLON(3, TOKEN, NAMEQ, QDUP);
@@ -3567,7 +3322,7 @@ Character strings are very important data structures for the program to communic
 
 ABORT" compiles an error message. This error message is display if top item on the stack is  non-zero. The rest of the words in the word is skipped and Forth resets to ABORT. If top of  stack is 0, ABORT” skips over the error message and continue executing the following token list. 
 
-ABORT "はエラーメッセージをコンパイルする。このエラーメッセージは、スタックの先頭の項目が0でない場合に表示される。残りの単語はスキップされ、ForthはABORTにリセットされます。スタックの先頭が0であれば、ABORTはエラーメッセージをスキップして、次のトークンリストの実行を継続する。
+ABORT "はエラーメッセージをコンパイルする。このエラーメッセージは、スタックの先頭の項目が0でない場合に表示される。残りのワードはスキップされ、ForthはABORTにリセットされます。スタックの先頭が0であれば、ABORTはエラーメッセージをスキップして、次のトークンリストの実行を継続する。
 
 
 HEADER(IMEDD + 6, "ABORT\"");
@@ -3582,7 +3337,7 @@ int STRQ = COLON(6, DOLIT, STRQP, HERE, STORE, STRCQ, EXITT);
 
 ." (dot-quot) ( -- ; <string> ) compiles a character string which will be displayed  when the word containing it is executed in the runtime. This is the best way to present messages  to the user.  
 
-." (dot-quot) ( -- ; <string> ) は、それを含む単語がランタイムで実行されたときに表示される文字列をコンパイルします。これはユーザーへのメッセージを表示するのに最適な方法である。 
+." (dot-quot) ( -- ; <string> ) は、それを含むワードがランタイムで実行されたときに表示される文字列をコンパイルします。これはユーザーへのメッセージを表示するのに最適な方法である。 
 
 HEADER(IMEDD + 2, ".\"");
 int DOTQQ = COLON(6, DOLIT, DOTQP, HERE, STORE, STRCQ, EXITT); 
@@ -3595,7 +3350,7 @@ In ceForth_33, I provide the following defining words: , CODE, CREATE, CONSTANT 
 
 CODE ( -- ; <string> ) creates a word header, ready to accept byte code for a new  primitive word. Without a byte code assembler, you can use the word , (comma) to add words  with byte code in them. 
 
-単語を定義するというコンセプトはForthの非常にユニークな機能で、パラメータ・フィールドに格納されたデータを特定の用途に使用できる新しいクラスの単語を定義することができるのです。各単語のクラスは、そのコードフィールドにエンコードされた同じインタープリタを共有します。 
+ワードを定義するというコンセプトはForthの非常にユニークな機能で、パラメータ・フィールドに格納されたデータを特定の用途に使用できる新しいクラスのワードを定義することができるのです。各ワードのクラスは、そのコードフィールドにエンコードされた同じインタープリタを共有します。 
 
 ceForth_33では、次のような定義語を用意しています。CODE、CREATE、CONSTANT、VARIABLEです。CREATEとVARIABLEは同じ内部インタプリタDOVARを使用し、CONSTANTはDOCONを使用します。CONSTANTとVARIABLEは、パラメータフィールドに4バイトしか割り当てられません。 しかし、CRATEはパラメータフィールドの大きさを指定することができます。
 
@@ -3656,18 +3411,18 @@ int PAREN = COLON(5, DOLIT, 0X29, PARSE, DDROP, EXITT);
 
 Remember bits 6 and 7 of the length byte in a name field? They are called lexicon bits, which  request special treatment by Forth interpreter and Forth compiler. Bit 7 is called immediate bit,  and it forces Forth compiler to execute this word instead of compiling its token into the  dictionary. All Forth words building control structures are immediate words. Bit 6 is called  compile-only bit. Many Forth words are dangerous. They may crash the system if executed by  Forth interpreter. These words are marked compile-only, and they can only be used by Forth  compiler. 
 
-名前フィールドの長さバイトの6ビットと7ビットを覚えていますか？これらはレキシコンビットと呼ばれ、ForthインタープリタとForthコンパイラに特別な扱いを要求するものです。ビット7は即時ビットと呼ばれ、Forthコンパイラに、そのトークンを辞書にコンパイルする代わりに、この単語を実行するように強制します。制御構造を構築するすべてのForth語は即時ワードです。ビット6はコンパイルオンリービットと呼ばれます。多くのForth語は危険です。Forthインタプリタによって実行されると、システムをクラッシュさせる可能性があります。これらの単語はコンパイル専用とマークされ、Forthコンパイラによってのみ使用することができる。
+名前フィールドの長さバイトの6ビットと7ビットを覚えていますか？これらはレキシコンビットと呼ばれ、ForthインタープリタとForthコンパイラに特別な扱いを要求するものです。ビット7は即時ビットと呼ばれ、Forthコンパイラに、そのトークンを辞書にコンパイルする代わりに、このワードを実行するように強制します。制御構造を構築するすべてのForth語は即時ワードです。ビット6はコンパイルオンリービットと呼ばれます。多くのForth語は危険です。Forthインタプリタによって実行されると、システムをクラッシュさせる可能性があります。これらのワードはコンパイル専用とマークされ、Forthコンパイラによってのみ使用することができる。
 
 COMPILE-ONLY ( -- ) sets the compile-only lexicon bit in the name field of the new word just compiled. When the interpreter encounters a word with this bit set, it will not execute this  word, but spit out an error message. This bit prevents structure words to be executed  accidentally outside of a compound word. 
 
-COMPILE-ONLY ( -- ) は、コンパイルされた新しい単語の名前フィールドにコンパイル専用レキシコンビットを設定します。インタープリタは、このビットが設定されたワードに遭遇した場合、このワードを実行せず、エラーメッセージを吐き出します。このビットは、複合語の外側で構造語が誤って実行されるのを防ぎます。
+COMPILE-ONLY ( -- ) は、コンパイルされた新しいワードの名前フィールドにコンパイル専用レキシコンビットを設定します。インタープリタは、このビットが設定されたワードに遭遇した場合、このワードを実行せず、エラーメッセージを吐き出します。このビットは、複合語の外側で構造語が誤って実行されるのを防ぎます。
 
 HEADER(12, "COMPILE-ONLY");
 int ONLY = COLON(6, DOLIT, 0x40, LAST, AT, PSTOR, EXITT);
 
 IMMEDIATE ( -- ) sets the immediate lexicon bit in the name field of the new word just  compiled. When the compiler encounters a word with this bit set, it will not compile this word into the token list under construction, but execute the token immediately. This bit allows  structure words to build special structures in a compound word, and to process special  conditions when the compiler is running.  
 
-IMMEDIATE ( -- ) は、コンパイルされたばかりの新しい単語の名前フィールドに、即時レキシコンビットを設定します。コンパイラは、このビットが設定された単語に出会ったとき、この単語を構築中のトークン・リストにコンパイルせず、直ちにトークンを実行する。このビットは、構造ワードが複合語の中で特別な構造を構築し、コンパイラの実行時に特別な条件を処理することを可能にする。 
+IMMEDIATE ( -- ) は、コンパイルされたばかりの新しいワードの名前フィールドに、即時レキシコンビットを設定します。コンパイラは、このビットが設定されたワードに出会ったとき、このワードを構築中のトークン・リストにコンパイルせず、直ちにトークンを実行する。このビットは、構造ワードが複合語の中で特別な構造を構築し、コンパイラの実行時に特別な条件を処理することを可能にする。 
 
 HEADER(9, "IMMEDIATE");
 int IMMED = COLON(6, DOLIT, 0x80, LAST, AT, PSTOR, EXITT);
@@ -3683,9 +3438,9 @@ There is an option to dump the contents in the dictionary in Intel-Dump-like for
 
 すべてのマクロ呼び出しがmain()ループ内に配置され、main()の開始時に実行されることにお気づきかもしれません。Forth辞書は実行時に構築され、data[]配列にはコンパイルされません。マクロにはprintf()文があり、コメントアウトされています。マクロのアセンブラがdata[]配列に何を組み込んでいるかを見たい場合は、これらのprintf()文の一部をアンコメントしてください。私は、これらのprintf()ステートメントを使用して、マクロが正しく動作することを確認しました。 
 
-ceForth_33のリリース版では、HEADER()にアセンブルした単語の名前とcfaを出力させるだけにしています。Forth辞書が完成した後、参考までにそのサイズがプリントされます。 また、すべての制御構造が正しく構築されていれば0になるはずの戻りスタックポインタも出力されます。
+ceForth_33のリリース版では、HEADER()にアセンブルしたワードの名前とcfaを出力させるだけにしています。Forth辞書が完成した後、参考までにそのサイズがプリントされます。 また、すべての制御構造が正しく構築されていれば0になるはずの戻りスタックポインタも出力されます。
 
-辞書の内容をIntel-Dumpのような形式でダンプするオプションがあり、16バイトのデータごとにチェックサムが計算される。私はこのチェックサムを使って、この辞書がceForth_23システムで使った辞書と同一であることを確認しました。この辞書ダンプを読んで、Forthの単語のレコードと、その単語のレコードのフィールドを確認するのは、良い練習になります。
+辞書の内容をIntel-Dumpのような形式でダンプするオプションがあり、16バイトのデータごとにチェックサムが計算される。私はこのチェックサムを使って、この辞書がceForth_23システムで使った辞書と同一であることを確認しました。この辞書ダンプを読んで、Forthのワードのレコードと、そのワードのレコードのフィールドを確認するのは、良い練習になります。
 
 // Boot Up
 
@@ -3739,7 +3494,7 @@ Originally, ceForth was designed to emulate a 32-bit Forth microcontroller eP32,
 
 Implement ceForth on a byte oriented machine, FSM was greatly simplified since VFM can  fetch and execute consecutive bytes. In C, FSM can be written simply as: 
 
-もともとceForthは、32ビットワードしか読み書きできない32ビットForthマイコンeP32をエミュレートするために設計されました。Finite State Machine（FSM）は、32ビットワードに格納された8ビットマシン命令を実行する。State0では、FSMはメモリから32ビットワードをフェッチする。ステート1～4では、このワードの中の4バイトコードを実行する。CALLとJMP命令はState1でのみ実行され、FSMを強制的にState0にし、メモリから次のプログラムワードをフェッチします。RETはState1-4のいずれかで実行され、FSMを強制的にState0にすることができる。
+もともとceForthは、32ビットワードしか読み書きできない32ビットForthマイクロコントローラeP32をエミュレートするために設計されました。Finite State Machine（FSM）は、32ビットワードに格納された8ビットマシン命令を実行する。State0では、FSMはメモリから32ビットワードをフェッチする。ステート1～4では、このワードの中の4バイトコードを実行する。CALLとJMP命令はState1でのみ実行され、FSMを強制的にState0にし、メモリから次のプログラムワードをフェッチします。RETはState1-4のいずれかで実行され、FSMを強制的にState0にすることができる。
 
 バイト指向のマシンにceForthを実装すると、VFMは連続したバイトをフェッチして実行できるため、FSMは大幅に簡素化されました。C言語では、FSMは次のように簡単に書くことができる。
 
@@ -3779,7 +3534,7 @@ I loved to recite a very short poem by a Tang poet name Ja Dao (779～843 AD).
 ここで、私が過去10年間にC言語でForthを実装する際に学んだことを要約してみましょう。
 
 * C言語で書かれたForthは、現代の高度なマイクロコントローラをプログラミングする上で価値がある。
-* 32ビットマイコンeP32を忠実にエミュレートしている。
+* 32ビットマイクロコントローラeP32を忠実にエミュレートしている。
 * Forthの辞書は、コードセグメントに書き込めない、データセグメントでコードを実行できないというC言語の基本的な制限を回避するために、仮想メモリ配列に格納されています。
 * リターンスタックやデータスタックには円形バッファが最適です。オーバーフローやアンダーフローを起こさない。 メンテナンスが不要。 
 * 仮想フォースマシンは、バイトコードで実装できる。
