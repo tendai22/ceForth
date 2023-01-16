@@ -15,7 +15,7 @@ Chuck Mooreは私にアセンブラの書き方と、メタコンパイラでMuP
 
 直接スレッド型Forthモデルでは、プリミティブワードのレコードはバイトコードのみを含む。コロンワードは、コードフィールドにバイトコードのセルを1つ持ち、パラメータフィールドにトークンリストを持つ。トークンは、他のワードのコードフィールド・アドレスである。
 
-Forthの辞書をデータ配列に埋め込むことは、C言語の基本的なプログラミングモデル、すなわち実行可能なCコードはコードセグメントに、データと変数はデータセグメントにコンパイルされる、ということにうまく適合する。C言語はコンパイル言語であるため、データセグメントでコードを実行することはなく、コードセグメントへのコードやデータの書き込みは違法とみなされます。Forthはインタプリタ型言語であり、コードとデータを区別せず、ユーザが新しいコードを辞書に追加することを推奨している。そこで、VFMのコードをコードセグメントに、Forthのワードをデータセグメントに書き込むという妥協策をとりました。VFMには新しい疑似命令を追加しないが、Forthの辞書には新しいコロン語を自由に追加できる、という制限を受け入れた。
+Forthの辞書をデータ配列に埋め込むことは、C言語の基本的なプログラミングモデル、すなわち実行可能なCコードはコードセグメントに、データと変数はデータセグメントにコンパイルされる、ということにうまく適合する。C言語はコンパイル言語であるため、データセグメントでコードを実行することはなく、コードセグメントへのコードやデータの書き込みは違法とみなされます。Forthはインタプリタ型言語であり、コードとデータを区別せず、ユーザが新しいコードを辞書に追加することを推奨している。そこで、VFMのコードをコードセグメントに、Forthのワードをデータセグメントに書き込むという妥協策をとりました。VFMには新しい疑似命令を追加しないが、Forthの辞書には新しいコロンワードを自由に追加できる、という制限を受け入れた。
 
 Forthシステムの設計は、Cを含む各種マイクロコントローラをターゲットとしたVFMマシンの構築と、Forth辞書の構築の2つの独立したタスクに分離できるようになりました。 その際、それぞれの作業に最適な独立したツールを使用することができます。Forth辞書の構築には、長年使ってきたF#を選びました。現在、私の理解では、C、C++、C#には、VFMと一緒に辞書を構築するのに必要なツールはありません。
 
@@ -283,7 +283,7 @@ void dolist(void)
     next();
 }
 ```
-`exitt ( -- )` コロン・ワードのトークン・リストをすべて終了させる。EXITは、リターンスタックに保存された実行アドレスをIPレジスタにポップバックし、コロン語が入力される前の状態を復元する。呼び出したトークンリストの実行は継続される。
+`exitt ( -- )` コロン・ワードのトークン・リストをすべて終了させる。EXITは、リターンスタックに保存された実行アドレスをIPレジスタにポップバックし、コロンワードが入力される前の状態を復元する。呼び出したトークンリストの実行は継続される。
 ```
 void exitt(void)
 {
@@ -436,8 +436,6 @@ void zless(void)
     top = (top < 0) LOGICAL;
 }
 ```
-`andd ( w w -- w )` Bitwise AND.
-
 `andd ( w w -- w )` ビット単位のAND。
 ```
 void andd(void)
@@ -445,8 +443,6 @@ void andd(void)
     top &= stack[(char)S--];
 }
 ```
-`orr ( w w -- w )` Bitwise inclusive OR.
-
 `orr ( w w -- w )` ビット単位の包括的論理和。
 ```
 void orr(void)
@@ -454,416 +450,288 @@ void orr(void)
     top |= stack[(char)S--];
 }
 ```
-`xorr ( w w -- w )` Bitwise exclusive OR.
-
 `xorr ( w w -- w )` ビット単位の排他的論理和。
-
-
+```
 void xorr(void)
-
 {
-
-top ^= stack[(char)S--];
-
+    top ^= stack[(char)S--];
 }
-
-uplus ( w w -- w cy ) Add two numbers, return the sum and carry flag. 
-
+```
 uplus ( w w -- w cy ) 2つの数値を加算し、その和とキャリーフラグを返します。
-
-
+```
 void uplus(void)
-
 {
-
-stack[(char)S] += top;
-
-top = LOWER(stack[(char)S], top);
-
+    stack[(char)S] += top;
+    top = LOWER(stack[(char)S], top);
 }
-
-nop ( -- ) No operation. 
-
+```
 nop ( -- ) 操作なし。
-
-
-
+```
 void nop(void)
-
 {
-
-next();
-
+    next();
 }
-
-qdup ( w -- w w | 0 ) Dup top of stack if it is not zero.
-
+```
 qdup ( w -- w w | 0 ) スタックの先頭が0でなければ、Dupする。
-
-
+```
 void qdup(void)
-
 {
-
-if (top) stack[(char) ++S] = top;
-
+    if (top) stack[(char) ++S] = top;
 }
-
-rot ( w1 w2 w3 -- w2 w3 w1 ) Rot 3rd item to top.
-
+```
 rot ( w1 w2 w3 -- w2 w3 w1 ) 3番目の項目を一番上に回転させる。
-
-
-
+```
 void rot(void)
-
 {
-
-WP = stack[(char)S - 1];
-
-stack[(char)S - 1] = stack[(char)S];
-
-stack[(char)S] = top;
-
-top = WP;
-
+    WP = stack[(char)S - 1];
+    stack[(char)S - 1] = stack[(char)S];
+    stack[(char)S] = top;
+    top = WP;
 }
-
-ddrop ( w w -- ) Discard two items on stack.
-
+```
 ddrop ( w w -- ) スタック上のアイテムを2つ捨てる。
-
-
-
+```
 void ddrop(void)
-
 {
-
-drop(); drop();
-
+    drop(); drop();
 }
-
-ddup ( w1 w2 -- w1 w2 w1 w2 ) Duplicate top two items.
-
-ddup ( w1 w2 -- w1 w2 w1 w2 ) 上位2項目を重複させる。
-
-
-
+```
+ddup ( w1 w2 -- w1 w2 w1 w2 ) 上位2項目を複製する。
+```
 void ddup(void)
-
 {
-
-over(); over();
-
+    over(); over();
 }
-
-plus ( w w -- sum ) Add top two items.
-
-plus ( w w -- sum ) 上の2つの項目を追加する。
-
-
+```
+plus ( w w -- sum ) 上2つの項目を追加する。
+```
 void plus(void)
-
 {
-
-top += stack[(char)S--];
-
+    top += stack[(char)S--];
 }
-
-inver ( w -- w ) One's complement of top.
-
-inver ( w -- w ) topの1つの補数。
-
-
-
+```
+inver ( w -- w ) topの1の補数。
+```
 void inver(void)
-
 {
-
-top = -top - 1;
-
+    top = -top - 1;
 }
-
-negat ( n -- -n ) Two's complement of top.
-
-negat ( n -- -n ) トップの2つの補数。
-
-
-
+```
+negat ( n -- -n ) topの2の補数。
+```
 void negat(void)
 {
-top = 0 - top;
+    top = 0 - top;
 }
-
-dnega ( d -- -d ) Two's complement of top double.
-
+```
 dnega ( d -- -d ) トップダブルの2の補数。
-
-
-
+```
 void dnega(void)
 {
-inver();
-tor();
-inver();
-push 1;
-uplus();
-rfrom();
-plus();
+    inver();
+    tor();
+    inver();
+    push 1;
+    uplus();
+    rfrom();
+    plus();
 }
-
-subb ( n1 n2 -- n1-n2 ) Subtraction.
-
+```
 subb ( n1 n2 -- n1-n2 ) 減算。
-
-
-
+```
 void subb(void)
 {
-top = stack[(char)S--] - top;
+    top = stack[(char)S--] - top;
 }
-
-abss ( n -- n ) Return the absolute value of n.
-
+```
 abss ( n -- n ) nの絶対値を返す。
-
-
-
+```
 void abss(void)
 {
-if (top < 0)
-top = -top;
+    if (top < 0)
+        top = -top;
 }
-
-great ( n1 n2 -- t ) Signed compare of top two items. Return true if n1>n2. 
-
-great ( n1 n2 -- t ) 上位 2 項目の符号付き比較。n1>n2 ならば真を返す。
-
-
-
+```
+`great ( n1 n2 -- t )` 上位 2 項目の符号付き比較。`n1>n2` ならば真を返す。
+```
 void great(void)
 {
-top = (stack[(char)S--] > top) LOGICAL;
+    top = (stack[(char)S--] > top) LOGICAL;
 }
-
-less ( n1 n2 -- t ) Signed compare of top two items. Return true if n1<n2. 
-
-less ( n1 n2 -- t ) 上位 2 項目の符号付き比較。n1<n2 ならば真を返す。
-
+```
+`less ( n1 n2 -- t )` 上位 2 項目の符号付き比較。`n1<n2` ならば真を返す。
+```
 void less(void)
 {
-top = (stack[(char)S--] < top) LOGICAL;
+    top = (stack[(char)S--] < top) LOGICAL;
 }
-
-equal ( w w -- t ) Return true if top two are equal.
-
+```
 equal ( w w -- t ) 上の二つが等しいとき、true を返す。
-
+```
 void equal(void)
 {
-top = (stack[(char)S--] == top) LOGICAL;
+    top = (stack[(char)S--] == top) LOGICAL;
 }
-
-uless ( u1 u2 -- t ) Unsigned compare of top two items.
-
+```
 uless ( u1 u2 -- t ) 上位 2 項目の符号なし比較。
-
-
-
+```
 void uless(void)
 {
-top = LOWER(stack[(char)S], top) LOGICAL; (char)S--;
+    top = LOWER(stack[(char)S], top) LOGICAL; (char)S--;
 }
-
-ummod ( udl udh u -- ur uq ) Unsigned divide of a double by a single. Return mod and quotient. 
-
+```
 ummod ( udl udh u -- ur uq ) 符号無しで double を single で割ったもの。modと商を返す。
-
-
-
+```
 void ummod(void)
 {
-d = (long long int)((unsigned long)top);
-m = (long long int)((unsigned long)stack[(char)S]);
-n = (long long int)((unsigned long)stack[(char)S - 1]);
-n += m << 32;
-pop;
-top = (unsigned long)(n / d);
-stack[(char)S] = (unsigned long)(n % d);
+    d = (long long int)((unsigned long)top);
+    m = (long long int)((unsigned long)stack[(char)S]);
+    n = (long long int)((unsigned long)stack[(char)S - 1]);
+    n += m << 32;
+    pop;
+    top = (unsigned long)(n / d);
+    stack[(char)S] = (unsigned long)(n % d);
 }
-
-msmod ( d n -- r q ) Signed floored divide of double by single. Return mod and quotient. 
-
-msmod ( d n -- r q ) 符号付き階乗法によるdoubleのsingleによる除算。modと商を返す。
-
-
-
+```
+msmod ( d n -- r q ) 符号付き打ち切り除算(signed floored divide)によるdoubleのsingleによる除算。modと商を返す。
+```
 void msmod(void)
 {
-d = (signed long long int)((signed long)top);
-m = (signed long long int)((signed long)stack[(char)S]);
-n = (signed long long int)((signed long)stack[(char)S - 1]);
-n += m << 32;
-pop;
-top = (signed long)(n / d);
-stack[(char)S] = (signed long)(n % d);
+    d = (signed long long int)((signed long)top);
+    m = (signed long long int)((signed long)stack[(char)S]);
+    n = (signed long long int)((signed long)stack[(char)S - 1]);
+    n += m << 32;
+    pop;
+    top = (signed long)(n / d);
+    stack[(char)S] = (signed long)(n % d);
 }
-
-slmod ( n1 n2 -- r q ) Signed divide. Return mod and quotient. 
-
+```
 slmod ( n1 n2 -- r q ) 符号付き除算。modと商を返す。
-
+```
 void slmod(void) 
 {
-if (top != 0) {
-WP = stack[(char)S] / top;
-stack[(char)S] %= top;
-top = WP;
+    if (top != 0) {
+        WP = stack[(char)S] / top;
+        stack[(char)S] %= top;
+        top = WP;
+    }
 }
-}
-
-mod ( n n -- r ) Signed divide. Return mod only.
-
+```
 mod ( n n -- r ) 符号付き除算。modのみを返す。
-
-
-
+```
 void mod(void)
 {
-top = (top) ? stack[(char)S--] % top : stack[(char)S--];
+    top = (top) ? stack[(char)S--] % top : stack[(char)S--];
 }
-
-slash ( n n -- q ) Signed divide. Return quotient only.
-
+```
 slash ( n n -- q ) 符号付き除算。商のみを返す。
-
-
-
+```
 void slash(void)
 {
-top = (top) ? stack[(char)S--] / top : (stack[(char)S--], 0);
+    top = (top) ? stack[(char)S--] / top : (stack[(char)S--], 0);
 }
-
-umsta ( u1 u2 -- ud ) Unsigned multiply. Return double product. 
-
+```
 umsta ( u1 u2 -- ud ) 符号なし乗算。double の積を返す。
-
-
-
+```
 void umsta(void)
 {
-d = (unsigned long long int)top;
-m = (unsigned long long int)stack[(char)S];
-m *= d;
-top = (unsigned long)(m >> 32);
-stack[(char)S] = (unsigned long)m;
+    d = (unsigned long long int)top;
+    m = (unsigned long long int)stack[(char)S];
+    m *= d;
+    top = (unsigned long)(m >> 32);
+    stack[(char)S] = (unsigned long)m;
 }
-
-star ( n n -- n ) Signed multiply. Return single product.
-
-star ( n n -- n ) 符号付き乗算。単一の積を返します。
-
-
-
+```
+star ( n n -- n ) 符号付き乗算。単長の積を返します。
+```
 void star(void)
 {
-top *= stack[(char)S--];
+    top *= stack[(char)S--];
 }
-
-mstar ( n1 n2 -- d ) Signed multiply. Return double product.
-
+```
 mstar ( n1 n2 -- d ) 符号付き乗算。double の積を返します。
-
+```
 void mstar(void)
 {
-d = (signed long long int)top;
-m = (signed long long int)stack[(char)S];
-m *= d;
-top = (signed long)(m >> 32);
-stack[(char)S] = (signed long)m;
+    d = (signed long long int)top;
+    m = (signed long long int)stack[(char)S];
+    m *= d;
+    top = (signed long)(m >> 32);
+    stack[(char)S] = (signed long)m;
 }
-
-ssmod ( n1 n2 n3 -- r q ) Multiply n1 and n2, then divide by n3. Return mod and quotient. 
-
+```
 ssmod ( n1 n2 n3 -- r q ) n1 と n2 を掛け、n3 で割る。modと商を返す。
-
-
+```
 void ssmod(void)
 {
-d = (signed long long int)top;
-m = (signed long long int)stack[(char)S];
-n = (signed long long int)stack[(char)S - 1];
-n *= m;
-pop;
-top = (signed long)(n / d);
-stack[(char)S] = (signed long)(n % d);
+    d = (signed long long int)top;
+    m = (signed long long int)stack[(char)S];
+    n = (signed long long int)stack[(char)S - 1];
+    n *= m;
+    pop;
+    top = (signed long)(n / d);
+    stack[(char)S] = (signed long)(n % d);
 }
-
-stasl ( n1 n2 n3 -- q ) Multiply n1 by n2, then divide by n3. Return quotient only. 
-
-stasl ( n1 n2 n3 -- q ) Multiply n1 by n2, then divide by n3. Return quotient only. 
-
-
+```
+stasl ( n1 n2 n3 -- q ) n1 を n2 で乗算し、n3 で除算する。商のみを返す。
+```
 void stasl(void)
 {
-d = (signed long long int)top;
-m = (signed long long int)stack[(char)S];
-n = (signed long long int)stack[(char)S - 1];
-n *= m;
-pop; pop;
-top = (signed long)(n / d);
+    d = (signed long long int)top;
+    m = (signed long long int)stack[(char)S];
+    n = (signed long long int)stack[(char)S - 1];
+    n *= m;
+    pop; pop;
+    top = (signed long)(n / d);
 }
-
-pick ( ... +n -- ... w ) Copy the nth stack item to top.
-
+```
 pick ( ... +n -- ... w ) スタックのn番目の項目を先頭にコピーします。
-
-
-
+```
 void pick(void)
 {
-top = stack[(char)S - (char)top];
+    top = stack[(char)S - (char)top];
 }
+```
 pstor ( n a -- ) Add n to the contents at address a.
+```
 void pstor(void)
 {
-data[top >> 2] += stack[(char)S--], pop;
+    data[top >> 2] += stack[(char)S--], pop;
 }
+```
 dstor ( d a -- ) Store the double integer to address a.
+```
 void dstor(void)
 {
-data[(top >> 2) + 1] = stack[(char)S--];
-data[top >> 2] = stack[(char)S--];
-pop;
+    data[(top >> 2) + 1] = stack[(char)S--];
+    data[top >> 2] = stack[(char)S--];
+    pop;
 }
+```
 dat ( a -- d ) Fetch double integer from address a.
+```
 void dat(void)
 {
-push data[top >> 2];
-top = data[(top >> 2) + 1];
+    push data[top >> 2];
+    top = data[(top >> 2) + 1];
 }
-
-count ( b -- b+1 +n ) Return count byte of a string and add 1 to byte address. 
-
-count ( b -- b+1 +n ) 文字列のバイト数を返し、バイト・アドレスに1を加える。
-
+```
+`count ( b -- b+1 +n )` 文字列のバイト数を返し、バイト・アドレスに1を加える。
+```
 void count(void)
 {
-stack[(char) ++S] = top + 1;
-top = cData[top];
+    stack[(char) ++S] = top + 1;
+    top = cData[top];
 }
-
-maxx ( n1 n2 -- n ) Return the greater of two top stack items. 
-
-maxx ( n1 n2 -- n ) スタックの先頭の2つの項目のうち、大きい方を返す。
-
-
+```
+`maxx ( n1 n2 -- n )` スタックの先頭の2つの項目のうち、大きい方を返す。
+```
 void max(void)
 {
-if (top < stack[(char)S]) pop;
-else (char)S--;
+    if (top < stack[(char)S]) pop;
+    else (char)S--;
 }
-
+```
 `minn ( n1 n2 -- n )` スタックの上位2項目のうち小さい方を返す。
 ```
 void min(void)
@@ -874,15 +742,9 @@ void min(void)
 ```
 ## Byte Code Array
 
-There are 64 functions defined in VFM as shown before. Each of these functions is assigned a  unique byte code, which become the pseudo instructions of this VFM. In the dictionary, there  are primitive words which have these byte code in their code field. The byte code may spill  over into the subsequent parameter field, if a primitive word is very complicated. VFM has a  byte code sequencer, which will be discussed shortly, to sequence through byte code list. The  numbering of these byte code in the following primitives[] array does not follow any perceived  order.  
+VFMには、先に示したように64個の関数が定義されています。これらの関数にはそれぞれ固有のバイトコードが割り当てられており、これがこのVFMの擬似命令となる。辞書には、このバイトコードをコードフィールドに持つプリミティブワードが存在します。このバイトコードは、プリミティブワードが非常に複雑な場合、後続のパラメータフィールドに波及することがあります。VFMには、後述するバイトコードシーケンサがあり、バイトコードリストを順番に表示します。primitives[]配列の中のバイトコードの番号付けは、順序を意識していません。 
 
-VFMには、先に示したように64個の関数が定義されています。これらの関数にはそれぞれ固有のバイトコードが割り当てられており、これがこのVFMの擬似命令となる。辞書には、このバイトコードをコードフィールドに持つプリミティブワードが存在します。このバイトコードは、プリミティブワードが非常に複雑な場合、後続のパラメータフィールドに波及することがあります。VFMには、後述するバイトコードシーケンサがあり、バイトコードリストを順番に表示します。プリミティブ[]配列の中のバイトコードの番号付けは、順序を意識していません。 
-
-Only 64 byte code are defined. You can extend them to 256 if you wanted. You have the  options to write more functions in C to extend the VFM, or to assemble more primitive words  using the metacompiler I will discuss later, or to compile more colon words in Forth, which is  far easier. The same function defined in different ways should behave identically. Only the  execution speed may differ, inversely proportional to the efforts in programming. 
-
-バイトコードは64個だけ定義されています。必要であれば256まで拡張することができます。VFMを拡張するためにC言語でさらに関数を書くか、後述するメタコンパイラを使ってさらにプリミティブワードを組み立てるか、あるいはForthでコロンワードを組み立てるかという選択肢がありますが、これははるかに簡単なことです。異なる方法で定義された同じ関数は、同じように動作するはずです。ただ、実行速度が違うだけで、プログラミングの労力に反比例する。
-
-
+バイトコードは64個だけ定義されています。必要であれば256まで拡張することができます。VFMを拡張するためにC言語でさらに関数を書くか、後述するメタコンパイラを使ってさらにプリミティブワードを組み立てるか、あるいは、さらに簡単なやり方としてForthでコロンワードを組み立てるという選択肢があります。異なる方法で定義された同じ関数は、同じように動作するはずです。ただ、実行速度が違うだけで、プログラミングの労力に反比例する。
 ```
 void(*primitives[64])(void) = {
 /* case 0 */ nop,
@@ -951,16 +813,12 @@ void(*primitives[64])(void) = {
 /* case 63 */ min,
 };
 ```
-Let us skip over all the macro assembler and the dictionary it builds, to the end of  ceForth_33.cpp to see how the Virtual Forth Machine starts running. The following code sets  up the boot-up vector: 
-
-マクロアセンブラとそれが構築する辞書のすべてを飛ばして、ceForth_33.cppの終わりまで、Virtual Forth Machineがどのように実行を開始するかを見てみましょう。次のコードは、起動ベクタを設定しています。
+マクロアセンブラとそれが構築する辞書のすべてをceForth_33.cppの終わりまで飛ばして、Virtual Forth Machineがどのように実行を開始するかを見てみましょう。次のコードは、起動ベクタを設定しています。
 ```
 IP = 0;
 int RESET = LABEL(2, 6, COLD);
 ```
-It basically tells VFM to execute COLD word in Forth, which starts the Forth interpreter. To start the VFM running, registers P, WP, IP, S, R and top have to be initialized in the  main() function required by Visual Studio. As P is set to 0, execution starts by executing the  byte code stored in virtual memory location 0.  
-
-基本的にはVFMにForthのCOLDワードを実行するように指示し、Forthインタプリタを起動させます。VFMの実行を開始するには、Visual Studioが要求するmain()関数内で、レジスタP、WP、IP、S、R、topを初期化する必要があります。Pは0に設定されているので、仮想メモリ位置0に格納されているバイトコードを実行することで実行が開始されます。 
+基本的にはVFMにForthのCOLDワードを実行するように指示し、COLDワードはForthインタプリタを起動させます。VFMの実行を開始するには、Visual Studioが要求するmain()関数内で、レジスタP、WP、IP、S、R、topを初期化する必要があります。Pは0に設定されているので、仮想メモリ位置0に格納されているバイトコードを実行することで実行が開始されます。 
 ```
 /*
  * Main Program
@@ -978,17 +836,21 @@ int main(int ac, char* av[])
     } 
 }
 ```
-The while(TRUE) loop loops forever. Going through each loop, the finite state machine  reads the next byte code pointed to by P. The byte code is executed by  execute(bytecode). The next byte code is read and executed. And so forth. It behaves  just like a real computer sequencing through its machine instructions stored in memory. 
-
-while(TRUE)ループは永遠にループする。各ループを通過するごとに、有限状態マシンは P が指す次のバイトコードを読み込みます。次のバイトコードが読み込まれ、実行される。といった具合です。これは、メモリに格納された機械命令を順番に実行していく本物のコンピュータと同じように動作します。
+`while(TRUE)`ループは永遠にループする。各ループを通過するごとに、有限状態マシンは `P` が指す次のバイトコードを読み込みます。次のバイトコードが読み込まれ、実行される。といった具合です。これは、メモリに格納された機械命令を順番に実行していく本物のコンピュータと同じように動作します。
 
 # Chapter 3. Forth Dictionary
 
 Forth is a programming language to program computers, but it is very similar to natural  languages like English. Forth has a set of words, similar to words in English. Forth words  therefore are called words. Forth has a very simple grammar rule: words are separated by  spaces. A Forth computer processes lists of words, executing words from left to right. It is like  English: you read a sentence from left to right.  
 
+Forthはコンピュータをプログラムするためのプログラミング言語ですが、英語のような自然言語に非常によく似ています。Forthには、英語のワードと同じようなワードがあります。したがって、Forthのワードはワードと呼ばれます。Forthの文法規則は非常に単純で、ワードは空白で区切られます。Forthのコンピュータは、ワードのリストを処理し、左から右へワードを実行していく。英語と同じで、文章を左から右へ読んでいくのです。 
+
 Forth is like a natural language, in which new words are defined in terms of existing words.  Adding new words extends the language, pushes it towards higher and higher levels of  abstraction, eventually solving all computable problems. It is the simplest and most powerful  form of intelligence, essentially the way how human beings think, reason, communicate, and  accumulate knowledge. 
 
+Forthは自然言語のようなもので、新しいワードは既存のワードを基準に定義されます。 新しいワードを追加することで言語が拡張され、より高い抽象度へと押し上げられ、最終的にはすべての計算可能な問題を解決することができるのです。これは最も単純で最も強力な知性の形態であり、本質的に人間が思考し、推論し、コミュニケーションし、知識を蓄積する方法なのである。
+
 A more detailed and precise description of Forth is as follows: 
+
+Forthをより詳しく、正確に説明すると、以下のようになります。
 
 * Forth has a set of words or words.
 * Forth words are records stored in a computer memory area, called a dictionary. 
@@ -998,12 +860,6 @@ A more detailed and precise description of Forth is as follows:
 * Forth has a compiler, which compiles new words to replace lists of tokens. 
 * Tokens are often nested token lists. A return stack is thus required to nest and unnest token  lists. 
 * Forth words pass numeric parameters implicitly on a first-in-last-out data stack or parameter  stack, thus greatly simplify the language syntax. 
-
-Forthはコンピュータをプログラムするためのプログラミング言語ですが、英語のような自然言語に非常によく似ています。Forthには、英語のワードと同じようなワードがあります。したがって、Forthのワードはワードと呼ばれます。Forthの文法規則は非常に単純で、ワードは空白で区切られます。Forthのコンピュータは、ワードのリストを処理し、左から右へワードを実行していく。英語と同じで、文章を左から右へ読んでいくのです。 
-
-Forthは自然言語のようなもので、新しいワードは既存のワードを基準に定義されます。 新しいワードを追加することで言語が拡張され、より高い抽象度へと押し上げられ、最終的にはすべての計算可能な問題を解決することができるのです。これは最も単純で最も強力な知性の形態であり、本質的に人間が思考し、推論し、コミュニケーションし、知識を蓄積する方法なのである。
-
-Forthをより詳しく、正確に説明すると、以下のようになります。
 
 * Forthには、ワードや言葉のセットがあります。
 * Forthのワードは、辞書と呼ばれるコンピュータのメモリ領域に格納された記録である。
@@ -1024,6 +880,8 @@ ceForth_33 allocates a big array data[16000] for the Virtual Forth Engine to use
 
 ceForth_33 は、Virtual Forth Engine が使用する大きな配列 data[16000] を割り当てています。この配列は主にForth辞書を格納するために使用され、他の情報のためにいくつかのバッファがあります。このデータ配列の中で最も重要な領域は、次の図のとおりです。
 
+<img width=200 src="img/ch3-memory-map.png">
+
 Reset vector is stored at location 0. 128 bytes are reserved for user to put his own system  initialization code here. Then, 128 bytes are used to store user variables, which store pointers  needed by Forth text interpreter to run. A big Terminal Input Buffer is allocated from 0x100 to  0c1FF. It used to be 80 bytes long to read a single punch card. 
 
 0番にはリセットベクターが格納され、128バイトはユーザーが独自のシステム初期化コードを格納するために確保されています。そして、128バイトはユーザー変数の格納に使用され、Forthテキストインタプリタが実行するために必要なポインタを格納します。0x100から0c1FFまでは、大きな端末入力バッファが割り当てられています。以前はパンチカード1枚を読み込むのに80バイトもあった。
@@ -1036,35 +894,24 @@ Area about 0x200 is the Forth dictionary. First come the primitive kernel words,
 
 Predefined Forth words, both primitive words and colon words, are assembled into a linearly  linked dictionary in memory. New colon words are added to the dictionary, and extends the  capability of Forth system. 
 
-プリミティブ語とコロン語の両方を含む定義済みForth語は、メモリ上で線形にリンクされた辞書に組み立てられる。この辞書には、新しいコロン語が追加され、Forthシステムの機能を拡張している。
+プリミティブワードとコロンワードの両方を含む定義済みForthワードは、メモリ上で線形にリンクされた辞書に組み立てられる。新しいコロンワードはこの辞書に追加され、Forthシステムの機能を拡張する。
 
 Each word is a record with 4 fields: 
 
 各ワードは4つのフィールドからなるレコードである。
 
- Field Length Function 
-
- フィールド長 機能 
-
-Link 4 bytes name field of previous word 
-
-リンク 前のワードの4バイトの名前フィールド 
-
-Name Variable name of word and lexicon byte
-
-名前 ワードの変数名と辞書バイト
-
-Code 4 byte executable byte code 
-
-コード 4バイト 実行可能バイトコード 
-
-Parameter Variable instructions, tokens, data
-
-パラメータ 変数 命令、トークン、データ
+|フィールド|長さ|機能 
+|--|--|--|
+|リンク|4バイト|前のワードの名前フィールド 
+|名前|可変長|ワードの変数名と辞書バイト
+|コード|4バイト|実行可能バイトコード 
+|パラメータ|可変長|命令、トークン、データ
 
 In colon words, the parameter field contains a list of tokens, In primitive words, the parameter  field is an extension of code field. Following figure shows the structure of word records: 
 
 原始的な言い方をすれば、コードフィールドを拡張したものがパラメータフィールドである。下図は、ワードレコードの構造を示している。
+
+<img width=550 src="img/ch3-structure-of-word.png">
 
 The addresses of the first bytes in these fields are called, respectively, link field address (lfa),  name field address (nfa), code field address (cfa), and parameter field address (pfa). Abbreviations of these field addresses will be used throughout this book.  
 
@@ -1084,6 +931,8 @@ Word searching also starts here. The first word HLD, which terminates the list a
 
 ceForth_33 uses the 'Direct Thread Model'. Each word has a code field in its record. The code  field address (cfa) is considered the token of this word. The code field contains executable byte  code. In a primitive word, the code field contains a list of byte code, which may extends into  the parameter field, terminated by a special byte code next, which fetches the next token from  a token list and executes that token.  
 
+<img width=200 src="img/ch3-linked-list.png">
+
 ceForth_33は「ダイレクト・スレッド・モデル」を使用している。各ワードは、そのレコードにコードフィールドを持つ。コードフィールドのアドレス（cfa）は、このワードのトークンとみなされる。コードフィールドには、実行可能なバイトコードが格納されています。プリミティブワードでは、コードフィールドは、パラメータフィールドに伸びる可能性のあるバイトコードのリストを含み、特別なバイトコードnextで終了し、トークン一覧から次のトークンをフェッチしてそのトークンを実行する。 
 
 In a colon word, the code field contains a DOLST byte code, which process the contents of the  parameter field as a token list. The token list is generally terminated by a primitive word EXIT,  which un-nests a token list started by DOLST. The code fields and parameter fields of these  words are shown as the following figure: 
@@ -1092,17 +941,23 @@ In a colon word, the code field contains a DOLST byte code, which process the co
 
 In the parameter field of a colon word, the token list generally contains tokens which are 32-bit  code field addresses of other words. However, there are many other kinds of information  embedded in a token list. In ceForth_33, there are integer literals, address literals, and string  literals. An integer literal is a token DOLIT followed by a 32-bit integer value. This integer will  be pushed on the data stack at run time. An address literal starts with a token BRAN, QBRAN or  DONXT, followed by a 32-bit address. This address will be used by BRAN, QBRAN oe DONXT to  branch to a new location in the token list containing these branching tokens. 
 
+<img width=400 src="img/ch3-primitive-and-colon-words.png">
+
 コロンワードのパラメータフィールドには，一般に他のワードの32ビットコードフィールドアドレスであるトークンが含まれる。しかし、トークン・リストには、他の多くの種類の情報が埋め込まれている。ceForth_33では、整数リテラル、アドレス・リテラル、文字列リテラルがある。整数リテラルは、トークンDOLITの後に32ビットの整数値が続くものである。この整数は、実行時にデータスタックにプッシュされる。アドレスリテラルは、BRAN、QBRAN、DONXTのいずれかのトークンと、32ビットアドレスで始まります。このアドレスは、BRAN、QBRAN、DONXTによって、これらの分岐トークンを含むトークンリスト内の新しい場所に分岐するために使用されます。
 
 The integer literal and address literals are shown in the following figure: 
 
 整数リテラルとアドレスリテラルを次の図に示します。
 
+<img width=400 src="img/ch3-literals.png">
+
 The address literals are used to build control structures in token lists. The following figure  shows how they are used in structures like IF-ELSE-THEN and BEGIN-WHILE-REPEAT. 
 
 アドレス・リテラルは、トークン・リスト内の制御構造を構築するために使用される。次の図は、IF-ELSE-THEN や BEGIN-WHILE-REPEAT などの構造で使用される様子を示しています。
 
 A string literal starts with a token, DOTQP, STRQP, or ABORQP, followed by a counted string  of ASCII characters, null-filled to the word boundary. They are used to print a string in runtime,  or make the string available for other words to use. They are used in the following ways: 
+
+<img width=500 src="img/ch3-branch-structure.png">
 
 文字列リテラルは、DOTQP、STRQP、ABORQPのいずれかのトークンで始まり、その後にASCII文字のカウント文字列が続き、ワード境界までヌルフィルされています。これらは、実行時に文字列を表示したり、他のワードが使用できるように文字列を作成するために使用されます。これらは次のように使用される。
 ```
@@ -1113,6 +968,8 @@ ABORT” compile only”
 These string literals are shown in the following figure:
 
 これらの文字列リテラルを下図に示します。
+
+<img width=300 src="img/ch3-three-types-of-strings.png">
 
 In ceForth_33, we have to build the entire Forth dictionary to work with the Virtual Forth  Machine. Native C compilers do not provide good tools to build variable length fields required  by an interpretive system like Forth. However, a set of macros can be defined in C as functions  to assemble all fields in all Forth words, and link them all into a searchable dictionary. In the  following Chapter, I will go through these macros and show you how to construct a dictionary  for a Virtual Forth Machine to run in Visual Studio 2019 Community. 
 
@@ -1137,7 +994,7 @@ Label macros allow branching and looping. However, it was difficult to make forw
 
 In the Virtual Forth Machine, the dictionary is stored in an integer array data[IP]. It is  aliased to a byte array cData[P], where IP is an integer pointer and P is a byte pointer. To  point to the same location in the dictionary, IP=P/4. To write consecutive bytes into the  dictionary, we can do the following: 
 
-Virtual Forth Machineでは、辞書は整数配列data[IP]に格納されます。これはバイト配列cData[P]にエイリアスされており、IPは整数ポインター、Pはバイトポインターである。辞書の同じ位置を指すには、IP=P/4である。連続したバイトを辞書に書き込むには、次のようにすればよい。
+Virtual Forth Machineでは、辞書は整数配列`data[IP]`に格納されます。これはバイト配列`cData[P]`にエイリアスされており、`IP`は整数ポインター、`P`はバイトポインターである。辞書の同じ位置を指すには、`IP=P/4`である。連続したバイトを辞書に書き込むには、次のようにすればよい。
 ```
 cData[P++]= char c;
 ```
@@ -1147,32 +1004,30 @@ To write consecutive integers, do the following:
 ```
 data[IP++]=int n;
 ```
-Synchronizing IP=P/4, we can write anything and everything to build a Forth dictionary. 
-
-IP=P/4を同期させれば、Forthの辞書を構築するために何でも書くことができる。
+IP=P/4のようにIPとPを同期させれば、Forthの辞書を構築するために何を書いてもよい。
 
 I first coded a simple macro assembler to build word records in the Forth dictionary. It  consisted of four macros: HEADER() to build link fields and name fields, CODE() to build  code fields for primitive words, COLON() to build code and parameter fields for colon words,  and LABEL() to extend token lists in colon words for branching and looping. These four  macros are as follows: 
 
-私はまず、Forth辞書のワードレコードを構築するための簡単なマクロアセンブラをコーディングした。それは、4つのマクロで構成されていた。HEADER()はリンクフィールドと名前フィールドを、CODE()は原始語のコードフィールドを、COLON()はコロン語のコードとパラメータフィールドを、LABEL()はコロン語のトークンリストを分岐やループのために拡張するためのものである。これら4つのマクロは次の通りである。
+私はまず、Forth辞書のワードレコードを構築するための簡単なマクロアセンブラをコーディングした。それは、4つのマクロで構成されていた。`HEADER()`はリンクフィールドと名前フィールドを、`CODE()`は原始語のコードフィールドを、`COLON()`はコロンワードのコードとパラメータフィールドを、`LABEL()`はコロンワードのトークンリストを分岐やループのために拡張するためのものである。これら4つのマクロは次の通りである。
 ```
 // Macro Assembler
 int IMEDD = 0x80;
 int COMPO = 0x40;
 ```
-IMEDD and COMPO designate lexicon bits in the length byte of name field. IMEDD as bit 7 is  called immediate bit, and it forces Forth compiler to execute this word instead of compiling its  token into the dictionary. All Forth words building control structures are immediate words.  COMPO as bit 6 is called compile-only bit. Many Forth words are dangerous. They may crash  the system if executed by Forth interpreter. These words are marked by COMPO as compile-only,  and they are only used by Forth compiler. 
+`IMEDD` and `COMPO` designate lexicon bits in the length byte of name field. `IMEDD` as bit 7 is  called immediate bit, and it forces Forth compiler to execute this word instead of compiling its  token into the dictionary. All Forth words building control structures are immediate words.  COMPO as bit 6 is called compile-only bit. Many Forth words are dangerous. They may crash  the system if executed by Forth interpreter. These words are marked by COMPO as compile-only,  and they are only used by Forth compiler. 
 
-IMEDDとCOMPOは、名前フィールドの長さバイトの辞書ビットを指定する。IMEDDはビット7として即時ビットと呼ばれ、Forthコンパイラにそのトークンを辞書にコンパイルする代わりに、このワードを実行するように強制します。制御構造を構築するすべてのForth語は即時ワードである。 第6ビットのCOMPOは、コンパイル専用ビットと呼ばれる。多くのForth語は危険である。Forthインタプリタによって実行されると、システムをクラッシュさせる可能性があります。これらのワードは、COMPOによってコンパイル専用とマークされ、Forthコンパイラによってのみ使用されます。
+`IMEDD`と`COMPO`は、名前フィールドの長さバイトの辞書ビットを指定する。`IMEDD`はビット7として即時ビットと呼ばれ、Forthコンパイラにそのトークンを辞書にコンパイルする代わりに、このワードを実行するように強制します。制御構造を構築するすべてのForth語は即時ワードである。 第6ビットの`COMPO`は、コンパイル専用ビットと呼ばれる。多くのForth語は危険である。Forthインタプリタによって実行されると、システムをクラッシュさせる可能性があります。これらのワードは、COMPOによってコンパイル専用とマークされ、Forthコンパイラによってのみ使用されます。
 
 ```
 int BRAN=0, QBRAN=0, DONXT=0, DOTQP=0, STRQP=0, TOR=0, ABORQP=0; 
 ```
 BRAN, QBRAN, DONXT, DOTQP, STRQP, ABRQP, and TOR are forward references to  primitive words the macro assembler needs to build control structures and string structures in  colon words. They are initialized to 0 here, but will be resolved when these primitives are  assembled. 
 
-BRAN、QBRAN、DONXT、DOTQP、STRQP、ABRQP、TORは、マクロアセンブラがコロンワードで制御構造や文字列構造を構築するために必要なプリミティブワードへの前方参照である。ここでは0に初期化されていますが、これらのプリミティブがアセンブルされるときに解決されます。
+`BRAN`、`QBRAN`、`DONXT`、`DOTQP`、`STRQP`、`ABRQP`、`TOR`は、マクロアセンブラがコロンワードで制御構造や文字列構造を構築するために必要なプリミティブワードへの前方参照である。ここでは0に初期化されていますが、これらのプリミティブがアセンブルされるときに解決されます。
 
 HEADER() builds a link field and a name field for either a primitive or a colon word. A global  variable thread contains the name field address (nfa) of the prior word in the dictionary. This  address is first assembled as a 32-bit integer with data[IP++]=thread;. Now, P is  pointing at the name field of the current word. This P is saved back to thread.  In the name field, the first byte is a lexicon byte, in which the lower 5 bits stores the length of  the name, bit 6 indicates a compile-only word, and bit 7 indicates an immediate word. This  lexicon byte is assembled first in the name field, and then the name string. The name field is  then null-filled to the next 32-bit word boundary. Now, P is pointing to the code field, ready to  assemble byte code. 
 
-HEADER()はプリミティブまたはコロンワードのリンクフィールドとネームフィールドを構築する。グローバル変数threadには、辞書にある先行ワードの名前フィールドアドレス（nfa）が格納される。このアドレスは、まずdata[IP++]=thread;で32ビット整数として組み立てられる。さて、Pは現在のワードの名前フィールドを指している。このPは、threadに戻して保存される。 nameフィールドでは、最初のバイトがレキシコンバイトで、下位5ビットが名前の長さ、ビット6がコンパイル専用ワード、ビット7が即時ワードを格納します。このレキシコンバイトをまず名前フィールドに組み入れてから、名前文字列を作成する。そして、nameフィールドは次の32ビットワード境界までヌルフィルされます。さて、Pはコードフィールドを指しており、バイトコードをアセンブルする準備ができています。
+`HEADER()`はプリミティブまたはコロンワードのリンクフィールドとネームフィールドを構築する。グローバル変数`thread`には、辞書にある先行ワードの名前フィールドアドレス（nfa）が格納される。このアドレスは、まず`data[IP++]=thread;`で32ビット整数として組み立てられる。さて、`P`は現在のワードの名前フィールドを指している。このPは、threadに戻して保存される。 `name`フィールドでは、最初のバイトがレキシコンバイトで、下位5ビットが名前の長さ、ビット6がコンパイル専用ワード、ビット7が即時ワードを格納します。このレキシコンバイトをまず名前フィールドに組み入れてから、名前文字列を作成する。そして、nameフィールドは次の32ビットワード境界までヌルフィルされます。さて、Pはコードフィールドを指しており、バイトコードをアセンブルする準備ができています。
 
 ```
 void HEADER(int lex, const char seq[]) {
@@ -1198,11 +1053,9 @@ void HEADER(int lex, const char seq[]) {
 ```
 CODE() builds a code field for a primitive word. After HEADER()finishes building a name  field, P has the code field address (cfa). This cfa is return and saved as an integer, which will be  used as a parameter by macro COLON()as a token. A sequence of byte code can now be  assembled by cData[P++]=c;. CODE() has a variable number of byte code as parameters.  This number must be the first parameter int len. In this implementation, the length len is  either 4 or 8. The code field will always be either 4 byte long or 8 byte long, and is always  aligned to 32-bit word boundary. 
 
-CODE()は、プリミティブワードのコードフィールドを構築する。HEADER()が名前フィールドを構築し終えると、Pはコードフィールドアドレス(cfa)を持つ。このcfaは整数値として返され、マクロCOLON()のパラメータとしてトークンとして使用されることになる。これで、cData[P++]=c; でバイトコード列を組み立てることができる。CODE()はパラメータとして可変長のバイトコードを持っています。 この数は、最初のパラメータint lenでなければならない。この実装では、長さlenは4または8のいずれかである。コードフィールドは、常に4バイト長または8バイト長であり、常に32ビットワード境界にアラインされる。
+`CODE()`は、プリミティブワードのコードフィールドを構築する。`HEADER()`が名前フィールドを構築し終えると、Pはコードフィールドアドレス(cfa)を持つ。このcfaは整数値として返され、マクロCOLON()のパラメータとしてトークンとして使用されることになる。これで、`cData[P++]=c;` でバイトコード列を組み立てることができる。`CODE()`はパラメータとして可変長のバイトコードを持っています。 この数は、最初のパラメータint lenでなければならない。この実装では、長さ`len`は4または8のいずれかである。コードフィールドは、常に4バイト長または8バイト長であり、常に32ビットワード境界にアラインされる。
 
-CODE(), together with HEADER(), builds a record for a primitive word in Forth dictionary.  It returns a cfa to be assigned as an integer token to construct token lists in colon words. 
-
-CODE()は、HEADER()と共に、Forth辞書にプリミティブワードのレコードを構築する。 これは、コロン語のトークン・リストを構築するための整数トークンとして割り当てられるCFAを返します。
+`CODE()`は、`HEADER()`と共に、Forth辞書にプリミティブワードのレコードを構築する。 これは、コロンワードのトークン・リストを構築するための整数トークンとして割り当てられるcfaを返します。
 ```
 int CODE(int len, ...) {
     int addr = P;
@@ -1217,13 +1070,9 @@ int CODE(int len, ...) {
     return addr;
 }
 ```
-COLON() builds a code field and a parameter field for a colon word. P has the code field  address (cfa). This cfa is and saved as an integer, which will be used as a parameter by other  COLON()macros as a token. A DOLST byte code with value 6 is assembled as an integer by  data[IP++]=6;. It then assembles a variable number of integer tokens as parameters. This  number must be the first parameter int len.  
+`COLON()`は、コロンワードのコードフィールドとパラメータフィールドを構築する。Pはコード・フィールド・アドレス(cfa)を持つ。このcfaは整数として保存され、他の`COLON()`マクロでトークンとしてパラメータに使われる。値6の`DOLST`バイトコードは、`data[IP++]=6;`で整数として組み立てられる。そして、パラメータとして可変数の整数トークンを組み立てる。この数値は、最初のパラメータ int len でなければならない。 
 
-COLON()は、コロン語のコードフィールドとパラメータフィールドを構築する。Pはコード・フィールド・アドレス(cfa)を持つ。このcfaは整数として保存され、他のCOLON()マクロでトークンとしてパラメータに使われる。値6のDOLSTバイトコードは、data[IP++]=6;で整数として組み立てられる。そして、パラメータとして可変数の整数トークンを組み立てる。この数値は、最初のパラメータ int len でなければならない。 
-
-COLON(), together with HEADER(), builds a record for a colon word in Forth dictionary. It  returns a cfa to be assigned as an integer token to construct token lists in later colon words. 
-
-COLON()は、HEADER()と共に、Forth辞書にコロン語のレコードを構築する。これは、後のコロン語のトークンリストを構築するための整数トークンとして割り当てられるcfaを返します。
+COLON()は、HEADER()と共に、Forth辞書にコロンワードのレコードを構築する。これは、後のコロンワードのトークンリストを構築するための整数トークンとして割り当てられるcfaを返します。
 ```
 int COLON(int len, ...) {
     int addr = P;
@@ -1242,53 +1091,55 @@ int COLON(int len, ...) {
     return addr;
 }
 ```
-LABEL() builds a partial token list in a colon word for branching and looping. P has the  current token address. This address is return and saved as an integer, which will be used as a  address following a branching token. It then assembles a variable number of integer tokens as  parameters. This number must be the first parameter int len.  LABEL()builds a partial token list in a colon word. It returns an address for branching tokens  as their target addresses. 
+LABEL()は、分岐やループのために、コロン・ワードの中に部分的なトークン・リストを構築する。Pは現在のトークンアドレスを持つ。このアドレスは戻り値で整数として保存され、分岐トークンに続くアドレスとして使用される。そして、可変数の整数のトークンをパラメータとして組み立てます。この数は最初のパラメータint lenでなければなりません。 
 
-LABEL()cannot handle forward reference. All references in its parameter list must be valid.  Not-yet-defined label must be initialized to a value like 0. After a first pass of macro assembler,  all references are resolved, and the valid addresses must be copied to replace the 0 initially  assigned. This second pass must be done manually. 
-
-LABEL()は、分岐やループのために、コロン・ワードで部分的なトークン・リストを構築する。Pは現在のトークンアドレスを持つ。このアドレスは戻り値で整数として保存され、分岐トークンに続くアドレスとして使用される。そして、可変数の整数のトークンをパラメータとして組み立てます。この数は最初のパラメータint lenでなければなりません。 LABEL()は、コロン・ワードで部分的なトークンリストを構築します。LABEL()は、トークンを分岐させるためのアドレスをターゲットアドレスとして返す。
+LABEL()は、コロン・ワードの中で部分的なトークンリストを構築します。LABEL()は、トークンを分岐させるためのアドレスをターゲットアドレスとして返す。
 
 LABEL()は、前方参照を扱うことができない。LABEL()のパラメータリストに含まれる全ての参照は有効でなければならない。 マクロアセンブラの最初のパスの後、すべての参照は解決され、有効なアドレスは最初に割り当てられた0を置き換えるためにコピーされる必要があります。この2回目のパスは手動で行う必要があります。
-
-
-
+```
 int LABEL(int len, ...) {
-int addr = P;
-IP = P >> 2;
-va_list argList;
-va_start(argList, len);
-//printf("\n%X ",addr);
-for (; len; len--) {
-int j = va_arg(argList, int);
-data[IP++] = j;
-//printf(" %X",j);
+    int addr = P;
+    IP = P >> 2;
+    va_list argList;
+    va_start(argList, len);
+    //printf("\n%X ",addr);
+    for (; len; len--) {
+        int j = va_arg(argList, int);
+        data[IP++] = j;
+        //printf(" %X",j);
+    }
+    P = IP << 2;
+    va_end(argList);
+    return addr;
 }
-P = IP << 2;
-va_end(argList);
-return addr;
-}
+```
+Using LABEL()to mark all locations for branching and looping, I built and tested  esp32Forth_61. I checked the dictionary it produced byte-for-byte against the dictionary  generated by espForth_54. It proved that a C program could correctly build a Forth dictionary.  However, manually resolving forward references was not satisfactory, and a better set of macro  is needed to assemble Forth dictionary automatically. The new scheme was tried out in  esp32forth_62, and it was adapted in ceForth_33. 
 
-Using LABEL()to mark all locations for branching and looping, I built and tested  esp32Forth_61. I checked the dictionary it produced byte-for-byte against the dictionary  generated by espForth_54. It proved that a C program could correctly build a Forth dictionary.  However, manually resolving forward references was not satisfactory, and a better set of macro  is needed to assemble Forth dictionary automatically. The new scheme was tried out in  esp32forth_62, and it was adapted in ceForth_33. Macros for Structured Programming I could handle labels myself to demonstrate that a Forth dictionary could be built in C, but I  would not expect users to manually resolve forward references. Chuck Moore demonstrated  that all nested control structures could be compiled correctly in a single pass. It is certainly  possible to do it in this macro assembler. The way to do it is to write all the Forth immediate  words in macros to set up branch and loop structures and resolve all references, forward or  backward. The macros we need are used to build the following structures: 
+LABEL()を使って、分岐とループのためのすべての場所をマークし、私はesp32Forth_61をビルドしてテストしました。私は、それが生成した辞書をespForth_54によって生成された辞書と1バイトずつチェックしました。CプログラムがForth辞書を正しく構築できることが証明されました。 しかし、前方参照を手動で解決することは満足できるものではなく、Forth辞書を自動的に組み立てるためのより良いマクロのセットが必要である。この新しい方式はesp32forth_62で試され、ceForth_33で適応された。
 
-LABEL()を使って、分岐とループのためのすべての場所をマークし、私はesp32Forth_61をビルドしてテストしました。私は、それが生成した辞書をespForth_54によって生成された辞書と1バイトずつチェックしました。CプログラムがForth辞書を正しく構築できることが証明されました。 しかし、前方参照を手動で解決することは満足できるものではなく、Forth辞書を自動的に組み立てるためのより良いマクロのセットが必要である。この新しい方式はesp32forth_62で試され、ceForth_33で適応された。構造化プログラミングのためのマクロ Forth辞書がCで構築できることを示すために、私自身はラベルを扱うことができたが、ユーザーが前方参照を手動で解決することは期待しない。Chuck Mooreは、すべてのネストされた制御構造が1回のパスで正しくコンパイルできることを実証しました。このマクロアセンブラでそれを行うことは確かに可能である。その方法は、Forthのすべての即値語をマクロで記述して、分岐やループ構造を設定し、前方や後方へのすべての参照を解決することだ。必要なマクロは、次のような構造を構築するために使用されます。
+### Macros for Structured Programming
 
+I could handle labels myself to demonstrate that a Forth dictionary could be built in C, but I  would not expect users to manually resolve forward references. Chuck Moore demonstrated  that all nested control structures could be compiled correctly in a single pass. It is certainly  possible to do it in this macro assembler. The way to do it is to write all the Forth immediate  words in macros to set up branch and loop structures and resolve all references, forward or  backward. 
 
+Forth辞書がCで構築できることを示すために、私自身はラベルを扱うことができたが、ユーザーが前方参照を手動で解決することは期待しない。Chuck Mooreは、すべてのネストされた制御構造が1回のパスで正しくコンパイルできることを実証しました。このマクロアセンブラでそれを行うことは確かに可能である。その方法は、Forthのすべての即値語をマクロで記述して、分岐やループ構造を設定し、前方や後方へのすべての参照を解決することだ。
 
-BEGIN...AGAIN
-BEGIN...UNTIL
-BEGIN...WHILE...REPEAT
-IF...ELSE...THEN
-FOR...AFT...THEN...NEXT
+The macros we need are used to build the following structures: 
 
+必要なマクロは、次のような構造を構築するために使用されます。
+```
+    BEGIN...AGAIN
+    BEGIN...UNTIL
+    BEGIN...WHILE...REPEAT
+    IF...ELSE...THEN
+    FOR...AFT...THEN...NEXT
+```
 Some macros generally assemble a branch token with a branch address, followed by a variable  number of tokens. Other macros resolves a forward reference. The structures can be nested;  therefore, a stack is necessary to pass address field locations, and resolved addresses when they  are available. I draft the return stack mechanism to accomplish address parameter passing.  
-
-Earlier I defined two replacement macros to clarify the return stack operations: 
 
 いくつかのマクロは、一般に分岐トークンを分岐アドレスでアセンブルし、その後に可変数のトークンが続く。他のマクロは、前方参照を解決する。構造体は入れ子にすることができるので、アドレスフィールドの位置、および解決されたアドレスが利用可能な場合はそれを渡すためにスタックが必要である。私は、アドレスパラメータ渡しを実現するために、リターンスタック機構を起草した。 
 
-先に、リターンスタックの操作を明確にするために、2つの置換マクロを定義した。
+Earlier I defined two replacement macros to clarify the return stack operations: 
 
-
+以前、リターンスタックの操作を明確にするために、2つの置換マクロを定義した。
 ```
 # define popR rack[(unsigned char)R--]
 # define pushR rack[(unsigned char)++R]
@@ -1299,40 +1150,38 @@ BEGIN()は不定形ループを開始します。ループを終了する分岐�
 
 ```
 void BEGIN(int len, ...) {
-IP = P >> 2;
-//printf("\n%X BEGIN ",P);
-pushR = IP;
-va_list argList;
-va_start(argList, len);
-for (; len; len--) {
-int j = va_arg(argList, int);
-data[IP++] = j;
-//printf(" %X",j);
-}
-P = IP << 2;
-va_end(argList);
+    IP = P >> 2;
+    //printf("\n%X BEGIN ",P);
+    pushR = IP;
+    va_list argList;
+    va_start(argList, len);
+    for (; len; len--) {
+        int j = va_arg(argList, int);
+        data[IP++] = j;
+        //printf(" %X",j);
+    }
+    P = IP << 2;
+    va_end(argList);
 }
 ```
 AGAIN()closes an indefinite loop. It first assembles a BRAN token, and then assembles the  address BEGIN() left on the return stack to complete the loop structure. It then assemble a  token list with the parameters passing to AGAIN() macro. Number of parameters is indicated  by the first parameter int len. 
 
 AGAIN()は、不定形ループを閉じる。まず、BRAN トークンを組み立て、リターンスタックに残っている BEGIN() アドレスを組み立てて、ループ構造を完成させる。そして、AGAIN()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
-
-
 ```
 void AGAIN(int len, ...) {
-IP = P >> 2;
-//printf("\n%X AGAIN ",P);
-data[IP++] = BRAN;
-data[IP++] = popR << 2;
-va_list argList;
-va_start(argList, len);
-for (; len; len--) {
-int j = va_arg(argList, int);
-data[IP++] = j;
-//printf(" %X",j);
-}
-P = IP << 2;
-va_end(argList);
+    IP = P >> 2;
+    //printf("\n%X AGAIN ",P);
+    data[IP++] = BRAN;
+    data[IP++] = popR << 2;
+    va_list argList;
+    va_start(argList, len);
+    for (; len; len--) {
+        int j = va_arg(argList, int);
+        data[IP++] = j;
+        //printf(" %X",j);
+    }
+    P = IP << 2;
+    va_end(argList);
 }
 ```
 UNTIL()closes an indefinite loop. It first assembles a QBRAN token, and then assembles the  address BEGIN()left on the return stack to complete the loop structure. It then assemble a  token list with the parameters passing to AGAIN()macro. Number of parameters is indicated  by the first parameter int len. 
@@ -1341,19 +1190,19 @@ UNTIL()は不定形ループを閉じる。最初にQBRANトークンを組み�
 
 ```
 void UNTIL(int len, ...) {
-IP = P >> 2;
-//printf("\n%X UNTIL ",P);
-data[IP++] = QBRAN;
-data[IP++] = popR << 2;
-va_list argList;
-va_start(argList, len);
-for (; len; len--) {
-int j = va_arg(argList, int);
-data[IP++] = j;
-//printf(" %X",j);
-}
-P = IP << 2;
-va_end(argList);
+    IP = P >> 2;
+    //printf("\n%X UNTIL ",P);
+    data[IP++] = QBRAN;
+    data[IP++] = popR << 2;
+    va_list argList;
+    va_start(argList, len);
+    for (; len; len--) {
+        int j = va_arg(argList, int);
+        data[IP++] = j;
+        //printf(" %X",j);
+    }
+    P = IP << 2;
+    va_end(argList);
 }
 ```
 WHILE()closes a always clause and starts a true clause in an indefinite loop. It first assembles  a QBRAN token with a null address. The words address after the null address is now pushed on  the return stack under the address left by BEGIN(). Two address on the return stack will be  used by REPEAT() macro to close the loop, and to resolve the address after QBRAN(). It then  assemble a token list with the parameters passing to WHILE()macro. Number of parameters is  indicated by the first parameter int len. 
@@ -1362,23 +1211,23 @@ WHILE()は、always節を閉じ、true節を開始する不定形ループであ
 
 ```
 void WHILE(int len, ...) {
-IP = P >> 2;
-int k;
-//printf("\n%X WHILE ",P);
-data[IP++] = QBRAN;
-data[IP++] = 0;
-k = popR;
-pushR = (IP - 1);
-pushR = k;
-va_list argList;
-va_start(argList, len);
-for (; len; len--) {
-int j = va_arg(argList, int);
-data[IP++] = j;
-//printf(" %X",j);
-}
-P = IP << 2;
-va_end(argList);
+    IP = P >> 2;
+    int k;
+    //printf("\n%X WHILE ",P);
+    data[IP++] = QBRAN;
+    data[IP++] = 0;
+    k = popR;
+    pushR = (IP - 1);
+    pushR = k;
+    va_list argList;
+    va_start(argList, len);
+    for (; len; len--) {
+        int j = va_arg(argList, int);
+        data[IP++] = j;
+        //printf(" %X",j);
+    }
+    P = IP << 2;
+    va_end(argList);
 }
 ```
 REPEAT()closes a BEGIN-WHILE-REPEAT indefinite loop. It first assembles a BRAN token  with the address left by BEGIN(). The words address after the BEGIN address is now stored  into the location whose address was left by WHILE() on the return stack. It then assemble a  token list with the parameters passing to REPEAT()macro. Number of parameters is indicated  by the first parameter int len. 
@@ -1387,43 +1236,41 @@ REPEAT()は、BEGIN-WHILE-REPEATの不定形ループを閉じます。まず、
 
 ```
 void REPEAT(int len, ...) {
-IP = P >> 2;
-//printf("\n%X REPEAT ",P);
-data[IP++] = BRAN;
-data[IP++] = popR << 2;
-data[popR] = IP << 2;
-va_list argList;
-va_start(argList, len);
-for (; len; len--) {
-int j = va_arg(argList, int);
-data[IP++] = j;
-//printf(" %X",j);
-}
-P = IP << 2;
-va_end(argList);
+    IP = P >> 2;
+    //printf("\n%X REPEAT ",P);
+    data[IP++] = BRAN;
+    data[IP++] = popR << 2;
+    data[popR] = IP << 2;
+    va_list argList;
+    va_start(argList, len);
+    for (; len; len--) {
+        int j = va_arg(argList, int);
+        data[IP++] = j;
+        //printf(" %X",j);
+    }
+    P = IP << 2;
+    va_end(argList);
 }
 ```
 IF()starts a true clause in a branch structure. It first assembles a QBRAN token with a null  address. The words address of the null address field is now pushed on the return stack. The null  address field will be filled by ELSE() or THEN(), when they resolve the branch address. It  then assemble a token list with the parameters passing to IF()macro. Number of parameters is  indicated by the first parameter int len. 
 
 IF()は、分岐構造内の真節を開始する。それは最初にヌルアドレスを持つQBRANトークンを組み立てる。ヌルアドレスフィールドのワードアドレスは、現在リターンスタックにプッシュされています。ヌルアドレスフィールドは、ELSE()またはTHEN()が分岐アドレスを解決するときに埋められる。次に、IF()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
-
-
 ```
 void IF(int len, ...) {
-IP = P >> 2;
-//printf("\n%X IF ",P);
-data[IP++] = QBRAN;
-pushR = IP;
-data[IP++] = 0;
-va_list argList;
-va_start(argList, len);
-for (; len; len--) {
-int j = va_arg(argList, int);
-data[IP++] = j;
-//printf(" %X",j);
-}
-P = IP << 2;
-va_end(argList);
+    IP = P >> 2;
+    //printf("\n%X IF ",P);
+    data[IP++] = QBRAN;
+    pushR = IP;
+    data[IP++] = 0;
+    va_list argList;
+    va_start(argList, len);
+    for (; len; len--) {
+        int j = va_arg(argList, int);
+        data[IP++] = j;
+        //printf(" %X",j);
+    }
+    P = IP << 2;
+    va_end(argList);
 }
 ```
 ELSE()closes a true clause and starts a false clause in an IF-ELSE-THEN branch structure. It  first assembles a BRAN token with a null address. The words address after the null address is  now used to resolve the branch address assembled by IF(). The address of the null address  field is pushed on the return stack to be used by THEN(). It then assemble a token list with the  parameters passing to ELSE()macro. Number of parameters is indicated by the first parameter  int len. 
@@ -1432,201 +1279,188 @@ ELSE()closes a true clause and starts a false clause in an IF-ELSE-THEN branch s
 ELSE()は、IF-ELSE-THEN分岐構造で真節を閉じ、偽節を開始します。まず、ヌルアドレスを持つBRANトークンを組み立てる。ヌル・アドレスの後のワード・アドレスは、IF()で組み立てられたブランチ・アドレスを解決するために使用されます。ヌルアドレスフィールドのアドレスは、THEN()で使用するために、リターンスタックにプッシュされる。そして、ELSE()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 ```
 void ELSE(int len, ...) {
-IP = P >> 2;
-//printf("\n%X ELSE ",P);
-data[IP++] = BRAN;
-data[IP++] = 0;
-data[popR] = IP << 2;
-pushR = IP - 1;
-va_list argList;
-va_start(argList, len);
-for (; len; len--) {
-int j = va_arg(argList, int);
-data[IP++] = j;
-//printf(" %X",j);
-}
-P = IP << 2;
-va_end(argList);
+    IP = P >> 2;
+    //printf("\n%X ELSE ",P);
+    data[IP++] = BRAN;
+    data[IP++] = 0;
+    data[popR] = IP << 2;
+    pushR = IP - 1;
+    va_list argList;
+    va_start(argList, len);
+    for (; len; len--) {
+        int j = va_arg(argList, int);
+        data[IP++] = j;
+        //printf(" %X",j);
+    }
+    P = IP << 2;
+    va_end(argList);
 }
 ```
 THEN()closes an IF-THEN or IF-ELSE-THEN branch structure. It resolved the null address  assembled by IF() or ELSE() with the current word address after THEN(). It then assemble  a token list with the parameters passing to THEN()macro. Number of parameters is indicated  by the first parameter int len. 
 
 THEN()は、IF-THENまたはIF-ELSE-THEN分岐構造を閉じます。IF()またはELSE()で組み立てたNULLアドレスをTHEN()の後の現在のワードアドレスで解決する。そして、THEN()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
-
-
-
+```
 void THEN(int len, ...) {
-IP = P >> 2;
-//printf("\n%X THEN ",P);
-data[popR] = IP << 2;
-va_list argList;
-va_start(argList, len);
-for (; len; len--) {
-int j = va_arg(argList, int);
-data[IP++] = j;
-//printf(" %X",j);
+    IP = P >> 2;
+    //printf("\n%X THEN ",P);
+    data[popR] = IP << 2;
+    va_list argList;
+    va_start(argList, len);
+    for (; len; len--) {
+        int j = va_arg(argList, int);
+        data[IP++] = j;
+    //printf(" %X",j);
+    }
+    P = IP << 2;
+    va_end(argList);
 }
-P = IP << 2;
-va_end(argList);
-}
-
+```
 FOR()starts a definite loop structure. It first assembles a TOR token and pushes the address of  the current address field on the return stack. This address will be used by NEXT() in its loop  back address filed. It then assemble a token list with the parameters passing to FOR()macro.  Number of parameters is indicated by the first parameter int len. 
 
 FOR()は確定したループ構造を開始する。最初にTORトークンを組み立て、現在のアドレス・フィールドのアドレスをリターン・スタックにプッシュします。このアドレスは、NEXT()のループバックアドレスファイルで使用されます。次に、FOR()マクロに渡すパラメータでトークンリストを作成する。 パラメータの数は、最初のパラメータ int len で示されます。
-
-
+```
 void FOR(int len, ...) {
-IP = P >> 2;
-//printf("\n%X FOR ",P);
-data[IP++] = TOR;
-pushR = IP;
-va_list argList;
-va_start(argList, len);
-for (; len; len--) {
-int j = va_arg(argList, int);
-data[IP++] = j;
-//printf(" %X",j);
+    IP = P >> 2;
+    //printf("\n%X FOR ",P);
+    data[IP++] = TOR;
+    pushR = IP;
+    va_list argList;
+    va_start(argList, len);
+    for (; len; len--) {
+        int j = va_arg(argList, int);
+        data[IP++] = j;
+        //printf(" %X",j);
+    }
+    P = IP << 2;
+    va_end(argList);
 }
-P = IP << 2;
-va_end(argList);
-}
-
+```
 NEXT()closes an definite loop. It first assembles a DONXT token, and then assembles the  address FOR()left on the return stack to complete the loop structure. It then assemble a token  list with the parameters passing to NEXT()macro. Number of parameters is indicated by the  first parameter int len. 
 
 NEXT()は、確定ループを閉じます。まず、DONXTトークンを組み立て、リターンスタックに残っているFOR()のアドレスを組み立てて、ループ構造を完成させる。次に、NEXT()マクロに渡すパラメータでトークンリストを作成する。パラメータの数は、最初のパラメータ int len で示されます。
-
-
+```
 void NEXT(int len, ...) {
-IP = P >> 2;
-//printf("\n%X NEXT ",P);
-data[IP++] = DONXT;
-data[IP++] = popR << 2;
-va_list argList;
-va_start(argList, len);
-for (; len; len--) {
-int j = va_arg(argList, int);
-data[IP++] = j;
-//printf(" %X",j);
+    IP = P >> 2;
+    //printf("\n%X NEXT ",P);
+    data[IP++] = DONXT;
+    data[IP++] = popR << 2;
+    va_list argList;
+    va_start(argList, len);
+    for (; len; len--) {
+        int j = va_arg(argList, int);
+        data[IP++] = j;
+        //printf(" %X",j);
+    }
+    P = IP << 2;
+    va_end(argList);
 }
-P = IP << 2;
-va_end(argList);
-}
-
+```
 AFT()closes a always clause and starts a skip-once-only clause in an definite loop. It first  assembles a BRAN token with a null address. The words address after the null address is now  pushed on the return stack replacing the address left by FOR(). The address of the null address  field is pushed on the return stack. Top address on the return stack will be used by THEN() macro to close skip-once-only clause, and to resolve the address after AFT(). It then assemble  a token list with the parameters passing to AFT()macro. Number of parameters is indicated by  the first parameter int len. 
 
 AFT()は、always節を閉じ、definiteループのskip-once-only節を開始する。まず、BRANトークンをヌルアドレスでアセンブルします。NULLアドレスの後のワードアドレスは、FOR()によって残されたアドレスに代わって、リターンスタックにプッシュされる。ヌルアドレスフィールドのアドレスは、リターンスタックにプッシュされます。リターンスタックの先頭アドレスは、THEN()マクロがスキップワンスオンリー節を閉じるために使用し、AFT()の後のアドレスを解決するために使用されます。次に、AFT()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
-
-
-
+```
 void AFT(int len, ...) {
-IP = P >> 2;
-int k;
-//printf("\n%X AFT ",P);
-data[IP++] = BRAN;
-data[IP++] = 0;
-k = popR;
-pushR = IP;
-pushR = IP - 1;
-va_list argList;
-va_start(argList, len);
-for (; len; len--) {
-int j = va_arg(argList, int);
-data[IP++] = j;
-//printf(" %X",j);
+    IP = P >> 2;
+    int k;
+    //printf("\n%X AFT ",P);
+    data[IP++] = BRAN;
+    data[IP++] = 0;
+    k = popR;
+    pushR = IP;
+    pushR = IP - 1;
+    va_list argList;
+    va_start(argList, len);
+    for (; len; len--) {
+        int j = va_arg(argList, int);
+        data[IP++] = j;
+        //printf(" %X",j);
+    }
+    P = IP << 2;
+    va_end(argList);
 }
-P = IP << 2;
-va_end(argList);
-}
-
+```
 A token list in a colon word contains mostly tokens, cfa of other words. However, other  information can be embedded in the token list as literals. We have seen lots of address literals  following BRAN, QBRAN and DONXT to build control structures. There is an integer literal  following DOLIT. The integer literal will be pushed on the data stack at run time when the  token list is executed. Another class of literals is string literals to embed strings in token list.  We need three more macros to build string structures: 
 
-コロン語のトークン・リストには、主に他の語のトークン、cfaが含まれる。しかし、他の情報はリテラルとしてトークンリストに埋め込むことができる。制御構造を構築するために、BRAN、QBRAN、DONXTに続くアドレスリテラルをたくさん見てきました。DOLITに続く整数リテラルがあります。整数リテラルは、トークン・リストが実行されるときに、実行時のデータ・スタックにプッシュされる。もう一つのリテラルのクラスは、トークン・リストに文字列を埋め込むための文字列リテラルである。 文字列構造を構築するために、さらに3つのマクロが必要である。
+コロンワードのトークン・リストには、主に他の語のトークン、cfaが含まれる。しかし、他の情報はリテラルとしてトークンリストに埋め込むことができる。制御構造を構築するために、BRAN、QBRAN、DONXTに続くアドレスリテラルをたくさん見てきました。DOLITに続く整数リテラルがあります。整数リテラルは、トークン・リストが実行されるときに、実行時のデータ・スタックにプッシュされる。もう一つのリテラルのクラスは、トークン・リストに文字列を埋め込むための文字列リテラルである。 文字列構造を構築するために、さらに3つのマクロが必要である。
 
-
+```
 .” <string”
 $” <string>”
 ABORT” <string>”
-
+```
 DOTQ()starts a string literal to be printed out at run time. It first assembles a DOTQP token.  Then the string, terminated by another double quote, is assembled as a counted string. The  string is null-filled to the 32-bit word boundary, similar to what HEADER() does. 
 
 DOTQ()は、ランタイムに出力される文字列リテラルを開始します。これは最初にDOTQPトークンを組み立てる。 次に、もう1つの二重引用符で終端された文字列が、カウントされた文字列として組み立てられる。文字列は、HEADER()が行うのと同様に、32ビットのワード境界までヌルフィルされます。
 
-
+```
 void DOTQ(const char seq[]) {
-IP = P >> 2;
-int i;
-int len = strlen(seq);
-data[IP++] = DOTQP;
-P = IP << 2;
-cData[P++] = len;
-for (i = 0; i < len; i++)
-{
-cData[P++] = seq[i];
+    IP = P >> 2;
+    int i;
+    int len = strlen(seq);
+    data[IP++] = DOTQP;
+    P = IP << 2;
+    cData[P++] = len;
+    for (i = 0; i < len; i++) {
+        cData[P++] = seq[i];
+    }
+    while (P & 3) { cData[P++] = 0; }
+    //printf("\n%X ",P);
+    //printf(seq);
 }
-while (P & 3) { cData[P++] = 0; }
-//printf("\n%X ",P);
-//printf(seq);
-}
-
+```
 STRQ()starts a string literal to be accessed at run time. When it executes, it leaves the address  of the count byte of this string on the data stack. Other Forth words will make use of this string,  knowing its count byte address. It first assembles a STRQP token. Then the string, terminated  by another double quote, is assembled as a counted string. The string is null-filled to the 32-bit  word boundary, similar to what HEADER() does. 
 
 STRQ()は、実行時にアクセスする文字列リテラルを開始します。実行時に、この文字列のカウント・バイトのアドレスをデータ・スタックに残します。他のForthワードは、この文字列のカウント・バイトのアドレスを知って、この文字列を使用します。まず、STRQPトークンをアセンブルします。次に、もう1つの二重引用符で終端された文字列が、カウントされた文字列として組み立てられる。文字列は、HEADER()が行うのと同様に、32ビットのワード境界までヌルフィルされます。
-
-
-
+```
 void STRQ(const char seq[]) {
-IP = P >> 2;
-int i;
-int len = strlen(seq);
-data[IP++] = STRQP;
-P = IP << 2;
-cData[P++] = len;
-for (i = 0; i < len; i++)
-{
-cData[P++] = seq[i];
+    IP = P >> 2;
+    int i;
+    int len = strlen(seq);
+    data[IP++] = STRQP;
+    P = IP << 2;
+    cData[P++] = len;
+    for (i = 0; i < len; i++) {
+        cData[P++] = seq[i];
+    }
+    while (P & 3) { cData[P++] = 0; }
+    //printf("\n%X ",P);
+    //printf(seq);
 }
-while (P & 3) { cData[P++] = 0; }
-//printf("\n%X ",P);
-//printf(seq);
-}
-
+```
 ABORQ()starts a string literal as a warning message to be printed out when Forth is aborted. It  first assembles a ABORQP token. Then the string, terminated by another double quote, is  assembled as a counted string. The string is null-filled to the 32-bit word boundary, similar to  what HEADER() does. 
 
 ABORQ()は、Forthが中断されたときに出力される警告メッセージとして、文字列リテラルを開始します。これはまずABORQPトークンを組み立てる。次に、もう1つの二重引用符で終端された文字列が、カウントされた文字列として組み立てられる。文字列は、HEADER()が行うのと同様に、32ビットのワード境界までヌルフィルされます。
-
-
+```
 void ABORQ(const char seq[]) {
-IP = P >> 2;
-int i;
-int len = strlen(seq);
-data[IP++] = ABORQP;
-P = IP << 2;
-cData[P++] = len;
-for (i = 0; i < len; i++)
-{
-cData[P++] = seq[i];
+    IP = P >> 2;
+    int i;
+    int len = strlen(seq);
+    data[IP++] = ABORQP;
+    P = IP << 2;
+    cData[P++] = len;
+    for (i = 0; i < len; i++) {
+        cData[P++] = seq[i];
+    }
+    while (P & 3) { cData[P++] = 0; }
+    //printf("\n%X ",P);
+    //printf(seq);
 }
-while (P & 3) { cData[P++] = 0; }
-//printf("\n%X ",P);
-//printf(seq);
-}
-
+```
 CheckSum() dumps 32 bytes of memory to Serial Terminal, roughly in the Intel dump format.  First display 4 bytes of address and a space. Then 32 bytes of data, 2 hex characters to a byte.  Finally the sum of these 32 bytes is displayed in 2 hex characters. The checksums are very  useful for me to compare the dictionary assembled by this macro assembler against the  dictionary produced by my earlier F# metacompiler. 
 
 CheckSum()は、32バイトのメモリをシリアルターミナルにダンプします。おおよそIntelのダンプ形式です。 最初に4バイトのアドレスとスペースが表示されます。次に32バイトのデータを、1バイトに16進数で2文字表示します。 最後にこれら32バイトの合計が16進数2文字で表示される。このチェックサムは、このマクロアセンブラで組まれた辞書と、私が以前作ったF#メタコンパイラで作られた辞書を比較するのに非常に便利である。
-
-
+```
 void CheckSum() {
-int i;
-char sum = 0;
-printf("\n%4X ", P);
-for (i = 0; i < 16; i++) {
-sum += cData[P];
-printf("%2X", cData[P++]);
+    int i;
+    char sum = 0;
+    printf("\n%4X ", P);
+    for (i = 0; i < 16; i++) {
+        sum += cData[P];
+        printf("%2X", cData[P++]);
+    }
+    printf(" %2X", sum & 0XFF);
 }
-printf(" %2X", sum & 0XFF);
-}
-
+```
 The macro assembler is complete. The macros thus defined will be used to construct primitive  words and colon words to form a complete Forth dictionary for VFM to run. 
 
 マクロアセンブラが完成しました。こうして定義されたマクロは、プリミティブワードやコロンワードを構成して、VFMが実行するための完全なForth辞書を形成するために使用されます。
@@ -1641,7 +1475,7 @@ To facilitate the macro assembler to assemble consecutive byte code, individual 
 マクロアセンブラが連続したバイトコードをアセンブルしやすいように、個々のバイトコードにニーモニック名をつけて、難しい数字を使わなくても済むようにしています。ニモニック名は、対応するプリミティブ・ルーチンの名前に、アセンブラのニモニックであることを示すために "as_"を付けただけのものです。
 
 
-
+```
 // Byte Code Assembler
 int as_nop = 0;
 int as_bye = 1;
@@ -1707,32 +1541,32 @@ int as_count = 60;
 int as_dovar = 61;
 int as_max = 62;
 int as_min = 63;
-
+```
 ## Assembling Forth Dictionary
 
 The macro assembler run first in the main() loop required by Visual Studio: 
 
 マクロアセンブラは、Visual Studioが要求するmain()ループの中で最初に実行されます。
 
-
+```
 /*
 * Main Program
 */
 int main(int ac, char* av[])
 {
-cData = (unsigned char*)data;
-P = 512;
-R = 0;
-
+    cData = (unsigned char*)data;
+    P = 512;
+    R = 0;
+```
 cData[] byte array must be aligned with data[] array, to allow bytes to be accessed in the  integer data[] array. 
 
 The macros HEADER() and CODE() defined previously in the macro assembler are now used  to assemble the primitive words to the dictionary. The dictionary is divided in two sections, first  the primitive words as a kernel of FVM, and next are all the colon words, which constitutes the  bulk of Forth dictionary. 
 
 The first 512 byte of the dictionary are allocated to a terminal input buffer, and an area storing  initial values of user variables. P is therefore initialized to 512. thread was already initialized  to 0, ready to build the linked records of the first Forth word. 
 
-cData[]バイト配列は、整数のdata[]配列でバイトをアクセスできるようにするために、data[]配列にアライメントする必要があります。
+`cData[]`バイト配列は、整数の`data[]`配列でバイトをアクセスできるようにするために、data[]配列にアライメントする必要があります。
 
-マクロアセンブラで先に定義したマクロHEADER()とCODE()を使って、プリミティブワードを辞書にアセンブルするようになりました。辞書は2つのセクションに分けられ、最初はFVMのカーネルとしての原始語、次はForth辞書の大部分を構成するすべてのコロン語である。
+マクロアセンブラで先に定義したマクロHEADER()とCODE()を使って、プリミティブワードを辞書にアセンブルするようになりました。辞書は2つのセクションに分けられ、最初はFVMのカーネルとしての原始語、次はForth辞書の大部分を構成するすべてのコロンワードである。
 
 辞書の最初の512バイトは、端末の入力バッファとユーザー変数の初期値を格納する領域に割り当てられている。スレッドはすでに0に初期化されており、最初のForth語のリンクレコードを構築する準備ができている。
 
@@ -2322,7 +2156,7 @@ Complicated colon words contain control structures, integer literals, and string
 
 HEADER()は、リンクフィールドと名前フィールドをコロンワードに組み立てる。COLON()は、ドルストバイトコードを追加してコードフィールドを形成する。COLON() は、可変長のトークンリストを作成する。トークンは、他のワードの模範となるものである。
 
-複雑なコロン語には、制御構造、整数リテラル、文字列リテラルが含まれます。マクロアセンブラは、これらの構造を自動的にトークンリストに構築するためのマクロをすべて備えている。これらのマクロのおかげで、ほとんど文字通りオリジナルのForthのコードをCのリストに書き写すことができた。
+複雑なコロンワードには、制御構造、整数リテラル、文字列リテラルが含まれます。マクロアセンブラは、これらの構造を自動的にトークンリストに構築するためのマクロをすべて備えている。これらのマクロのおかげで、ほとんど文字通りオリジナルのForthのコードをCのリストに書き写すことができた。
 
  一般的なワード 
 
@@ -2980,9 +2814,9 @@ $COMPILE normally adds a token to the dictionary. However, there are two excepti
 
 Forthコンパイラは、Forthテキスト・インタープリタの双子の兄弟です。両者は多くの共通特性を持ち、多くの共通コードを使用しています。Forthでは、コンパイラの実装は、この特別な二面性を明確に反映しています。2つの興味深い言葉[ and ]によって、テキスト・インタープリタはコンパイラ・モードとインタープリタ・モードの間を行ったり来たりします。 
 
-EVALでは@EXECUTEがテキスト行からパースされたトークンを処理するために使われるので、'EVAL内の内容がテキストインタプリタの動作を決定する。EVALに$INTERPRETを格納すると、[ と同様に、トークンが実行または解釈されます。 EVALに$COMPILEを格納するために[ を呼び出すと、トークンは実行されず、辞書の先頭にコンパイルされます。これはまさに、コロン語コンパイラが辞書の新しいコロン語のパラメータ・フィールドにトークンのリストを構築する際に望む動作である。 
+EVALでは@EXECUTEがテキスト行からパースされたトークンを処理するために使われるので、'EVAL内の内容がテキストインタプリタの動作を決定する。EVALに$INTERPRETを格納すると、[ と同様に、トークンが実行または解釈されます。 EVALに$COMPILEを格納するために[ を呼び出すと、トークンは実行されず、辞書の先頭にコンパイルされます。これはまさに、コロンワードコンパイラが辞書の新しいコロンワードのパラメータ・フィールドにトークンのリストを構築する際に望む動作である。 
 
-通常、$COMPILEはトークンを辞書に追加します。しかし、2つの例外を処理する必要があります。入力ストリームから解析された文字列が辞書内のワードでない場合、その文字列は数値に変換されます。文字列が整数に変換できる場合、その整数は、特別なトークンDOLITと整数の続きからなる整数リテラルとして辞書にコンパイルされる。もう1つの例外は、辞書で見つかったトークンが、辞書にコンパイルされずにすぐに実行されなければならない即時ワードである可能性があることです。 即値語は、コロン語の構造をコンパイルするために使用されます。 
+通常、$COMPILEはトークンを辞書に追加します。しかし、2つの例外を処理する必要があります。入力ストリームから解析された文字列が辞書内のワードでない場合、その文字列は数値に変換されます。文字列が整数に変換できる場合、その整数は、特別なトークンDOLITと整数の続きからなる整数リテラルとして辞書にコンパイルされる。もう1つの例外は、辞書で見つかったトークンが、辞書にコンパイルされずにすぐに実行されなければならない即時ワードである可能性があることです。 即値語は、コロンワードの構造をコンパイルするために使用されます。 
 
 // Colon Word Compiler
 
@@ -3189,7 +3023,7 @@ int DOTQ1 = LABEL(2, CR, QUITT);
 
 A set of immediate words are defined in Forth to build control structures in colon words. The  control structures used in Forth are the following:  
 
-Forthでは、コロン語で制御構造を構築するために、即値語のセットが定義されています。Forthで使用される制御構造は以下の通りです。 
+Forthでは、コロンワードで制御構造を構築するために、即値語のセットが定義されています。Forthで使用される制御構造は以下の通りです。 
 
 Conditional branch IF ... THEN  
 IF ... ELSE ... THEN  
