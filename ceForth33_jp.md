@@ -1242,8 +1242,6 @@ void FOR(int len, ...) {
     va_end(argList);
 }
 ```
-NEXT()closes an definite loop. It first assembles a DONXT token, and then assembles the  address FOR()left on the return stack to complete the loop structure. It then assemble a token  list with the parameters passing to NEXT()macro. Number of parameters is indicated by the  first parameter int len. 
-
 `NEXT()`は、定回数ループを閉じます。まず、`DONXT`トークンを書き込み、リターンスタックに残っている`FOR()`のアドレスを書き込みループ構造を完成させる。次に、`NEXT()`マクロに渡すパラメータでトークンリストを作成する。パラメータの数は、最初のパラメータ int len で示されます。
 ```
 void NEXT(int len, ...) {
@@ -1262,8 +1260,6 @@ void NEXT(int len, ...) {
     va_end(argList);
 }
 ```
-AFT()closes a always clause and starts a skip-once-only clause in an definite loop. It first  assembles a BRAN token with a null address. The words address after the null address is now  pushed on the return stack replacing the address left by FOR(). The address of the null address  field is pushed on the return stack. Top address on the return stack will be used by THEN() macro to close skip-once-only clause, and to resolve the address after AFT(). It then assemble  a token list with the parameters passing to AFT()macro. Number of parameters is indicated by  the first parameter int len. 
-
 `AFT()`は、always節を閉じ、定回数ループのskip-once-only節を開始する。まず、`BRAN`トークンをヌルアドレスとともに書き込みます。ヌルアドレスの後のワードアドレスは、`FOR()`によって残されたアドレスに代わって、リターンスタックにプッシュされる。ヌルアドレスフィールドのアドレスは、リターンスタックにプッシュされます。リターンスタックの先頭アドレスは、`THEN()`マクロがskip-once-only節を閉じるために使用し、`AFT()`の後のアドレスを解決するために使用されます。次に、`AFT()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 ```
 void AFT(int len, ...) {
@@ -1499,505 +1495,353 @@ int TEMP = CODE(8, as_docon, as_next, 0, 0, 0XAC, 0, 0, 0);
 
 ## Kernel Words
 
-Forth words have a link field, a name field, a code field, and an optional parameter field. Link  field and name field are constructed by HEADER() macro. Primitive words have variable  length code field and are assembled by CODE() macro. CODE() returns the code field address  (cfa) of a word. This cfa is assigned to an integer, which will be invoked by COLON() macro to  assemble a token into the token list in the parameter field of a colon word. 
-
-Forthワードは、リンクフィールド、名前フィールド、コードフィールド、オプションのパラメータフィールドを持ちます。リンクフィールドと名前フィールドは、HEADER()マクロで構築される。プリミティブワードは可変長のコードフィールドを持ち、CODE()マクロでアセンブルされる。CODE()は、ワードのコードフィールドアドレス(cfa)を返す。このcfaは整数に割り当てられ、COLON()マクロによって呼び出され、コロンワードのパラメータフィールドのトークンリストにトークンを組み入れます。
-
-Kernel words reveal the 32-bit nature of the eP32 microcontroller this VFM emulates. Most  kernel words execute one byte code followed by the return byte code next(). Two empty  bytes are null-filled to make up the 32-bit word. In all the user variable words listed above, and  many other words which return only a constant, the byte code are docon() and next(),  followed by 2 null bytes. The constant value is stored in the next 32-bit word. These words  have 8 bytes in their code fields. docon() has to read the constant value stored in the next 32- bit word. 
+Forthワードは、リンクフィールド、名前フィールド、コードフィールド、オプションのパラメータフィールドを持ちます。リンクフィールドと名前フィールドは、`HEADER()`マクロで構築される。プリミティブワードは可変長のコードフィールドを持ち、`CODE()`マクロでアセンブルされる。`CODE()`は、ワードのコードフィールドアドレス(cfa)を返す。このcfaはある整数に割り当てられ、`COLON()`マクロによって呼び出され、コロンワードのパラメータフィールドのトークンリストにトークンを組み入れます。
 
 カーネルワードは、このVFMがエミュレートしているeP32マイクロコントローラの32ビット的な性質を表しています。ほとんどのカーネルワードは、1バイトのコードを実行し、その後にリターンバイトのコードnext()を実行します。2つの空のバイトがヌルフィルされて32ビットワードを構成しています。上記のすべてのユーザー変数ワード、および定数のみを返す他の多くのワードでは、バイトコードはdocon()とnext()で、その後に2つのヌルバイトが続きます。定数値は次の32ビットワードに格納されます。docon()は、次の32ビットワードに格納されている定数値を読まなければなりません。
 
-
-
 // primitive words
-NOP ( -- ) No operation. Break FVM and returns to Arduino loop(). 
+NOP ( -- ) 何もしない。FVMを解除し、Arduinoのloop()に戻る。 
 ```
 HEADER(3, "NOP"); 
 int NOP = CODE(4, as_next, 0, 0, 0); 
 ```
-BYE ( -- ) Return to Visual Studio OS. 
+BYE ( -- ) Visual Studio OSに戻る。 
 ```
 HEADER(3, "BYE"); 
 int BYE = CODE(4, as_bye, as_next, 0, 0); 
 ```
-?RX ( -- c t | f ) Read a character from terminal input device. Return character c and a true flag  if available. Else return a false flag. 
-
 ?RX ( -- c t | f ) 端末入力デバイスから文字を読み込む。文字cと、利用可能な場合はtrueフラグを返す。そうでなければ、偽フラグを返す。
 ```
 HEADER(3, "?RX");
 int QRX = CODE(4, as_qrx, as_next, 0, 0);
 ```
-TX! ( c -- ) Send a character to the Windows console.
-
 TX! ( c -- ) Windows コンソールに文字を送信します。
 ```
 HEADER(3, "TX!");
 int TXSTO = CODE(4, as_txsto, as_next, 0, 0);
 ```
-DOCON ( -- w) Push the next token onto the data stack as a constant.  
-
 DOCON ( -- w) 次のトークンを定数としてデータスタックにプッシュする。 
 ```
 HEADER(5, "DOCON");
 int DOCON = CODE(4, as_docon, as_next, 0, 0);
 ```
-DOLIT ( -- w) Push the next token onto the data stack as an integer literal. It allows numbers to  be compiled as in-line literals, supplying data to the data stack at run time.  
-
 DOLIT ( -- w) 次のトークンを整数リテラルとしてデータスタックにプッシュします。これにより、数値はインラインリテラルとしてコンパイルされ、実行時にデータスタックにデータを供給することができる。 
 ```
 HEADER(5, "DOLIT");
 int DOLIT = CODE(4, as_dolit, as_next, 0, 0);
 ```
-DOLIST ( -- ) Push the current Instruction Pointer (IP) on the return stack and then pops the  Program Counter P into IP from the data stack. When next() is executed, the tokens in the list  are executed consecutively. Dolist, is in the code field of all colon words. The token list in a  colon word must be terminated by EXIT. 
-
-DOLIST ( -- ) 現在の命令ポインタ(IP)をリターンスタックにプッシュし、プログラムカウンタPをデータスタックからIPにポッ プスする。next()が実行されると、リスト内のトークンが連続実行されます。Dolist, は、すべてのコロンワードのコードフィールドにある。コロンワードのトークンリストは、EXITで終了させなければならない。
+`DOLIST ( -- )` 現在の命令ポインタ(`IP`)をリターンスタックにプッシュし、プログラムカウンタ`P`をデータスタックからIPにポップする。`next()`が実行されると、リスト内のトークンが連続実行されます。`DOLIST`は、すべてのコロンワードのコードフィールドに存在します。コロンワードのトークンリストは、`EXIT`で終了させなければならない。
 ```
 HEADER(6, "DOLIST");
 int DOLST = CODE(4, as_dolist, as_next, 0, 0);
 ```
-EXIT ( -- ) Terminate all token lists in colon words. EXIT pops the execution address saved on  the return stack back into the IP register and thus restores the condition before the colon word was entered. Execution of the calling token list will continue. 
-
-EXIT ( -- ) コロン・ワードのトークン・リストをすべて終了させる。EXITは、リターンスタックに保存された実行アドレスをIPレジスタにポップバックし、コロン・ワードが入力される前の状態に復元する。呼び出したトークンリストの実行は継続される。
-
-
+`EXIT ( -- )` コロンワードのトークンリストをすべて終了させる。`EXIT`は、リターンスタックに保存された実行アドレスを`IP`レジスタにポップバックし、コロンワードが入力される前の状態に復元する。呼び出した側のトークンリストの実行は継続される。
 ```
 HEADER(4, "EXIT");
 int EXITT = CODE(4, as_exit, as_next, 0, 0);
 ```
-EXECUTE ( a -- ) Take the execution address from the data stack and executes that token. This  powerful word allows you to execute any token which is not a part of a token list. 
-
-EXECUTE ( a -- ) データスタックから実行アドレスを取り出し、そのトークンを実行する。この強力な言葉により、トークン・リストにない任意のトークンを実行することができる。
+`EXECUTE ( a -- )` データスタックから実行アドレスを取り出し、そのトークンを実行する。この強力なワードにより、トークンリストの一部ではない任意のトークンを実行することができる。
 ```
 HEADER(7, "EXECUTE");
 int EXECU = CODE(4, as_execu, as_next, 0, 0);
 ```
-DONEXT ( -- ) Terminate a FOR-NEXT loop. The loop count was pushed on return stack, and is  decremented by DONEXT. If the count is not negative, jump to the address following DONEXT;  otherwise, pop the count off return stack and exit the loop. DONEXT is compiled by NEXT. 
-
-DONEXT ( -- ) FOR-NEXTループを終了させる。ループのカウントは、リターンスタックにプッシュされ、DONEXTによってデクリメントされる。カウントが負でなければ、DONEXTの次のアドレスにジャンプし、そうでなければ、カウントをリターンスタックから取り出して、ループを抜ける。DONEXTは、NEXTでコンパイルされる。
-
-
+`DONEXT ( -- )` FOR-NEXTループを終了させる。ループのカウントは、リターンスタックにプッシュされ、`DONEXT`によってデクリメントされる。カウントが負でなければ、`DONEXT`の次のアドレスにジャンプし、そうでなければ、カウントをリターンスタックから取り出して、ループを抜ける。`DONEXT`は、`NEXT`でコンパイルされる。
 ```
 HEADER(6, "DONEXT");
 DONXT = CODE(4, as_donext, as_next, 0, 0);
 ```
-QBRANCH ( f -- ) Test top element as a flag on data stack. If it is zero, branch to the address  following QBRANCH; otherwise, continue execute the token list following the address.  QBRANCH is compiled by IF, WHILE and UNTIL. 
-
-QBRANCH ( f -- ) トップ・エレメントをデータ・スタックのフラグとしてテストする。0であれば、QBRANCHに続くアドレスに分岐し、そうでなければ、そのアドレスに続くトークンリストの実行を継続する。 QBRANCHは、IF、WHILE、UNTILでコンパイルされます。
-
-
+`QBRANCH ( f -- )` データスタックのトップの要素をフラグとしてテストする。0であれば、`QBRANCH`に続くアドレスに分岐し、そうでなければ、そのアドレスに続くトークンリストの実行を継続する。 `QBRANCH`は、`IF`、`WHILE`、`UNTIL`でコンパイルされます。
 ```
 HEADER(7, "QBRANCH");
 QBRAN = CODE(4, as_qbran, as_next, 0, 0);
 ```
-BRANCH ( -- ) Branch to the address following BRANCH. BRANCH is compiled by AFT, ELSE,  REPEAT and AGAIN. 
-
-BRANCH ( -- ) BRANCHの次のアドレスに分岐する。BRANCHはAFT、ELSE、REPEAT、AGAINでまとめられる。
+`BRANCH ( -- )` `BRANCH`の次のアドレスに分岐する。`BRANCH`は`AFT`、`ELSE`、`REPEAT`、`AGAIN`でまとめられる。
 
 ```
 HEADER(6, "BRANCH");
 BRAN = CODE(4, as_bran, as_next, 0, 0);
 ```
-! ( n a -- ) Store integer n into memory location a.
-
-! ( n a -- ) 整数nをメモリ位置aに格納する。
+`! ( n a -- )` 整数nをメモリ位置aに格納する。
 ```
 HEADER(1, "!");
 int STORE = CODE(4, as_store, as_next, 0, 0);
 ```
-@ ( a -- n) Replace memory address a with its integer contents fetched from this location. 
-
-@ ( a -- n) メモリアドレス a を、この場所から取得した整数の内容で置き換える。
-
+`@ ( a -- n)` (データスタックトップの)メモリアドレス a を、このアドレスが指す場所から取得した整数の内容で置き換える。
 ```
 HEADER(1, "@");
 int AT = CODE(4, as_at, as_next, 0, 0);
 ```
-C! ( c b -- ) Store a byte value c into memory location b.
-
-C! ( c b -- ) バイト値cをメモリ位置bに格納する。
-
-
+`C! ( c b -- )` バイト値cをメモリ位置bに格納する。
 ```
 HEADER(2, "C!");
 int CSTOR = CODE(4, as_cstor, as_next, 0, 0);
 ```
-C@ ( b -- n) Replace byte memory address b with its byte contents fetched from this location. 
-
-C@ ( b -- n) バイトメモリアドレスbを、この位置から取り出したバイトの内容に置き換える。
+`C@ ( b -- n)` バイトメモリアドレスbを、このアドレスが指す位置から取り出したバイトの内容に置き換える。
 ```
 HEADER(2, "C@");
 int CAT = CODE(4, as_cat, as_next, 0, 0);
 ```
-R> ( n -- ) Pop a number off the data stack and pushes it on the return stack.  
-
-R> ( n -- ) データスタックから数値をポップし、リターンスタックにプッシュします。 
-
+`R> ( n -- )` データスタックから数値をポップし、リターンスタックにプッシュします。 
 ```
 HEADER(2, "R>");
 int RFROM = CODE(4, as_rfrom, as_next, 0, 0);
 ```
-R@ ( -- n ) Copy a number off the return stack and pushes it on the return stack.  
-
 R@ ( -- n ) リターンスタックから数値をコピーして、リターンスタックにプッシュします。 
-
 ```
 HEADER(2, "R@");
 int RAT = CODE(4, as_rat, as_next, 0, 0);
 ```
->R( -- n ) Pop a number off the return stack and pushes it on the data stack.  
-
->R( -- n ) リターンスタックから数値をポップし、データスタックにプッシュする。 
+`>R( -- n )` リターンスタックから数値をポップし、データスタックにプッシュする。 
 ```
 HEADER(2, ">R");
 TOR = CODE(4, as_tor, as_next, 0, 0);
 ```
-DROP ( w -- ) Discard top stack item.
-
 DROP ( w -- ) スタックの一番上のアイテムを破棄します。
-
-
 ```
 HEADER(4, "DROP");
 int DROP = CODE(4, as_drop, as_next, 0, 0);
 ```
-DUP ( w -- w w ) Duplicate the top stack item.
+DUP ( w -- w w ) スタック最上段のアイテムを複製する。
 ```
 HEADER(3, "DUP");
 int DUPP = CODE(4, as_dup, as_next, 0, 0);
 ```
-SWAP ( w1 w2 -- w2 w1 ) Exchange top two stack items.
+SWAP ( w1 w2 -- w2 w1 ) 上位2つのスタックアイテムを交換する。
 ```
 HEADER(4, "SWAP");
 int SWAP = CODE(4, as_swap, as_next, 0, 0);
 ```
-OVER ( w1 w2 -- w1 w2 w1 ) Copy second stack item to top.
+OVER ( w1 w2 -- w1 w2 w1 ) 2 番目のスタックアイテムを先頭にコピーする。
 ```
 HEADER(4, "OVER");
 int OVER = CODE(4, as_over, as_next, 0, 0);
 ```
-0< ( n – f ) Examine the top item on the data stack for its negativeness. If it is negative, return a  -1 for true. If it is 0 or positive, return a 0 for false. 
-
-0< ( n - f ) データスタックの先頭の項目が負であるかどうかを調べる。負の場合は-1を返す。0または正の場合は、0を返して偽とする。
+`0< ( n - f )` データスタックの先頭の項目が負であるかどうかを調べる。負の場合は-1を返す。0または正の場合は、0を返して偽とする。
 ```
 HEADER(2, "0<");
 int ZLESS = CODE(4, as_zless, as_next, 0, 0);
 ```
-AND ( w w -- w ) Bitwise AND.
+`AND ( w w -- w )` ビット毎に論理積を取る。
 ```
 HEADER(3, "AND");
 int ANDD = CODE(4, as_andd, as_next, 0, 0);
 ```
-OR ( w w -- w ) Bitwise inclusive OR.
+`OR ( w w -- w )` ビット単位の包括的論理和を取る。
 ```
 HEADER(2, "OR");
 int ORR = CODE(4, as_orr, as_next, 0, 0);
 ```
-XOR ( w w -- w ) Bitwise exclusive OR.
+`XOR ( w w -- w )` ビットごとに排他的論理和を散る。
 ```
 HEADER(3, "XOR");
 int XORR = CODE(4, as_xorr, as_next, 0, 0);
 ```
-UM+ ( w w -- w cy ) Add two numbers, return the sum and carry flag. 
-
-UM+ ( w w -- w cy ) 2つの数値を加算し、和とキャリーフラグを返す。
+`UM+ ( w w -- w cy )` 2つの数値を加算し、和とキャリーフラグを返す。
 
 ```
 HEADER(3, "UM+");
 int UPLUS = CODE(4, as_uplus, as_next, 0, 0);
 ```
-NEXT ( -- ) Jump to the next token in the token list under processing. 
-
-NEXT ( -- ) 処理中のトークンリストの次のトークンにジャンプします。
-
+`NEXT ( -- )` 処理中のトークンリストの次のトークンにジャンプします。
 ```
 HEADER(4, "NEXT");
 int NEXTT = CODE(4, as_next, as_next, 0, 0);
 ```
-?DUP ( w -- w w | 0 ) Dup top of stack if its is not zero.
-
-?DUP ( w -- w w | 0 ) スタックの先頭が0でなければ、Dupする。
-
+`?DUP ( w -- w w | 0 )` スタックの先頭が0でなければdupする。
 ```
 HEADER(4, "?DUP");
 int QDUP = CODE(4, as_qdup, as_next, 0, 0);
 ```
-ROT ( w1 w2 w3 -- w2 w3 w1 ) Rot 3rd item to top.
-
-ROT ( w1 w2 w3 -- w2 w3 w1 ) 3 番目の項目を先頭に回転させる。
-
+`ROT ( w1 w2 w3 -- w2 w3 w1 )` 3 番目の項目を先頭に回転させる。
 ```
 HEADER(3, "ROT");
 int ROT = CODE(4, as_rot, as_next, 0, 0);
 ```
-2DROP ( w w -- ) Discard two items on stack.
-
-2DROP ( w w -- ) スタック上のアイテムを2つ破棄する。
-
+`2DROP ( w w -- )` スタック上のアイテムを2つ破棄する。
 ```
 HEADER(5, "2DROP");
 int DDROP = CODE(4, as_ddrop, as_next, 0, 0);
 ```
-2DUP ( w1 w2 -- w1 w2 w1 w2 ) Duplicate top two items.
-
-2DUP ( w1 w2 -- w1 w2 w1 w2 ) 上位 2 項目を複写する。
-
+`2DUP ( w1 w2 -- w1 w2 w1 w2 )` 上位 2 項目を複写する。
 ```
 HEADER(4, "2DUP");
 int DDUP = CODE(4, as_ddup, as_next, 0, 0);
 ```
-+ ( w w -- sum ) Add top two items.
-
-+ ( w w -- sum ) 上位2項目を追加する。
+`+ ( w w -- sum )` 上位2項目を加算する。
 ```
 HEADER(1, "+");
 int PLUS = CODE(4, as_plus, as_next, 0, 0);
 ```
-NOT ( w -- w ) One's complement of top.
-
-NOT ( w -- w ) topの1つの補数。
+`NOT ( w -- w )` topの1の補数。
 ```
 HEADER(3, "NOT");
 int INVER = CODE(4, as_inver, as_next, 0, 0);
 ```
-NEGATE ( n -- -n ) Two's complement of top.
-
-NEGATE ( n -- -n ) トップの2つの補数。
-
+`NEGATE ( n -- -n )` トップの2の補数。
 ```
 HEADER(6, "NEGATE");
 int NEGAT = CODE(4, as_negat, as_next, 0, 0);
 ```
-DNEGATE ( d -- -d ) Two's complement of top double.
-
-DNEGATE ( d -- -d ) トップダブルの2の補数。
+`DNEGATE ( d -- -d )` トップダブルの2の補数。
 
 ```
 HEADER(7, "DNEGATE");
 int DNEGA = CODE(4, as_dnega, as_next, 0, 0);
 ```
-- ( n1 n2 -- n1-n2 ) Subtraction.
-
-- ( n1 n2 -- n1-n2 ) 減算。
-
-
+`- ( n1 n2 -- n1-n2 )` 減算。
 ```
 HEADER(1, "-");
 int SUBBB = CODE(4, as_subb, as_next, 0, 0);
 ```
-ABS ( n -- n ) Return the absolute value of n.
-
-ABS ( n -- n ) n の絶対値を返す。
-
+`ABS ( n -- n )` n の絶対値を返す。
 ```
 HEADER(3, "ABS");
 int ABSS = CODE(4, as_abss, as_next, 0, 0);
 ```
-= ( w w -- t ) Return true if top two are equal.
-
-= ( w w -- t ) 上位2つが等しいとき、trueを返す。
-
-
+`= ( w w -- t )` 上位2つが等しいとき、trueを返す。
 ```
 HEADER(1, "=");
 int EQUAL = CODE(4, as_equal, as_next, 0, 0);
 ```
-U< ( u1 u2 -- t ) Unsigned compare of top two items.
-
-U< ( u1 u2 -- t ) 上位 2 項目の符号なし比較。
-
+`U< ( u1 u2 -- t )` 上位 2 項目の符号なし比較。
 ```
 HEADER(2, "U<");
 int ULESS = CODE(4, as_uless, as_next, 0, 0);
 ```
-< ( n1 n2 -- t ) Signed compare of top two items.
-
-< ( n1 n2 -- t ) 上位 2 項目の符号付き比較。
-
-
+`< ( n1 n2 -- t )` 上位 2 項目の符号付き比較。
 ```
 HEADER(1, "<");
 int LESS = CODE(4, as_less, as_next, 0, 0);
 ```
-UM/MOD( udl udh u -- ur uq ) Unsigned divide of a double by a single. Return mod and quotient. 
-
-UM/MOD( udl udh u -- ur uq ) 符号無しで double を single で割ったもの。modと商を返す。
+`UM/MOD( udl udh u -- ur uq )` double を single で符号無し除算する。剰余と商を返す。
 ```
 HEADER(6, "UM/MOD");
 int UMMOD = CODE(4, as_ummod, as_next, 0, 0);
 ```
-M/MOD ( d n -- r q ) Signed floored divide of double by single. Return mod and quotient. 
-
-M/MOD ( d n -- r q ) 符号付き階数付き除算(double×single)。modと商を返す。
+`M/MOD ( d n -- r q )` doubleをsingleで符号付き階数付き除算する。剰余と商を返す。
 ```
 HEADER(5, "M/MOD");
 int MSMOD = CODE(4, as_msmod, as_next, 0, 0);
 ```
-/MOD ( n1 n2 -- r q ) Signed divide. Return mod and quotient.
-
-/MOD ( n1 n2 -- r q ) 符号付き除算。modと商を返す。
+`/MOD ( n1 n2 -- r q )` 符号付き除算。剰余(mod)と商(quotient)を返す。
 ```
 HEADER(4, "/MOD");
 int SLMOD = CODE(4, as_slmod, as_next, 0, 0);
 ```
-MOD ( n n -- r ) Signed divide. Return mod only.
-
-MOD ( n n -- r ) 符号付き除算。modのみを返す。
+`MOD ( n n -- r )` 符号付き除算。剰余のみを返す。
 ```
 HEADER(3, "MOD");
 int MODD = CODE(4, as_mod, as_next, 0, 0);
 ```
-/ ( n n -- q ) Signed divide. Return quotient only.
-
-/ ( n n -- q ) 符号付き除算。商のみを返す。
+`/ ( n n -- q )` 符号付き除算。商のみを返す。
 ```
 HEADER(1, "/");
 int SLASH = CODE(4, as_slash, as_next, 0, 0);
 ```
-UM* ( u1 u2 -- ud ) Unsigned multiply. Return double product.
-
-UM* ( u1 u2 -- ud ) 符号なし乗算。double の積を返す。
+`UM* ( u1 u2 -- ud )` 符号なし乗算。double の積を返す。
 ```
 HEADER(3, "UM*");
 int UMSTA = CODE(4, as_umsta, as_next, 0, 0);
 ```
-* ( n n -- n ) Signed multiply. Return single product.
-
-* ( n n -- n ) 符号付き乗算。単一の積を返す。
+`* ( n n -- n )` 符号付き乗算。singleの積を返す。
 ```
 HEADER(1, "*");
 int STAR = CODE(4, as_star, as_next, 0, 0);
 ```
-M* ( n1 n2 -- d ) Signed multiply. Return double product.
-
-M* ( n1 n2 -- d ) 符号付き乗算。2 倍の積を返します。
+`M* ( n1 n2 -- d )` 符号付き乗算。doubleの積を返します。
 ```
 HEADER(2, "M*");
 int MSTAR = CODE(4, as_mstar, as_next, 0, 0);
 ```
-*/MOD ( n1 n2 n3 -- r q ) Multiply n1 and n2, then divide by n3. Return mod and quotient. 
-
-*/MOD ( n1 n2 n3 -- r q ) n1 と n2 を掛け、n3 で割る。modと商を返す。
+`*/MOD ( n1 n2 n3 -- r q )` n1 と n2 を乗算し、n3 で除算する。剰余と商を返す。
 ```
 HEADER(5, "*/MOD");
 int SSMOD = CODE(4, as_ssmod, as_next, 0, 0);
 ```
-*/ ( n1 n2 n3 -- q ) Multiply n1 by n2, then divide by n3. Return quotient only. 
-
-*/ ( n1 n2 n3 -- q ) n1 を n2 で乗算し、n3 で除算する。商のみを返す。
+`*/ ( n1 n2 n3 -- q )` n1 を n2 で乗算し、n3 で除算する。商のみを返す。
 ```
 HEADER(2, "*/");
 int STASL = CODE(4, as_stasl, as_next, 0, 0);
 ```
-PICK ( ... +n -- ... w ) Copy the nth stack item to top.
-
-PICK ( ... +n -- ... w ) スタックの n 番目の項目を先頭にコピーします。
+`PICK ( ... +n -- ... w )` スタックの n 番目の項目を先頭にコピーします。
 ```
 HEADER(4, "PICK");
 int PICK = CODE(4, as_pick, as_next, 0, 0);
 ```
-+! ( n a -- ) Add n to the contents at address a.
-
-+! ( n a -- ) アドレスaのコンテンツにnを加算する。
+`+! ( n a -- )` アドレスaの指す内容にnを加算する。
 ```
 HEADER(2, "+!");
 int PSTOR = CODE(4, as_pstor, as_next, 0, 0);
 ```
-2! ( d a -- ) Store the double integer to address a.
-
-2! ( d a -- ) アドレス a に二重整数を格納する。
+`2! ( d a -- )` アドレス a にdoubleの整数を格納する。
 ```
 HEADER(2, "2!");
 int DSTOR = CODE(4, as_dstor, as_next, 0, 0);
 ```
 2@ ( a -- d ) Fetch double integer from address a.
 
-2@ ( a -- d ) アドレス a から double integer を取得する。
+`2@ ( a -- d )` アドレス a から doubleの整数を取得する。
 
 ```
 HEADER(2, "2@");
 int DAT = CODE(4, as_dat, as_next, 0, 0);
 ```
-COUNT ( b -- b+1 +n ) Return count byte of a string and add 1 to byte address. 
-
-COUNT ( b -- b+1 +n ) 文字列のカウントバイトを返し、バイトアドレスに1を加える。
+`COUNT ( b -- b+1 +n )` 文字列のカウントバイトを返し、バイトアドレスに1を加える(カウント付き文字列の2値を返す)。
 ```
 HEADER(5, "COUNT");
 int COUNT = CODE(4, as_count, as_next, 0, 0);
 ```
-MAX ( n1 n2 -- n ) Return the greater of two top stack items.
-
-MAX ( n1 n2 -- n ) スタックの先頭の2つの項目のうち大きい方を返す。
+`MAX ( n1 n2 -- n )` スタックの先頭の2つの項目のうち大きい方を返す。
 ```
 HEADER(3, "MAX");
 int MAX = CODE(4, as_max, as_next, 0, 0);
 ```
-MIN ( n1 n2 -- n ) Return the smaller of top two stack items.
-
-MIN ( n1 n2 -- n ) スタックの上位2項目のうち、小さい方を返す。
+`MIN ( n1 n2 -- n )` スタックの上位2項目のうち、小さい方を返す。
 ```
 HEADER(3, "MIN");
 int MIN = CODE(4, as_min, as_next, 0, 0);
 ```
-BL ( -- 32 ) Return the blank ASCII code 32.
-
-BL ( -- 32 ) 空白のASCIIコード32を返す。
+`BL ( -- 32 )` 空白文字のASCIIコード32を返す。
 ```
 HEADER(2, "BL");
 int BLANK = CODE(8, as_docon, as_next, 0, 0, 32, 0, 0, 0);
 ```
-CELL ( -- 4 ) Return number of bytes in a 32-bit integer.
-
-CELL ( -- 4 ) 32ビット整数のバイト数を返す。
-
+`CELL ( -- 4 )` 32ビット整数のバイト数を返す。
 ```
 HEADER(4, "CELL");
 int CELL = CODE(8, as_docon, as_next, 0, 0, 4, 0, 0, 0);
 ```
-CELL+ ( n – n+4 ) Add 4 to n.
-
-CELL+ ( n - n+4 ) n に 4 を加える。
+`CELL+ ( n - n+4 )` n に 4 を加える。
 ```
 HEADER(5, "CELL+");
 int CELLP = CODE(8, as_docon, as_plus, as_next, 0, 4, 0, 0, 0); 
 ```
-CELL- ( n – n-4 ) Subtract 4 from n.
-
-CELL- ( n - n-4 ) n から 4 を引く。
+`CELL- ( n - n-4 )` n から 4 を引く。
 ```
 HEADER(5, "CELL-");
 int CELLM = CODE(8, as_docon, as_subb, as_next, 0, 4, 0, 0, 0); 
 ```
-CELLS ( n – n*4 ) Multiply n by 4.
-
-CELLS ( n - n*4 ) nに4を乗じる。
+`CELLS ( n - n*4 )` nに4を乗じる。
 ```
 HEADER(5, "CELLS");
 int CELLS = CODE(8, as_docon, as_star, as_next, 0, 4, 0, 0, 0); 
 ```
-CELL/ ( n – n+4 ) Divide n by 4.
-
-CELL/ ( n - n+4 ) nを4で割る。
+`CELL/ ( n - n+4 )` nを4で割る。
 ```
 HEADER(5, "CELL/");
 int CELLD = CODE(8, as_docon, as_slash, as_next, 0, 4, 0, 0, 0); 
 ```
-1+ ( n – n+1 ) Increment n.
-
-1+ ( n - n+1 ) nをインクリメントする。
+`1+ ( n - n+1 )` nをインクリメントする。
 ```
 HEADER(2, "1+");
 int ONEP = CODE(8, as_docon, as_plus, as_next, 0, 1, 0, 0, 0); 
 ```
-1- ( n – n-1 ) Decrement n.
-
-1- ( n - n-1 ) nを減じる。
+`1- ( n - n-1 )` nを減じる。
 ```
 HEADER(2, "1-");
 int ONEM = CODE(8, as_docon, as_subb, as_next, 0, 1, 0, 0, 0); 
 ```
-DOVAR ( – a ) Return address of a variable.
-
-DOVAR ( - a ) 変数のリターンアドレスです。
+`DOVAR ( - a )` 変数のアドレスを返す。
 ```
 HEADER(5, "DOVAR");
 int DOVAR = CODE(4, as_dovar, as_next, 0, 0);
@@ -2005,95 +1849,73 @@ int DOVAR = CODE(4, as_dovar, as_next, 0, 0);
 
 # Chapter 7. Colon Words
 
-HEADER()は、リンクフィールドと名前フィールドをコロンワードに組み立てる。COLON()は、DOLSTバイトコードを追加してコードフィールドを形成する。COLON() は、可変長のトークンリストを作成する。トークンは、他のワードのcfaである。
-
-Complicated colon words contain control structures, integer literals, and string literals. The  macro assembler has all the macros to build these structures automatically in token lists. These  macros allowed me to transcribe almost literally original Forth code into listing in C. Common Words 
+HEADER()は、リンクフィールドと名前フィールドをコロンワードに組み立てる。COLON()は、DOLSTバイトコードを書き込んでコードフィールドを形成する。COLON() は、可変長のトークンリストを作成する。トークンは、他のワードのcfaである。
 
 複雑なコロンワードには、制御構造、整数リテラル、文字列リテラルが含まれます。マクロアセンブラは、これらの構造を自動的にトークンリストに構築するためのマクロをすべて備えている。これらのマクロのおかげで、ほとんど文字通りオリジナルのForthのコードをCのリストに書き写すことができた。
 
- 一般的なワード 
+## 一般的なワード 
 
 // Common Colon Words
 
-?KEY ( -- c T|F ) Return a character and a true flag if the character has been received. If no  character was received, return a false flag 
-
-?KEY ( -- c T|F ) 文字と、その文字が受信された場合の真フラグを返す。文字を受信していない場合は、偽フラグを返す 
+`?KEY ( -- c T|F )` 文字が受信された場合、その文字とtrueフラグを返す。文字を受信していない場合は、falseフラグを返す 
 ```
 HEADER(4, "?KEY");
 int QKEY = COLON(2, QRX, EXITT);
 ```
-KEY ( -- c ) wait for the console to receive a character c.
-
-KEY ( -- c ) コンソールが文字cを受信するのを待ちます。
+`KEY ( -- c )` コンソールが文字cを受信するのを待ちます。
 ```
 HEADER(3, "KEY");
 int KEY = COLON(0);
 BEGIN(1, QKEY);
 UNTIL(1, EXITT);
 ```
-TX! ( c -- ) Send a character to the Windows console.
-
-TX! ( c -- ) Windows コンソールに文字を送信します。
+`TX! ( c -- )` Windows コンソールに文字を送信します。
 ```
 HEADER(4, "EMIT");
 int EMIT = COLON(2, TXSTO, EXITT);
 ```
-WITHIN ( u ul uh -- t ) checks whether the third item on the data stack is within the  range as specified by the top two numbers on the data stack. The range is inclusive as to the  lower limit and exclusive to the upper limit. If the third item is within range, a true flag is  returned on the data stack. Otherwise, a false flag is returned. All numbers are assumed to be  unsigned integers.  
-
-WITHIN ( u ul uh -- t ) は、データスタックの3番目の項目が、データスタックの上位2つの数値で指定された範囲内にあるかどうかをチェックします。範囲は、下限を含み、上限を除く。3 番目の項目が範囲内であれば、データスタックに真のフラグが返される。そうでなければ、偽フラグが返される。すべての数値は符号なし整数であると仮定される。 
+`WITHIN ( u ul uh -- t )` は、データスタックの3番目の項目が、データスタックの上位2つの数値で指定された範囲内にあるかどうかをチェックします。範囲は、下限を含み、上限を除く。3 番目の項目が範囲内であれば、データスタックに真のフラグが返される。そうでなければ、偽フラグが返される。すべての数値は符号なし整数であると仮定される。 
 ```
 HEADER(6, "WITHIN");
 int WITHI = COLON(7, OVER, SUBBB, TOR, SUBBB, RFROM, ULESS, EXITT); 
 ```
 `>CHAR ( c -- c )`is very important in converting a non-printable character to a harmless  'underscore' character (ASCII 95). As Forth is designed to communicate with you through a  serial I/O device, it is important that Forth will not emit control characters to the host and  causes unexpected behavior on the host computer. >CHAR thus filters the characters before they  are sent out by TYPE.  
 
-`>CHAR ( c -- c )`は、印字不可能な文字を無害な「アンダースコア」文字(ASCII 95)に変換する際に非常に重要です。ForthはシリアルI/Oデバイスを通して通信するように設計されているので、Forthが制御文字をホストに出して、ホストコンピュータで予期せぬ動作を引き起こさないようにすることが重要なのです。このように>CHARは、TYPEで送出される前に文字をフィルタリングします。 
+`>CHAR ( c -- c )`は、非印字可能文字を無害なアンダースコア文字(ASCII 95)に変換する際に非常に重要です。ForthはシリアルI/Oデバイスを通して通信するように設計されているので、Forthが制御文字をホストに出して、ホストコンピュータで予期せぬ動作を引き起こさないようにすることが重要なのです。`>CHAR`は、`TYPE`で送出される前に文字をフィルタリングします。 
 ```
 HEADER(5, ">CHAR");
 int TCHAR = COLON(8, DOLIT, 0x7F, ANDD, DUPP, DOLIT, 0X7F, BLANK, WITHI); 
 IF(3, DROP, DOLIT, 0X5F);
 THEN(1, EXITT);
 ```
-ALIGNED ( b -- a ) changes the address to the next cell boundary so that it can be used to  address 32 bit word in memory. 
-
-ALIGNED ( b -- a ) は、次のセル境界にアドレスを変更し、メモリ内の32ビットワードのアドレスに使用できるようにします。
+`ALIGNED ( b -- a )` は、次のセル境界にアドレスを変更し、メモリ内の32ビットワードのアドレスに使用できるようにします。
 ```
 HEADER(7, "ALIGNED");
 int ALIGN = COLON(7, DOLIT, 3, PLUS, DOLIT, 0XFFFFFFFC, ANDD, EXITT); 
 ```
-HERE ( -- a ) returns the address of the first free location above the code dictionary, where  new words are compiled.  
-
-HERE ( -- a ) は、新しいワードがコンパイルされる、コード辞書の上の最初の空き場所のアドレスを返します。 
+`HERE ( -- a )` は、新しいワードがコンパイルされた場所で、コード辞書の上の最初の空き場所のアドレスを返します。 
 ```
 HEADER(4, "HERE");
 int HERE = COLON(3, CP, AT, EXITT);
 ```
-PAD ( -- a ) returns the address of the text buffer where numbers are constructed and text  strings are stored temporarily.  
-
-PAD ( -- a ) は、数値が構成され、テキスト文字列が一時的に格納されるテキストバッファのアドレスを返します。 
+`PAD ( -- a )` は、数値を構成する場所であり、また、テキスト文字列が一時的に格納される場所であるテキストバッファのアドレスを返します。 
 ```
 HEADER(3, "PAD");
 int PAD = COLON(5, HERE, DOLIT, 0X50, PLUS, EXITT);
 ```
-TIB ( -- a ) returns the terminal input buffer where input text string is held.  
-
-TIB ( -- a ) は、入力文字列が保持されている端末入力バッファを返します。 
+`TIB ( -- a )` は、入力文字列が保持されている端末入力バッファ(terminal input buffer)を返します。 
 ```
 HEADER(3, "TIB");
 int TIB = COLON(3, TTIB, AT, EXITT);
 ```
-@EXECUTE ( a -- ) is a special word supporting the vectored execution words in Forth. It  fetches the code field address of a token and executes the token.  
-
-@EXECUTE ( a -- ) は、Forthのベクター実行語をサポートする特別な語である。トークンのコードフィールドアドレスをフェッチし、トークンを実行する。 
+`@EXECUTE ( a -- )` は、Forthのベクタ実行ワードをサポートする特別なワードです。トークンのコードフィールドアドレスをフェッチし、トークンを実行する。 
 ```
 HEADER(8, "@EXECUTE");
 int ATEXE = COLON(2, AT, QDUP);
 IF(1, EXECU);
 THEN(1, EXITT);
 ```
-CMOVE ( b b u -- )copies a memory array from one location to another. It copies one byte  at a time. 
-
-CMOVE ( b b u -- )は、メモリ配列をある位置から別の位置へコピーします。一度に1バイトずつコピーします。
+`CMOVE ( b b u -- )`は、メモリ配列をある位置から別の位置へコピーします。一度に1バイトずつコピーします。
 ```
 HEADER(5, "CMOVE");
 int CMOVEE = COLON(0);
@@ -2102,9 +1924,7 @@ AFT(8, OVER, CAT, OVER, CSTOR, TOR, ONEP, RFROM, ONEP);
 THEN(0);
 NEXT(2, DDROP, EXITT);
 ```
-MOVE ( b b u -- )copies a memory array from one location to another. It copies one word  at a time. 
-
-MOVE ( b b u -- )は、メモリ配列をある位置から別の位置へコピーします。一度に1ワードずつコピーします。
+`MOVE ( b b u -- )`は、メモリ配列をある位置から別の位置へコピーします。一度に1ワードずつコピーします。
 ```
 HEADER(4, "MOVE");
 int MOVE = COLON(1, CELLD);
@@ -2113,9 +1933,7 @@ AFT(8, OVER, AT, OVER, STORE, TOR, CELLP, RFROM, CELLP);
 THEN(0);
 NEXT(2, DDROP, EXITT);
 ```
-FILL( b u c -- ) fills a memory array with the same byte c. 
-
-FILL( b u c -- ) は、メモリ配列に同じバイトcを埋める。
+`FILL( b u c -- )` は、メモリ配列に同じバイトcを埋める。
 ```
 HEADER(4, "FILL");
 int FILL = COLON(1, SWAP);
@@ -2126,54 +1944,40 @@ NEXT(2, DDROP, EXITT);
 ```
 ## Numeric Output 
 
-Forth is interesting in its special capabilities in handling numbers across the man-machine  interface. It recognizes that the machine and the human prefer very different representations of  numbers. The machine prefers a binary representation, but the human prefers decimal Arabic  digital representations. However, depending on circumstances, you may want numbers to be  represented in other radices, like hexadecimal, octal, and sometimes binary.    Forth solves this problem of internal (machine) versus external (human) number representations  by insisting that all numbers are represented in the binary form in the CPU and in memory.  Only when numbers are imported or exported for human consumption are they converted to the  external ASCII representation. The radix of external representation is controlled by the radix  value stored in the variable BASE.  
+Forthは、マン・マシン・インターフェース上で数字を扱う特別な機能を備えているのが興味深いところです。Forthは、機械と人間が非常に異なった数字の表現を好むことを認識している。機械は2進数表現を好みますが、人間は10進数のアラビア数字表現を好みます。しかし、状況によっては、16進数、8進数、時には2進数など、他の基数で数字を表現してほしい場合もあります。   
 
-Forthは、マン・マシン・インターフェース上で数字を扱う特別な機能を備えているのが興味深いところです。Forthは、機械と人間が非常に異なった数字の表現を好むことを認識している。機械は2進数表現を好みますが、人間は10進数のアラビア数字表現を好みます。しかし、状況によっては、16進数、8進数、時には2進数など、他の基数で数字を表現してほしい場合もあります。   Forthは、CPUやメモリ上ではすべての数字を2進数で表現することにこだわり、この内部(機械)対外部(人間)の数字表現の問題を解決している。 人間が消費するために数値をインポートまたはエクスポートするときだけ、外部のASCII表現に変換されます。外部表現の基数は、変数BASEに格納されている基数値で制御される。 
+Forthは、CPUやメモリ上ではすべての数字を2進数で表現することにこだわり、この内部(機械)対外部(人間)の数字表現の問題を解決している。 人間が使用するために数値をインポートまたはエクスポートするときだけ、外部のASCII表現に変換されます。外部表現の基数は、変数BASEに格納されている基数値で制御される。 
 
-Since BASE is a system variable, you can select any reasonable radix for entering numbers into  the computer and formatting numbers to be shown to you. Most programming languages can  handle a small set of radices, like decimal, octal, hexadecimal and binary, with explicit prefix or  postfix characters. In Forth, radix for number conversion is implicit, stored in BASE. It had  caused endless grieves, even to very experience Forth programmers, because one did not know  the true value of a number without knowing what was in BASE at the moment. 
+BASEはシステム変数なので、コンピュータに数値を入力したり、表示される数値をフォーマットしたりする際に、合理的な基数を選択することができる。ほとんどのプログラミング言語では、10進数、8進数、16進数、2進数のように、明示的な接頭辞や接尾辞で基数を表す限られた数の基数セットを扱うことができます。Forthでは、数値変換のための基数は暗黙のうちにBASEに格納されています。これは、経験豊富なForthプログラマでさえも、BASEに何が入っているかを知らなければ、数の真の値を知ることができないため、限りなく悲嘆に暮れることになった。
 
-BASEはシステム変数なので、コンピュータに数値を入力したり、表示される数値をフォーマットしたりする際に、合理的な基数を選択することができる。ほとんどのプログラミング言語では、10進数、8進数、16進数、2進数のように、明示的な接頭辞や接尾辞を持つ小さな基数のセットを扱うことができます。Forthでは、数値変換のための基数は暗黙のうちにBASEに格納されています。これは、経験豊富なForthプログラマーでさえも、BASEに何が入っているかを知らなければ、数の真の値を知ることができないため、限りなく悲嘆に暮れることになった。
-
-BASE is one of the very important inventions by Chuck Moore who gave us the Forth language.  It gives us freedom of expression, in representing numbers any way we choose for whatever the  reason at the moment.  
-
-BASEは、Forth言語を生み出したチャック・ムーアによる非常に重要な発明の一つである。 BASEは、Forth言語を作ったチャック・ムーアによる非常に重要な発明の一つであり、私たちに、その時々の目的に応じた自由な数値表現を与えてくれる。 
+BASEは、Forth言語を作ったチャック・ムーアによる非常に重要な発明の一つであり、私たちに、その時々の目的に応じた自由な数値表現を与えてくれる。 
 
 // Number Conversions
-DIGIT ( u -- c )converts an integer to an ASCII digit. 
+`DIGIT ( u -- c )`は、整数をASCIIの数字1桁に変換します。
 ```
 HEADER(5, "DIGIT");
 int DIGIT = COLON(12, DOLIT, 9, OVER, LESS, DOLIT, 7, ANDD, PLUS, DOLIT, 0X30,  PLUS, EXITT); 
 ```
-EXTRACT( n base -- n c ) extracts the least significant digit from a number n. n is  divided by the radix in BASE and returned on the stack.  
-
-EXTRACT( n base -- n c ) は、数値 n から最下位桁を抽出し、n を BASE の基数で割ってスタックに返します。 
+`EXTRACT( n base -- n c )` は、数値 n から最下位桁を抽出し、n を BASE の基数で割ってスタックに返します。 
 ```
 HEADER(7, "EXTRACT");
 int EXTRC = COLON(7, DOLIT, 0, SWAP, UMMOD, SWAP, DIGIT, EXITT); 
 ```
-`<# ( -- )` initiates the output number conversion process by storing PAD buffer address into  variable HLD, which points to the location next numeric digit will be stored. 
-
-`<# ( -- )` は、PADバッファのアドレスを変数HLDに格納し、次の数字が格納される場所を指して、出力数字の変換処理を開始します。
+`<# ( -- )` は、`PAD`バッファのアドレスを変数`HLD`に格納し、次の数字が格納される場所を指すようにして、出力数字の変換処理を開始します。
 ```
 HEADER(2, "<#");
 int BDIGS = COLON(4, PAD, HLD, STORE, EXITT);
 ```
-HOLD ( c -- ) appends an ASCII character whose code is on the top of the parameter stack,  to the numeric output string at HLD. HLD is decremented to receive the next digit. 
-
-HOLD ( c -- ) は、パラメータスタックの先頭にあるコードを持つ ASCII 文字を、HLD にある数値出力文字列に追加します。HLDは、次の桁を受け取るためにデクリメントされます。
+`HOLD ( c -- )` は、パラメータスタックのトップにあるコードを持つ ASCII 文字を、HLD にある数値出力文字列に追加します。HLDは、次の桁を受け取るためにデクリメントされます。
 ```
 HEADER(4, "HOLD");
 int HOLD = COLON(8, HLD, AT, ONEM, DUPP, HLD, STORE, CSTOR, EXITT); 
 ```
-`#(dig) ( u -- u )` extracts one digit from integer on the top of the parameter stack,  according to radix in BASE, and add it to output numeric string. 
-
-`#(dig) ( u -- u )` は、パラメータスタックの先頭の整数から、BASEの基数に従って1桁ずつ抜き出して、出力する数値文字列に追加する。
+`#(dig) ( u -- u )` は、パラメータスタックのトップの整数から、BASEの基数に従って1桁ずつ抜き出して、出力する数値文字列に追加する。
 ```
 HEADER(1, "#");
 int DIG = COLON(5, BASE, AT, EXTRC, HOLD, EXITT);
 ```
-`#S (digs) ( u -- 0 )` extracts all digits to output string until the integer on the top of the  parameter stack is divided down to 0. 
-
 `#S (digs) ( u -- 0 )` パラメータスタックの先頭の整数が0になるまで、すべての桁を出力文字列に抽出します。
 ```
 HEADER(2, "#S");
@@ -2182,53 +1986,39 @@ BEGIN(2, DIG, DUPP);
 WHILE(0);
 REPEAT(1, EXITT);
 ```
-SIGN ( n -- ) inserts a - sign into the numeric output string if the integer on the top of the  parameter stack is negative. 
-
-SIGN ( n -- ) は，パラメータスタックの先頭の整数が負であれば，数値出力文字列に - を挿入する。
+`SIGN ( n -- )` は，パラメータスタックの先頭の整数が負であれば，数値出力文字列に - を挿入する。
 ```
 HEADER(4, "SIGN");
 int SIGN = COLON(1, ZLESS);
 IF(3, DOLIT, 0X2D, HOLD);
 THEN(1, EXITT);
 ```
-`#> ( w -- b u )` terminates the numeric conversion and pushes the address and length of  output numeric string on the parameter stack. 
-
 `#> ( w -- b u )` は数値変換を終了し、出力される数値文字列のアドレスと長さをパラメータスタックにプッシュします。
 ```
 HEADER(2, "#>");
 int EDIGS = COLON(7, DROP, HLD, AT, PAD, OVER, SUBBB, EXITT);
 ```
-str ( n -- b u ) converts a signed integer on the top of data stack to a numeric output  string. 
-
-str ( n -- b u ) は、データスタックの先頭にある符号付き整数を数値出力文字列に変換する。
+`str ( n -- b u )` は、データスタックの先頭にある符号付き整数を数値出力文字列に変換する。
 ```
 HEADER(3, "str");
 int STRR = COLON(9, DUPP, TOR, ABSS, BDIGS, DIGS, RFROM, SIGN, EDIGS, EXITT); 
 ```
-HEX ( -- ) sets numeric conversion radix in BASE to 16 for hexadecimal conversions. 
-
-HEX ( -- ) は、BASE の数値変換基数を 16 に設定し、16 進数変換を行います。
+`HEX ( -- )` は、BASE の数値変換基数を 16 に設定し、16 進数変換を行います。
 ```
 HEADER(3, "HEX");
 int HEXX = COLON(5, DOLIT, 16, BASE, STORE, EXITT);
 ```
-DECIMAL ( -- ) sets numeric conversion radix in BASE to 10 for decimal conversions. 
-
-DECIMAL ( -- ) は、BASE の数値変換基数を 10 に設定し、10 進数変換を行います。
+`DECIMAL ( -- )` は、BASE の数値変換基数を 10 に設定し、10 進数変換を行います。
 ```
 HEADER(7, "DECIMAL");
 int DECIM = COLON(5, DOLIT, 10, BASE, STORE, EXITT);
 ```
-wupper ( w -- w' ) converts 4 bytes in a word to upper case characters. 
-
-wupper ( w -- w' ) は、ワード内の4バイトを大文字に変換する。
+`wupper ( w -- w' )` は、ワード内の4バイトを大文字に変換する。
 ```
 HEADER(6, "wupper");
 int UPPER = COLON(4, DOLIT, 0x5F5F5F5F, ANDD, EXITT);
 ```
->upper ( c -- UC )converts a character to upper case.
-
->upper ( c -- UC )は、文字を大文字に変換します。
+`>upper ( c -- UC )`は、文字を大文字に変換します。
 
 ```
 HEADER(6, ">upper");
@@ -2236,18 +2026,14 @@ int TOUPP = COLON(6, DUPP, DOLIT, 0x61, DOLIT, 0x7B, WITHI);
 IF(3, DOLIT, 0x5F, ANDD);
 THEN(1, EXITT);
 ```
-DIGIT? ( c base -- u t )converts a digit to its numeric value according to the current  base, and NUMBER? converts a number string to a single integer.  
-
-DIGIT? ( c base -- u t )は数字を現在の基数に従って数値に変換し、NUMBER? は数値文字列を1つの整数に変換する。 
+`DIGIT? ( c base -- u t )`は数字1桁を現在の基数に従って数値に変換し、`NUMBER?` は数値文字列を1つの整数に変換する。 
 ```
 HEADER(6, "DIGIT?");
 int DIGTQ = COLON(9, TOR, TOUPP, DOLIT, 0X30, SUBBB, DOLIT, 9, OVER, LESS); 
 IF(8, DOLIT, 7, SUBBB, DUPP, DOLIT, 10, LESS, ORR);
 THEN(4, DUPP, RFROM, ULESS, EXITT);
 ```
-NUMBER? ( a -- n T | a F )converts a string of digits to a single integer. If the first  character is a $ sign, the number is assumed to be in hexadecimal. Otherwise, the number will  be converted using the radix value stored in BASE. For negative numbers, the first character  should be a - sign. No other characters are allowed in the string. If a non-digit character is  encountered, the address of the string and a false flag are returned. Successful conversion  returns the integer value and a true flag. If the number is larger than 2^n, where n is the bit  width of a single integer, only the modulus to 2^n will be kept.  
-
-NUMBER? ( a -- n T | a F )は、数字列を1つの整数に変換する。最初の文字が$記号の場合、数値は16進数であるとみなされます。それ以外の場合は、BASEに格納されている基数を用いて変換されます。負の数の場合、最初の文字は-記号でなければならない。文字列中に他の文字は許されない。数字以外の文字に遭遇した場合，その文字列のアドレスと偽フラグが返される。変換に成功した場合は，整数値と真フラグが返される。数値が2^n(nは1つの整数のビット幅)より大きい場合，2^nまでのモジュラスのみが保持される。 
+`NUMBER? ( a -- n T | a F )`は、数字文字列を1つの整数に変換する。最初の文字が$記号の場合、数値は16進数であるとみなされます。それ以外の場合は、`BASE`に格納されている基数を用いて変換されます。負の数の場合、最初の文字は`-`記号でなければならない。文字列中に他の文字は許されない。数字以外の文字に遭遇した場合，その文字列のアドレスとfalseフラグが返される。変換に成功した場合は，整数値とtrueフラグが返される。数値が2^n(nは1つの整数のビット幅)より大きい場合，2^nまでの剰余のみが保持される。 
 ```
 HEADER(7, "NUMBER?");
 int NUMBQ = COLON(12, BASE, AT, TOR, DOLIT, 0, OVER, COUNT, OVER, CAT, DOLIT, 0X24, EQUAL); 
@@ -2266,26 +2052,18 @@ THEN(6, RFROM, DDROP, RFROM, BASE, STORE, EXITT);
 
 ## Number Output
 
-The output number string is built below the PAD buffer. The least significant digit is extracted  from an integer on the top of data stack by dividing it by the current radix in BASE. One digit  thus extracted is added to the output string backwards from PAD to lower memory. The  conversion is terminated when the integer is divided to zero. The address and length of the  number string are made available by #> for outputting.  
+出力される数値列は、'PAD'バッファの下に構築される。データスタックの最上位にある整数から最下位桁を抽出し、BASEの現在の基数で割る。こうして抽出された1桁の数字は出力文字列に対して、PADから下位メモリへ逆方向に追加されます。整数を除算してゼロになったとき、変換は終了する。数値文字列のアドレスと長さは、`#>`が出力に利用できるようになる。 
 
-出力される数値列は、PADバッファの下に構築される。データスタックの最上位にある整数から最下位桁を抽出し、BASEの現在の基数で割る。こうして抽出された1桁の数字は、PADから下位メモリへ逆方向の出力文字列に追加されます。整数がゼロに除算されたとき、変換は終了する。数値文字列のアドレスと長さは、#>によって出力に利用できるようになる。 
-
-An output number conversion is initiated by `<#` and terminated by `#>`. Between them, `#`  converts one digit at a time, #S converts all the digits, while HOLD and SIGN inserts special  characters into the string under construction. This set of tokens is very versatile and can handle  many different output formats.  
-
-出力する数値の変換は、`<#`で開始され、`#>`で終了する。この間、`#`は1桁ずつ変換し、`#S`は全桁を変換し、`HOLD`と`SIGN`は構築中の文字列に特殊文字を挿入する。このトークンのセットは非常に汎用性が高く、多くの異なる出力形式を扱うことができる。 
+出力する数値変換は、`<#`で開始され、`#>`で終了する。この間、`#`は1桁ずつ変換し、`#S`は全桁を変換し、`HOLD`と`SIGN`は構築中の文字列に特殊文字を挿入する。このトークンのセットは非常に汎用性が高く、多くの異なる出力形式を扱うことができる。 
 
 // Terminal Output
 
-SPACE ( -- ) outputs a blank space character. 
-
-SPACE ( -- ) は、空白文字を出力します。
+`SPACE ( -- )` は、空白文字を出力します。
 ```
 HEADER(5, "SPACE");
 int SPACE = COLON(3, BLANK, EMIT, EXITT);
 ```
-CHARS ( +n c -- )outputs n characters c. 
-
-CHARS ( +n c -- )は、n文字cを出力します。
+`CHARS ( +n c -- )`は、cをn文字出力します。
 ```
 HEADER(5, "CHARS");
 int CHARS = COLON(4, SWAP, DOLIT, 0, MAX);
@@ -2294,16 +2072,12 @@ AFT(2, DUPP, EMIT);
 THEN(0);
 NEXT(2, DROP, EXITT);
 ```
-SPACES ( +n -- ) outputs n blank space characters. 
-
-SPACES ( +n -- ) は、空白を n 文字出力します。
+`SPACES ( +n -- )` は、空白を n 文字出力します。
 ```
 HEADER(6, "SPACES");
 int SPACS = COLON(3, BLANK, CHARS, EXITT);
 ```
-TYPE ( b u -- )outputs n characters from a string in memory. Non ASCII characters are  replaced by a underscore character. 
-
-TYPE ( b u -- )は、メモリ上の文字列からn文字を出力する。非 ASCII 文字はアンダースコア文字に置き換えられます。
+`TYPE ( b u -- )`は、メモリ上の文字列からn文字を出力する。非 ASCII 文字はアンダースコア文字に置き換えられます。
 ```
 HEADER(4, "TYPE");
 int TYPES = COLON(0);
@@ -2312,57 +2086,41 @@ AFT(3, COUNT, TCHAR, EMIT);
 THEN(0);
 NEXT(2, DROP, EXITT);
 ```
-CR ( -- ) outputs a carriage-return and a line-feed. 
-
-CR ( -- ) は，キャリッジリターンとラインフィードを出力します．
+`CR ( -- )` は，キャリッジリターンとラインフィードを出力します．
 ```
 HEADER(2, "CR");
 int CR = COLON(7, DOLIT, 10, DOLIT, 13, EMIT, EMIT, EXITT);
 ```
-`do$ ( -- $adr )`retrieves the address of a string stored as the second item on the return stack.  `do$` is a bit difficult to understand, because the starting address of the following string is the  second item on the return stack. This address is pushed on the data stack so that the string can  be accessed. This address must be changed so that the address interpreter will return to the  token right after the compiled string. This address will allow the address interpreter to skip over  the string literal and continue to execute the token list as intended. Both $"| and ."| use the word do$, 
-
-`do$ ( -- $adr )`は、リターンスタックの2番目の項目として格納されている文字列のアドレスを取得します。 `do$`が少しわかりにくいのは、次の文字列の開始アドレスがリターンスタックの2番目の項目であることです。このアドレスは、文字列にアクセスできるように、データスタックにプッシュされている。このアドレスは、アドレスインタプリタがコンパイルされた文字列の直後のトークンに戻るように変更する必要があります。このアドレスによって、アドレス・インタープリタは文字列リテラルをスキップして、意図したとおりにトークン・リストを実行し続けることができるようになります。`$"|` と `."|` は両方とも `do$` というワードを使用します。
+`do$ ( -- $adr )`は、リターンスタックの2番目の項目として格納されている文字列のアドレスを取得します。 `do$`が少しわかりにくいのは、次の文字列の開始アドレスがリターンスタックの2番目の項目であることです。このアドレスは、文字列にアクセスできるように、データスタックにプッシュされます。このアドレスは、アドレスインタプリタがコンパイルされた文字列の直後のトークンに戻るように変更する必要があります。このアドレスによって、アドレスインタープリタは文字列リテラルをスキップして、意図したとおりにトークン・リストを実行し続けることができるようになります。`$"|` と `."|` は両方とも `do$` というワードを使用します。
 ```
 HEADER(3, "do$");
 int DOSTR = COLON(10, RFROM, RAT, RFROM, COUNT, PLUS, ALIGN, TOR, SWAP, TOR,  EXITT); 
 ```
-`$”| ( -- a )` pushes the address of the following string on stack. Other words can use this  address to access data stored in this string. The string is a counted string. Its first byte is a byte  count. 
-
 `$"| ( -- a )` は、次の文字列のアドレスをスタックにプッシュします。他のワードはこのアドレスを使って、この文字列に格納されているデータにアクセスすることができます。この文字列は、カウントされた文字列です。最初のバイトはバイト数です。
 ```
 HEADER(3, "$\"|");
 int STRQP = COLON(2, DOSTR, EXITT);
 ```
-`”| ( -- )` displays the following string on stack. This is a very convenient way to send  helping messages to you at run time. 
-
-`"| ( -- )` は、スタック上に次の文字列を表示します。これは、実行時にお助けメッセージを送るのに非常に便利な方法です。
+`"| ( -- )` は、スタック上の次の文字列を表示します。これは、実行時にヘルプメッセージを送るのに非常に便利な方法です。
 ```
 HEADER(3, ".\"|");
 DOTQP = COLON(4, DOSTR, COUNT, TYPES, EXITT);
 ```
-`.R ( u +n -- )`displays a signed integer n , the second item on the parameter stack, right-justified in a field of +n characters. +n is on the top of the parameter stack. 
-
-`.R ( u +n -- )`は、パラメータスタックの2番目の項目である符号付き整数nを、+n文字のフィールドに右寄せで表示します。+nはパラメータスタックの最上位にある。
+`.R ( u +n -- )`は、パラメータスタックの2番目の項目である符号付き整数nを、+n文字のフィールドに右寄せで表示します。+nはパラメータスタックの最上位にあるものです。
 ```
 HEADER(2, ".R");
 int DOTR = COLON(8, TOR, STRR, RFROM, OVER, SUBBB, SPACS, TYPES, EXITT); 
 ```
-U.R ( u +n -- )displays an unsigned integer n right-justified in a field of +n characters. 
-
-U.R ( u +n -- )は符号なし整数 n を右寄せで +n 文字のフィールドに表示します。
+`U.R ( u +n -- )`は符号なし整数 n を右寄せで +n 文字のフィールドに表示します。
 ```
 HEADER(3, "U.R");
 int UDOTR = COLON(10, TOR, BDIGS, DIGS, EDIGS, RFROM, OVER, SUBBB, SPACS, TYPES,  EXITT); 
 ```
-U. ( u -- ) displays an unsigned integer u in free format, followed by a space. 
-
-U. ( u -- ) は，符号なし整数 u をフリーフォーマットで表示し，その後にスペースを表示します。
+`U. ( u -- )` は，符号なし整数 u をフリーフォーマットで表示し，その後にスペースを表示します。
 ```
 HEADER(2, "U.");
 int UDOT = COLON(6, BDIGS, DIGS, EDIGS, SPACE, TYPES, EXITT);
 ```
-`. (dot) ( n -- )`displays a signed integer n in free format, followed by a space. 
-
 `. (ドット) ( n -- )`符号付き整数nをフリーフォーマットで表示し、その後にスペースを表示します。
 ```
 HEADER(1, ".");
@@ -2370,9 +2128,7 @@ int DOT = COLON(5, BASE, AT, DOLIT, 0XA, XORR);
 IF(2, UDOT, EXITT);
 THEN(4, STRR, SPACE, TYPES, EXITT);
 ```
-`? ( a -- )` displays signed integer stored in memory a on the top of the parameter stack, in  free format followed by a space. 
-
-`? ( a -- )` メモリ a に格納されている符号付き整数をパラメータスタックの先頭にフリーフォーマットで表示し、その後にスペースを表示します。
+`? ( a -- )` パラメータスタックの先頭のアドレス a が指すメモリに格納されている符号付き整数をフリーフォーマットで表示し、その後にスペースを表示します。
 ```
 HEADER(1, "?");
 int QUEST = COLON(3, AT, DOT, EXITT);
@@ -2380,19 +2136,13 @@ int QUEST = COLON(3, AT, DOT, EXITT);
 
 ## Parsing
 
-Parsing is always thought of as a very advanced topic in computer sciences. However, because  Forth uses very simple syntax rules, parsing is easy. Forth source code consists of words, which  are ASCII strings separated by spaces and other white space characters like tabs, carriage  returns, and line feeds. The text interpreter scans the source code, isolates words and interprets  them in sequence. After a word is parsed out of the input text stream, the text interpreter will  'interpret' it--execute it if it is a token, compile it if the text interpreter is in the compiling mode,  and convert it to a number if the word is not a Forth token.  
+構文解析はコンピュータサイエンスにおいて非常に高度なトピックであると常に考えられています。しかし、Forthは非常にシンプルな構文規則を使用しているため、構文解析は容易です。Forthのソースコードは、ワードから構成されます。ワードは、ASCII文字列を、スペースやタブ、キャリッジリターン、ラインフィードなどの空白文字で区切ったものです。テキストインタープリタは、ソースコードをスキャンしてワードを分離し、順番に解釈していく。入力テキストストリームからワードが解析された後、テキストインタープリタはそれを「解釈」します。それがトークンであれば実行し、テキストインタープリタがコンパイルモードであればコンパイルし、そのワードがForthトークンでなければ数値に変換します。 
 
-構文解析はコンピュータサイエンスにおいて非常に高度なトピックであると常に考えられています。しかし、Forthは非常にシンプルな構文規則を使用しているため、構文解析は容易です。Forthのソースコードは、ワードというASCII文字列を、スペースやタブ、キャリッジリターン、ラインフィードなどの空白文字で区切って構成されています。テキストインタープリタは、ソースコードをスキャンしてワードを分離し、順番に解釈していく。入力テキストストリームからワードが解析された後、テキストインタープリタはそれを「解釈」します--それがトークンであれば実行し、テキストインタープリタがコンパイルモードであればコンパイルし、そのワードがForthトークンでなければ数値に変換します。 
-
-PARSE scans the source string in the terminal input buffer from where >IN points to till the  end of the buffer, for a word delimited by character c. It returns the address and length of the  word parsed out. PARSE calls (parse) to do the dirty work.  
-
-PARSE は、端末の入力バッファ内のソース文字列を >IN が指す位置からバッファの終わりまで走査して、文字 c で区切られたワードを探します。PARSE は (parse) を呼び出して汚れ仕事をさせます。 
+`PARSE` は、端末の入力バッファ内のソース文字列を `>IN` が指す位置からバッファの終わりまで走査して、文字 c で区切られたワードを探します。`PARSE` は `(parse)` を呼び出して汚れ仕事をさせます。 
 
 // Parser
 
-(parse) ( b1 u1 c --b2 u2 n ) From the source string starting at b1 and of u1 characters long,  parse out the first word delimited by character c. Return the address b2 and length u2 of the  word just parsed out and the difference n between b1 and b2. Leading delimiters are skipped  over. (parse) is used by PARSE.  
-
-`(parse) ( b1 u1 c --b2 u2 n )` b1 で始まり u1 文字の長さのソース文字列から、文字 c で区切られた最初のワードをパースアウトします。先頭の区切り文字は読み飛ばされます。(parse)はPARSEで使用されます。 
+`(parse) ( b1 u1 c --b2 u2 n )` b1 で始まり u1 文字の長さのソース文字列から、文字 c で区切られた最初のワードをパースアウトします。先頭の区切り文字は読み飛ばされます。`(parse)`は`PARSE`で使用されます。 
 ```
 HEADER(7, "(parse)");
 int PARS = COLON(5, TEMP, CSTOR, OVER, TOR, DUPP);
@@ -2412,30 +2162,22 @@ ELSE(5, RFROM, DROP, DUPP, ONEP, TOR);
 THEN(6, OVER, SUBBB, RFROM, RFROM, SUBBB, EXITT);
 THEN(4, OVER, RFROM, SUBBB, EXITT);
 ```
-`PACK$ ( b u a -- a )` copies a source string (b u) to target address at a. The target string is  null filled to the cell boundary. The target address a is returned. 
-
-`PACK$ ( b u a -- a )` は、ソース文字列 (b u) をターゲットアドレス a にコピーする。ターゲット文字列は、セル境界まで null 埋めされる。ターゲットアドレスaが返される。
+`PACK$ ( b u a -- a )` は、ソース文字列 `(b u)` をターゲットアドレス a にコピーする。ターゲット文字列は、セル境界まで null 埋めされる。ターゲットアドレスaが返される。
 ```
 HEADER(5, "PACK$");
 int PACKS = COLON(18, DUPP, TOR, DDUP, PLUS, DOLIT, 0xFFFFFFFC, ANDD, DOLIT, 0,  SWAP, STORE, DDUP, CSTOR, ONEP, SWAP, CMOVEE, RFROM, EXITT); 
 ```
-`PARSE ( c -- b u ; <string> )`scans the source string in the terminal input buffer from  where >IN points to till the end of the buffer, for a word delimited by character c. It returns the  address and length of the word parsed out. PARSE calls (parse) to do the dirty work.  
-
-`PARSE ( c -- b u ; <string> )`は、端末の入力バッファの >IN が指す位置からバッファの終わりまで、文字 c で区切られたワードのソース文字列をスキャンします。PARSE は (parse) を呼び出して汚れ仕事をさせます。 
+`PARSE ( c -- b u ; <string> )`は、端末の入力バッファの `>IN` が指す位置からバッファの終わりまで、文字 c で区切られたワードのソース文字列をスキャンします。`PARSE` は `(parse)` を呼び出して汚れ仕事をさせます。 
 ```
 HEADER(5, "PARSE");
 int PARSE = COLON(15, TOR, TIB, INN, AT, PLUS, NTIB, AT, INN, AT, SUBBB, RFROM,  PARS, INN, PSTOR, EXITT); 
 ```
-TOKEN ( -- a ;; <string> ) parses the next word from the input buffer and copy the  counted string to the top of the name dictionary. Return the address of this counted string.  HEADER(5, "TOKEN"); 
-
-TOKEN ( -- a ;; <string> ) は、入力バッファから次のワードを解析し、カウントされた文字列を名前辞書の先頭にコピーする。このカウントされた文字列のアドレスを返す。 
+`TOKEN ( -- a ;; <string> )` は、入力バッファから次のワードを解析し、カウントされた文字列を名前辞書の先頭にコピーする。このカウントされた文字列のアドレスを返す。 
 ```
 HEADER(5, "TOKEN")。
 int TOKEN = COLON(9, BLANK, PARSE, DOLIT, 0x1F, MIN, HERE, CELLP, PACKS, EXITT); 
 ```
-WORD ( c -- a ; <string> )parses out the next word delimited by the ASCII character c.  Copy the word to the top of the code dictionary and return the address of this counted string.  
-
-WORD ( c -- a ; <string> )は、ASCII文字cで区切られた次のワードを解析し、そのワードをコード辞書の先頭にコピーし、このカウントされた文字列のアドレスを返します。 
+`WORD ( c -- a ; <string> )`は、ASCII文字cで区切られた次のワードを解析し、そのワードをコード辞書の先頭にコピーし、このカウントされた文字列のアドレスを返します。 
 ```
 HEADER(4, "WORD");
 int WORDD = COLON(5, PARSE, HERE, CELLP, PACKS, EXITT);
@@ -2445,18 +2187,14 @@ int WORDD = COLON(5, PARSE, HERE, CELLP, PACKS, EXITT);
 
 In Forth, word records are linked into a dictionary which can be searched to find valid words. A  header contains four fields: a link field holding the name field address of the previous header, a  name field holding the name as a counted string, a code field holding execution address of the  word, and a parameter field holding data to be processed. The dictionary is a list linked through  the link fields and the name fields. The basic searching function is performed by the word  find. find scans the linked list to find a name which matches an input text string, and returns  the code field address and the name field address of an executable token, if a match is found.  
 
-Forthでは、ワードレコードは辞書にリンクされ、検索して有効なワードを見つけることができる。ヘッダは、前のヘッダの名前フィールドのアドレスを保持するリンクフィールド、名前をカウントした文字列を保持する名前フィールド、ワードの実行アドレスを保持するコードフィールド、および処理するデータを保持するパラメータフィールドの4つのフィールドを含む。辞書は、リンクフィールドと名前フィールドを経由してリンクされたリストである。findはリンクリストを走査して入力文字列と一致する名前を探し、一致するものがあればコードフィールドのアドレスと実行トークンの名前フィールドのアドレスを返すという基本的な検索機能を持つ。 
-
-`NAME> ( nfa – cfa)` Return a code field address from the name field address of a word. 
+Forthでは、ワードレコードは辞書にリンクされ、検索して有効なワードを見つけることができる。ヘッダは、前のヘッダの名前フィールドのアドレスを保持するリンクフィールド、名前をカウントした文字列を保持する名前フィールド、ワードの実行アドレスを保持するコードフィールド、および処理するデータを保持するパラメータフィールドの4つのフィールドを含む。辞書は、リンクフィールドと名前フィールドを経由してリンクされたリストである。`find`はリンクリストを走査して入力文字列と一致する名前を探し、一致するものがあればコードフィールドのアドレスと実行トークンの名前フィールドのアドレスを返すという基本的な検索機能を持つ。 
 
 `NAME> ( nfa - cfa)` ワードの名前フィールドアドレスからコードフィールドアドレスを返す。
 ```
 HEADER(5, "NAME>");
 int NAMET = COLON(7, COUNT, DOLIT, 0x1F, ANDD, PLUS, ALIGN, EXITT); 
 ```
-SAME? ( a1 a2 n – a1 a2 f) Compare n/4 words in strings at a1 and a2. If the strings  are the same, return a 0. If string at a1 is higher than that at a2, return a positive number;  otherwise, return a negative number. FIND compares the 1st word input string and a name. If  these two words are the same, SAME? is called to compare the rest of two strings 
-
-SAME? ( a1 a2 n - a1 a2 f) a1 と a2 の文字列中の n/4 個のワードを比較する。もし文字列が同じなら0を返す。もしa1の文字列がa2の文字列より大きければ正の数を返し、そうでなければ負の数を返す。FINDは、1語目の入力文字列と名前を比較する。この2つのワードが同じであれば、SAME? が呼ばれ、残りの2つの文字列が比較される。
+`SAME? ( a1 a2 n - a1 a2 f)` `a1` と `a2` の文字列中の `n/4` 個のワードを比較する。もし文字列が同じなら0を返す。もし`a1`の文字列が`a2`の文字列より大きければ正の数を返し、そうでなければ負の数を返す。`FIND`は、入力文字列の1語目と名前を比較する。この2つのワードが同じであれば、`SAME?` が呼ばれ、残りの2つの文字列が比較される。
 ```
 HEADER(5, "SAME?");
 int SAMEQ = COLON(4, DOLIT, 0x1F, ANDD, CELLD);
@@ -2467,9 +2205,7 @@ THEN(0);
 THEN(0);
 NEXT(3, DOLIT, 0, EXITT);
 ```
-find ( a va --cfa nfa, a F) searches the dictionary for a word. A counted string at  a is the name of a token to be looked up in the dictionary. The last name field address of the  dictionary is stored in location va. If the string is found, both the code field address and the  name field address are returned. If the string is not the name a token, the string address and a  false flag are returned.  
-
-find ( a va --cfa nfa, a F) は、あるワードについて辞書を検索する。aでカウントされる文字列は、辞書で検索するトークンの名前である。辞書の最後の名前フィールドのアドレスは、場所vaに格納される。文字列が見つかった場合、コードフィールドのアドレスと名前フィールドのアドレスの両方が返される。文字列がトークンの名前でない場合、文字列アドレスと偽フラグが返される。 
+`find ( a va -- cfa nfa, a F)` は、辞書からあるワードを検索する。`a`の指すカウント付き文字列は、辞書で検索するトークンの名前である。辞書の最後の名前フィールドのアドレスは、場所`va`に格納される。文字列が見つかった場合、コードフィールドのアドレスと名前フィールドのアドレスの両方が返される。文字列がトークンの名前でない場合、文字列自身のアドレスとfalseフラグが返される。 
 ```
 HEADER(4, "find");
 int FIND = COLON(10, SWAP, DUPP, AT, TEMP, STORE, DUPP, AT, TOR, CELLP, SWAP); 
@@ -2491,31 +2227,23 @@ int NAMEQ = COLON(3, CNTXT, FIND, EXITT);
 
 ## Terminal Input
 
-The text interpreter interprets input text stream stored in the terminal input buffer. None of us  can type perfectly. We have to allow mistyped characters and give us opportunities to back up  and correct mistakes. To allow some minimal editing, we need three special words to deal with  backspaces and carriage return thus received: ^H, TAP and KTAP. These words are hard to  understand because they manipulate three addresses on data stack: bot is bottom of terminal  buffer, eot is end of terminal buffer, and cur is current character pointer. 
-
-テキストインタープリタは、端末の入力バッファに格納された入力テキストストリームを解釈する。私たちは誰も完璧にタイプすることはできない。誤入力を許容し、バックアップや訂正の機会を与えなければならない。最低限の編集を可能にするために、このように受け取ったバックスペースとキャリッジリターンを処理するための3つの特別な言葉が必要である。^H、TAP、KTAPである。これらのワードはデータスタック上の3つのアドレスを操作するため、理解するのは難しい。
+テキストインタープリタは、端末の入力バッファに格納された入力テキストストリームを解釈する。私たちは誰も完璧にタイプすることはできない。誤入力を許容し、バックアップや訂正の機会を与えなければならない。最低限の編集を可能にするために、このように受け取ったバックスペースとキャリッジリターンを処理するための3つの特別な言葉が必要である。`^H`、`TAP`、`KTAP`である。これらのワードはデータスタック上の3つのアドレスを操作するため、理解するのは難しい。`bot`は端末バッファの底、`eot`は端末バッファの終端、`cur`はカレントポインタである。
 
 // Terminal Input
 
-^H (bot eot cur -- bot eot cur) Process the back-space character. Erase the last character and  decrement cur. If cur=bot, do nothing because you cannot backup beyond the beginning of the  input buffer.  
-
-^H (bot eot cur -- bot eot cur) バックスペース文字を処理する。最後の文字を消去し、curをデクリメントする。cur=bot の場合は、入力バッファの先頭から先にはバックアップできないので、何もしない。 
+`^H (bot eot cur -- bot eot cur)` バックスペース文字を処理する。最後の文字を消去し、curをデクリメントする。cur=bot の場合は、入力バッファの先頭から先にはバックアップできないので、何もしない。 
 ```
 HEADER(2, "^H");
 int HATH = COLON(6, TOR, OVER, RFROM, SWAP, OVER, XORR);
 IF(9, DOLIT, 8, EMIT, ONEM, BLANK, EMIT, DOLIT, 8, EMIT);
 THEN(1, EXITT);
 ```
-TAP (bot eot cur c -- bot eot cur) Echo c to output device, store c in cur, and bump cur.  
-
-TAP (bot eot cur c -- bot eot cur) 出力デバイスに c をエコーし、c を cur に格納し、cur をバンプする。 
+`TAP (bot eot cur c -- bot eot cur)` 出力デバイスに `c` をエコーし、`c` を `cur` に格納し、`cur` をバンプする。 
 ```
 HEADER(3, "TAP");
 int TAP = COLON(6, DUPP, EMIT, OVER, CSTOR, ONEP, EXITT); 
 ```
-kTAP (bot eot cur c -- bot eot cur) Process a character c in input buffer. bot is the starting  address of the input buffer. eot is the end of the input buffer. cur is the current character pointer.  Character c is normally stored into cur, which is increment by 1. In this case, cur is the same as  eot. If c is a carriage-return, echo a space and make eot=cur. If c is a back-space, erase the last  character and decrement cur.  
-
-kTAP (bot eot cur c -- bot eot cur) 入力バッファ内の文字cを処理します。 botは入力バッファの開始アドレス、eotは入力バッファの終了アドレス、curは現在の文字ポインタです。 通常、文字cはcurに格納され、curは1つインクリメントされる。cがキャリッジリターンの場合、スペースをエコーし、eot=curとする。cがバックスペースの場合、最後の文字を消去し、curをデクリメントする。 
+`kTAP (bot eot cur c -- bot eot cur)` 入力バッファ内の文字`c`を処理します。 `bot`は入力バッファの開始アドレス、`eot`は入力バッファの終了アドレス、`cur`は現在の文字ポインタです。 通常、文字`c`は`cur`に格納され、`cur`は1つインクリメントされる。`c`がキャリッジリターンの場合、スペースをエコーし、`eot=cur`とする。`c`がバックスペースの場合、最後の文字を消去し、`cur`をデクリメントする。 
 ```
 HEADER(4, "kTAP");
 int KTAP = COLON(9, DUPP, DOLIT, 0XD, XORR, OVER, DOLIT, 0XA, XORR, ANDD); 
@@ -2525,9 +2253,7 @@ ELSE(1, HATH);
 THEN(1, EXITT);
 THEN(5, DROP, SWAP, DROP, DUPP, EXITT);
 ```
-ACCEPT ( b u1 --b u2 ) Accept u1 characters to b. u2 returned is the actual number of  characters received.  
-
-ACCEPT ( b u1 --b u2 ) b に u1 文字を受け渡す。返し値u2は実際に受け取った文字数である。 
+`ACCEPT ( b u1 --b u2 )` b に u1 個の文字を受ける。返し値u2は実際に受け取った文字数である。 
 ```
 HEADER(6, "ACCEPT");
 int ACCEP = COLON(3, OVER, PLUS, OVER);
@@ -2540,14 +2266,12 @@ REPEAT(4, DROP, OVER, SUBBB, EXITT);
 ```
 EXPECT ( b u1 -- ) accepts u1 characters to b. Number of characters accepted is stored  in SPAN. 
 
-EXPECT ( b u1 -- ) は、b に u1 文字を受け入れる。受け取った文字数はSPANに格納される。
+`EXPECT ( b u1 -- )` は、b に u1 文字を受け入れる。受け取った文字数は`SPAN`に格納される。
 ```
 HEADER(6, "EXPECT");
 int EXPEC = COLON(5, ACCEP, SPAN, STORE, DROP, EXITT);
 ```
-QUERY is the word which accepts text input, up to 80 characters, from an input device and  copies the text characters to the terminal input buffer. It also prepares the terminal input buffer  for parsing by setting #TIB to the received character count and clearing `>IN`.  
-
-QUERYは、入力デバイスから最大80文字までのテキスト入力を受け付け、そのテキスト文字を端末入力バッファにコピーするワードである。また、#TIBに受信文字数を設定し、`>IN`をクリアすることで、端末入力バッファを解析する準備をします。 
+`QUERY`は、入力デバイスから最大80文字までのテキスト入力を受け付け、そのテキスト文字を端末入力バッファにコピーするワードである。また、`#TIB`に受信文字数を設定し、`>IN`をクリアすることで、端末入力バッファを解析する準備をします。 
 ```
 HEADER(5, "QUERY");
 int QUERY = COLON(12, TIB, DOLIT, 0X50, ACCEP, NTIB, STORE, DROP, DOLIT, 0, INN,  STORE, EXITT); 
@@ -2555,46 +2279,31 @@ int QUERY = COLON(12, TIB, DOLIT, 0X50, ACCEP, NTIB, STORE, DROP, DOLIT, 0, INN,
 
 ## Text Interpreter 
 
-Text interpreter is the heart of Forth. It is like the operating system of a computer. It is the  primary interface between you and a computer. Since Forth uses very simple syntax rules-- words are separated by spaces, the text interpreter is also very simple. It accepts a line of text  you type on a terminal keyboard, parses out a word delimited by spaces, searches the token of  this word in the dictionary and then executes it. The process is repeated until the line of text is  exhausted. Then the text interpreter waits for another line of text and interprets it again. This  cycle repeats until you are exhausted and turns off the computer.  
+テキストインタープリタは、Forthの心臓部です。コンピュータのオペレーティングシステムのようなものです。あなたとコンピュータの間の主要なインターフェイスです。Forthでは、ワードはスペースで区切るという非常にシンプルな構文ルールを採用しているので、テキストインタープリタも非常にシンプルなものとなっています。端末のキーボードから入力されたテキスト1行分を受け取り、スペースで区切られたワードを解析し、そのワードのトークンを辞書で検索し、実行する。この処理は、テキスト行を処理し尽くすまで繰り返される。次に、テキストインタープリタは、別の行のテキストを待って、それを再び解釈する。このサイクルは、あなた自身が疲れ果ててコンピュータの電源を切るまで繰り返される。 
 
-テキストインタープリタは、Forthの心臓部です。コンピュータのオペレーティングシステムのようなものです。あなたとコンピュータの間の主要なインターフェイスです。Forthでは、ワードはスペースで区切るという非常にシンプルな構文ルールを採用しているので、テキスト・インタープリタも非常にシンプルなものとなっています。端末のキーボードから入力されたテキストを受け取り、スペースで区切られたワードを解析し、そのワードのトークンを辞書で検索し、実行する。この処理は、テキスト行がなくなるまで繰り返される。次にテキストインタープリタは、別の行のテキストを待って、それを再び解釈する。このサイクルは、疲れ果ててコンピュータの電源を切るまで繰り返される。 
+Forthでは、テキスト・インタープリタは`QUIT`というワードにコード化されています。`QUIT`は、`QUERY`と`EVAL`コマンドを繰り返す無限ループを含んでいます。`QUERY`はターミナルからテキスト行を受け取り、そのテキストをターミナルインプットバッファ(`TIB`)にコピーします。`EVAL`は、行の終わりまで一度に1ワードずつテキストを解釈する。 
 
-In Forth, the text interpreter is encoded in the word QUIT. QUIT contains an infinite loop  which repeats the QUERY and EVAL commands. QUERY accepts a line of text from the  terminal and copies the text into the Terminal Input Buffer (TIB). EVAL interprets the text  one word at a time till end of the line.  
-
-Forthでは、テキスト・インタープリタはQUITという言葉でエンコードされています。QUITは、QUERYとEVALコマンドを繰り返す無限ループを含んでいます。QUERYはターミナルからテキスト行を受け取り、そのテキストをターミナルインプットバッファ(TIB)にコピーします。EVALは、行の終わりまで一度に1ワードずつテキストを解釈する。 
-
-One of the unique features in Forth is its error handling mechanism. While EVAL is interpreting a line of text, it could encounter many error conditions: a word is not found in the  dictionary and it is not a number, a compile-only word is accidentally executed interpretively,  and the interpretive process may be interrupted by the words ABORT or abort". Wherever  the error occurs, the text interpreter resets and starts over at ABORT. 
-
-Forthのユニークな機能の1つは、そのエラー処理メカニズムです。EVALがテキスト行を解釈している間、多くのエラー状態に遭遇する可能性があります：ワードが辞書で見つからず、それが数字でない、コンパイル専用のワードが誤って解釈的に実行された、解釈プロセスがABORTまたはabortというワードによって中断されるかもしれません". どこでエラーが発生しても、テキストインタープリタはリセットされ、ABORTでやり直される。
-
+Forthのユニークな機能の1つは、そのエラー処理メカニズムです。EVALがテキスト行を解釈している間、多くのエラー状態に遭遇する可能性があります：ワードが辞書で見つからない、ワードが数字でない、コンパイル専用のワードが誤って解釈的に実行された、解釈プロセスが`ABORT`または`abort"`というワードによって中断されるかもしれません。どこでエラーが発生しても、テキストインタープリタはリセットされ、`ABORT`でやり直される。
 
 // Text Interpreter
 
-ABORT ( -- ) resets system and re-enters into the text interpreter loop EVAL. It actually  executes EVAL stored in ‘ABORT.  
-
-ABORT ( -- ) はシステムをリセットし、テキストインタープリタループEVALに再突入する。実際に実行されるのは、'ABORT'に格納されたEVALである。 
+`ABORT ( -- )` はシステムをリセットし、テキストインタープリタループ`EVAL`に再突入する。実際に実行されるのは、'ABORT'に格納されたEVALである。 
 ```
 HEADER(5, "ABORT");
 int ABORT = COLON(2, TABRT, ATEXE);
 ```
-`abort”| ( f -- )` A runtime string word compiled in front of a string of error message. If  flag f is true, display the following string and jump to ABORT. If flag f is false, ignore the  following string and continue executing tokens after the error message. 
-
-`abort"| ( f -- )` エラーメッセージの文字列の前にコンパイルされる実行時文字列のワードです。フラグfが真の場合、以下の文字列を表示し、ABORTにジャンプする。フラグfが偽の場合、以下の文字列を無視し、エラーメッセージの後のトークンを実行し続ける。
+`abort"| ( f -- )` エラーメッセージの文字列の前にコンパイルされる実行時文字列のワードです。フラグfが真の場合、以下の文字列を表示し、ABORTにジャンプする。フラグfがfalseの場合、以下の文字列を無視し、エラーメッセージの後のトークンを実行し続ける。
 ```
 HEADER(6, "abort\"");
 ABORQP = COLON(0);
 IF(4, DOSTR, COUNT, TYPES, ABORT);
 THEN(3, DOSTR, DROP, EXITT);
 ```
-`ERROR ( a -- )` displays an error message at a with a ? mark, and ABORT. 
-
-`ERROR ( a -- )` は a に ?マーク、ABORT とエラーメッセージを表示します。
+`ERROR ( a -- )` は a のエラーメッセージと?マークを表示し、ABORT します。
 ```
 HEADER(5, "ERROR");
 int ERRORR = COLON(11, SPACE, COUNT, TYPES, DOLIT, 0x3F, EMIT, DOLIT, 0X1B, EMIT,  CR, ABORT); 
 ```
-$INTERPRET ( a -- )executes a word whose string address is on the stack. If the string is  not a word, convert it to a number. If it is not a number, ABORT. 
-
 `$INTERPRET ( a -- )`は、スタック上の文字列アドレスのワードを実行します。文字列がワードでない場合は、数値に変換します。数値でない場合は、ABORTします。
 ```
 HEADER(10, "$INTERPRET");
@@ -2607,24 +2316,18 @@ IF(1, EXITT);
 ELSE(1, ERRORR);
 THEN(0);
 ```
-`[ (left-paren) ( -- )` activates the text interpreter by storing the execution address of  $INTERPRET into the variable 'EVAL, which is executed in EVAL while the text interpreter  is in the interpretive mode.  
-
-`[ (左鍵括弧) ( -- )` は、$INTERPRETの実行アドレスを変数'EVAL'に格納し、テキストインタプリタがインタプリタモードの時にEVALで実行され、テキストインタプリタをアクティブにします。 
+`[ (左鍵括弧) ( -- )` は、`$INTERPRET`の実行アドレスを変数`'EVAL`に格納し、テキストインタプリタがインタプリタモードの時に`EVAL`で実行され、テキストインタプリタを有効にします。 
 ```
 HEADER(IMEDD + 1, "[");
 int LBRAC = COLON(5, DOLIT, INTER, TEVAL, STORE, EXITT);
 ```
-.OK ( -- ) used to be a word which displays the familiar 'ok' prompt after executing to the  end of a line. In ceForth_33, it displays the top 4 elements on data stack so you can see what is  happening on the stack. It is more informative than the plain ‘ok’, which only give you a  warm and fuzzy feeling about the system. When text interpreter is in compiling mode, the  display is suppressed. 
-
-.OK ( -- ) は、以前は、行末まで実行した後にお馴染みの 'ok' プロンプトを表示する言葉でした。ceForth_33 では、データスタックの上位4要素を表示するので、スタック上で何が起きているのかがわかります。このように、'ok'プロンプトを表示することで、スタック上で何が起こっているのかを知ることができます。テキストインタープリタがコンパイルモードのときは、この表示は抑止されます。
+`.OK ( -- )` は、以前は、行末まで実行した後にお馴染みの 'ok' プロンプトを表示するワードでした。ceForth_33 では、データスタックの上位4要素を表示するので、スタック上で何が起きているのかがわかります。単に'ok'プロンプトを表示するだけよりも情報が多くなります。テキストインタープリタがコンパイルモードのときは、この表示は抑止されます。
 ```
 HEADER(3, ".OK");
 int DOTOK = COLON(6, CR, DOLIT, INTER, TEVAL, AT, EQUAL);
 IF(14, TOR, TOR, TOR, DUPP, DOT, RFROM, DUPP, DOT, RFROM, DUPP, DOT, RFROM, DUPP,  DOT); DOTQ(" ok>"); THEN(1, EXITT); 
 ```
-EVAL ( -- )has a loop which parses tokens from the input stream and invokes whatever is in  'EVAL to process that token, either execute it with $INTERPRET or compile it with  $COMPILE. It exits the loop when the input stream is exhausted.  
-
-EVAL ( -- )は、入力ストリームからトークンをパースし、そのトークンを処理するために 'EVAL' にあるものを呼び出すループを持っています。入力ストリームを使い切った時点でループを終了します。 
+`EVAL ( -- )`は、入力ストリームからトークンをパースし、そのトークンを処理するために `'EVAL` にあるものを呼び出すループを持っています。入力ストリームを使い切った時点でループを終了します。 
 ```
 HEADER(4, "EVAL");
 int EVAL = COLON(0);
