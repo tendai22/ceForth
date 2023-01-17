@@ -68,13 +68,21 @@ ceForth_33.cppは、Visual Studio C++のWindows Console Applicationです。Visu
 
 Visual Studio 2019 Communityをwww.microsoft.com からダウンロードし、PCにインストールします。 Visual Studioを開くと、そのロゴページが表示されます。
 
+<img width=400 src="img/ch2-visual-studio-splash.png" style="display: block; margin: auto;">
+
 しばらくすると、そのスタートページが表示されます。
+
+<img width=400 src="img/ch2-visual-studio-start.png" style="display: block; margin: auto;">
 
 "新しいプロジェクトを作成する"をクリックします。
 
+<img width=400 src="img/ch2-visual-studio-new-project.png" style="display: block; margin: auto;">
+
 新しいプロジェクトを作成するパネルで、Console Appを選択します。すると、プロジェクトの設定ページが表示されます。
 
-プロジェクト名]ボックスに、ceForth_33と入力します。Locationボックスで、プロジェクトを保存するファイルフォルダを選択するか、または任意のフォルダをブラウズしてください。
+<img width=400 src="img/ch2-visual-studio-creating-new-project.png" style="display: block; margin: auto;">
+
+[プロジェクト名]ボックスに、ceForth_33と入力します。Locationボックスで、プロジェクトを保存するファイルフォルダを選択するか、または任意のフォルダをブラウズしてください。
 
 右下の作成ボタンをクリックすると、新しいceForth_33プロジェクトが作成されます。 
 
@@ -84,9 +92,13 @@ Visual Studioはあなたのために新しいプロジェクトを作成し、�
 
 これで、ceForth_33.cppがEdit Panelに表示されました。
 
+<img width=500 src="img/ch2-visual-studio-compiling.png" style="display: block; margin: auto;">
+
 Build>Rebuild Solution をクリックすると、Visual Studio は作業を開始します。しばらくすると、出力パネルに進捗状況が数行表示され、このメッセージで終了します。
 
 ===== Rebuild All, 1 succeeded, 0 failed, 0 skipped =====
+
+<img width=400 src="img/ch2-visual-studio-compiled-result.png" style="display: block; margin: auto;">
 
 すべて順調です。テストの準備ができました。
 
@@ -94,19 +106,29 @@ Build>Rebuild Solution をクリックすると、Visual Studio は作業を開�
 
 Debug>Start without debuggingをクリック。もう少し待ちます。最後に、Debug ウィンドウが表示されます。
 
+<img width=400 src="img/ch2-visual-studio-testing.png" style="display: block; margin: auto;">
+
 その上に、Console Windowがあります。
+
+<img width=400 src="img/ch2-console-window.png" style="display: block; margin: auto;">
 
 成功！ceForthは実行されています。
 
 Enterキーを何回か押すと、ceForthは空のスタックを表示し、'ok>'のプロンプを表示します。
 
+<img width=400 src="img/ch2-console-window-ok-prompt.png" style="display: block; margin: auto;">
+
 WORDSと入力すると、ceForthの完全なシステムを表すワード名の画面が表示されます。
+
+<img width=400 src="img/ch2-console-window-words.png" style="display: block; margin: auto;">
 
 さて、この世界共通の挨拶語を入力してください。
 ```
 : TEST CR .” HELLO, WORLD!” ;
 ```
 と入力し、TESTと入力します。
+<img width=400 src="img/ch2-console-window-hello-world.png" style="display: block; margin: auto;">
+
 
 これでceForthは完全に機能するようになりました。
 
@@ -1048,7 +1070,7 @@ Forth辞書がCで構築できることを示すために、私自身はラベ�
 # define popR rack[(unsigned char)R--]
 # define pushR rack[(unsigned char)++R]
 ```
-`BEGIN()`は不定形ループを開始します。ループを終了する分岐トークンが正しいリターンアドレスを組み立てられるように、まず、現在のワードアドレス`IP`をリターンスタックにプッシュします。次に、`BEGIN()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
+`BEGIN()`は不定回数ループを開始します。ループを終了する分岐トークンが正しいリターンアドレスを組み立てられるように、まず、現在のワードアドレス`IP`をリターンスタックにプッシュします。次に、`BEGIN()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 
 ```
 void BEGIN(int len, ...) {
@@ -1066,7 +1088,7 @@ void BEGIN(int len, ...) {
     va_end(argList);
 }
 ```
-`AGAIN()`は不定形ループを閉じる。まず、`BRAN` トークンを書き込み、リターンスタックに残っている `BEGIN()` アドレスを書き込んでループ構造を完成させる。そして、`AGAIN()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
+`AGAIN()`は不定回数ループを閉じる。まず、`BRAN` トークンを書き込み、リターンスタックに残っている `BEGIN()` アドレスを書き込んでループ構造を完成させる。そして、`AGAIN()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 ```
 void AGAIN(int len, ...) {
     IP = P >> 2;
@@ -1084,7 +1106,7 @@ void AGAIN(int len, ...) {
     va_end(argList);
 }
 ```
-`UNTIL()`は不定形ループを閉じる。最初に`QBRAN`トークンを書き込み、次にリターンスタックに残されたアドレス`BEGIN()`を書き込んでループ構造を完成させる。そして、`AGAIN()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
+`UNTIL()`は不定回数ループを閉じる。最初に`QBRAN`トークンを書き込み、次にリターンスタックに残されたアドレス`BEGIN()`を書き込んでループ構造を完成させる。そして、`AGAIN()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 
 ```
 void UNTIL(int len, ...) {
@@ -1103,7 +1125,7 @@ void UNTIL(int len, ...) {
     va_end(argList);
 }
 ```
-`WHILE()`は、always節を閉じ、true節を開始する不定形ループである。これは最初にヌルアドレスを持つ`QBRAN`トークンを組み立てる。ヌルアドレスの後のワードアドレスは、リターンスタックの`BEGIN()`によって残されたアドレスの下にプッシュされる。リターンスタックのこの2つのアドレスは、ループを閉じるために`REPEAT()`マクロによって使用され、 `QBRAN()`の後のアドレスを解決する。そして、`WHILE()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
+`WHILE()`は、always節を閉じ、true節を開始する不定回数ループである。これは最初にヌルアドレスを持つ`QBRAN`トークンを組み立てる。ヌルアドレスの後のワードアドレスは、リターンスタックの`BEGIN()`によって残されたアドレスの下にプッシュされる。リターンスタックのこの2つのアドレスは、ループを閉じるために`REPEAT()`マクロによって使用され、 `QBRAN()`の後のアドレスを解決する。そして、`WHILE()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 
 ```
 void WHILE(int len, ...) {
@@ -1126,7 +1148,7 @@ void WHILE(int len, ...) {
     va_end(argList);
 }
 ```
-`REPEAT()`は、BEGIN-WHILE-REPEATの不定形ループを閉じます。まず、`BEGIN()`が残したアドレスで`BRAN`トークンを組み立てる。`BEGIN`アドレスの後のワードアドレスは、リターンスタック上の`WHILE()`によって残されたアドレスの場所に格納されるようになりました。次に、`REPEAT()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
+`REPEAT()`は、BEGIN-WHILE-REPEATの不定回数ループを閉じます。まず、`BEGIN()`が残したアドレスで`BRAN`トークンを組み立てる。`BEGIN`アドレスの後のワードアドレスは、リターンスタック上の`WHILE()`によって残されたアドレスの場所に格納されるようになりました。次に、`REPEAT()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 
 ```
 void REPEAT(int len, ...) {
@@ -1185,9 +1207,7 @@ void ELSE(int len, ...) {
     va_end(argList);
 }
 ```
-THEN()closes an IF-THEN or IF-ELSE-THEN branch structure. It resolved the null address  assembled by IF() or ELSE() with the current word address after THEN(). It then assemble  a token list with the parameters passing to THEN()macro. Number of parameters is indicated  by the first parameter int len. 
-
-THEN()は、IF-THENまたはIF-ELSE-THEN分岐構造を閉じます。IF()またはELSE()で組み立てたNULLアドレスをTHEN()の後の現在のワードアドレスで解決する。そして、THEN()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
+`THEN()`は、IF-THENまたはIF-ELSE-THEN分岐構造を閉じます。`IF()`または`ELSE()`で書き込んだNULLアドレスの位置に、`THEN()`の後の現在のワードアドレスを書き込んで解決する。そして、`THEN()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 ```
 void THEN(int len, ...) {
     IP = P >> 2;
@@ -1198,15 +1218,13 @@ void THEN(int len, ...) {
     for (; len; len--) {
         int j = va_arg(argList, int);
         data[IP++] = j;
-    //printf(" %X",j);
+        //printf(" %X",j);
     }
     P = IP << 2;
     va_end(argList);
 }
 ```
-FOR()starts a definite loop structure. It first assembles a TOR token and pushes the address of  the current address field on the return stack. This address will be used by NEXT() in its loop  back address filed. It then assemble a token list with the parameters passing to FOR()macro.  Number of parameters is indicated by the first parameter int len. 
-
-FOR()は確定したループ構造を開始する。最初にTORトークンを組み立て、現在のアドレス・フィールドのアドレスをリターン・スタックにプッシュします。このアドレスは、NEXT()のループバックアドレスファイルで使用されます。次に、FOR()マクロに渡すパラメータでトークンリストを作成する。 パラメータの数は、最初のパラメータ int len で示されます。
+`FOR()`は定回数ループ構造を開始する。最初にTORトークンを組み立て、現在のアドレス・フィールドのアドレスをリターン・スタックにプッシュします。こうして保存されたアドレスは、`NEXT()`でループの戻りアドレスとして使用されます。次に、`FOR()`マクロに渡すパラメータでトークンリストを作成する。 パラメータの数は、最初のパラメータ int len で示されます。
 ```
 void FOR(int len, ...) {
     IP = P >> 2;
@@ -1226,7 +1244,7 @@ void FOR(int len, ...) {
 ```
 NEXT()closes an definite loop. It first assembles a DONXT token, and then assembles the  address FOR()left on the return stack to complete the loop structure. It then assemble a token  list with the parameters passing to NEXT()macro. Number of parameters is indicated by the  first parameter int len. 
 
-NEXT()は、確定ループを閉じます。まず、DONXTトークンを組み立て、リターンスタックに残っているFOR()のアドレスを組み立てて、ループ構造を完成させる。次に、NEXT()マクロに渡すパラメータでトークンリストを作成する。パラメータの数は、最初のパラメータ int len で示されます。
+`NEXT()`は、定回数ループを閉じます。まず、`DONXT`トークンを書き込み、リターンスタックに残っている`FOR()`のアドレスを書き込みループ構造を完成させる。次に、`NEXT()`マクロに渡すパラメータでトークンリストを作成する。パラメータの数は、最初のパラメータ int len で示されます。
 ```
 void NEXT(int len, ...) {
     IP = P >> 2;
@@ -1246,7 +1264,7 @@ void NEXT(int len, ...) {
 ```
 AFT()closes a always clause and starts a skip-once-only clause in an definite loop. It first  assembles a BRAN token with a null address. The words address after the null address is now  pushed on the return stack replacing the address left by FOR(). The address of the null address  field is pushed on the return stack. Top address on the return stack will be used by THEN() macro to close skip-once-only clause, and to resolve the address after AFT(). It then assemble  a token list with the parameters passing to AFT()macro. Number of parameters is indicated by  the first parameter int len. 
 
-AFT()は、always節を閉じ、definiteループのskip-once-only節を開始する。まず、BRANトークンをヌルアドレスでアセンブルします。NULLアドレスの後のワードアドレスは、FOR()によって残されたアドレスに代わって、リターンスタックにプッシュされる。ヌルアドレスフィールドのアドレスは、リターンスタックにプッシュされます。リターンスタックの先頭アドレスは、THEN()マクロがスキップワンスオンリー節を閉じるために使用し、AFT()の後のアドレスを解決するために使用されます。次に、AFT()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
+`AFT()`は、always節を閉じ、定回数ループのskip-once-only節を開始する。まず、`BRAN`トークンをヌルアドレスとともに書き込みます。ヌルアドレスの後のワードアドレスは、`FOR()`によって残されたアドレスに代わって、リターンスタックにプッシュされる。ヌルアドレスフィールドのアドレスは、リターンスタックにプッシュされます。リターンスタックの先頭アドレスは、`THEN()`マクロがskip-once-only節を閉じるために使用し、`AFT()`の後のアドレスを解決するために使用されます。次に、`AFT()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 ```
 void AFT(int len, ...) {
     IP = P >> 2;
@@ -1268,19 +1286,14 @@ void AFT(int len, ...) {
     va_end(argList);
 }
 ```
-A token list in a colon word contains mostly tokens, cfa of other words. However, other  information can be embedded in the token list as literals. We have seen lots of address literals  following BRAN, QBRAN and DONXT to build control structures. There is an integer literal  following DOLIT. The integer literal will be pushed on the data stack at run time when the  token list is executed. Another class of literals is string literals to embed strings in token list.  We need three more macros to build string structures: 
-
-コロンワードのトークン・リストには、主に他の語のトークン、cfaが含まれる。しかし、他の情報はリテラルとしてトークンリストに埋め込むことができる。制御構造を構築するために、BRAN、QBRAN、DONXTに続くアドレスリテラルをたくさん見てきました。DOLITに続く整数リテラルがあります。整数リテラルは、トークン・リストが実行されるときに、実行時のデータ・スタックにプッシュされる。もう一つのリテラルのクラスは、トークン・リストに文字列を埋め込むための文字列リテラルである。 文字列構造を構築するために、さらに3つのマクロが必要である。
+コロンワードのトークン・リストには、主にトークン、すなわち他のワードのcfaが含まれる。しかし、リテラルのようなその他の情報をトークンリストに埋め込むことができる。制御構造を構築するために、`BRAN`、`QBRAN`、`DONXT`に続くアドレスリテラルをたくさん見てきました。`DOLIT`に続く整数リテラルがあります。整数リテラルは、トークンリストが実行されるときに、実行時のデータ・スタックにプッシュされる。もう一つのリテラルのクラスは、トークンリストに文字列を埋め込むための文字列リテラルである。 文字列構造を構築するために、さらに3つのマクロが必要である。
 
 ```
 .” <string”
 $” <string>”
 ABORT” <string>”
 ```
-DOTQ()starts a string literal to be printed out at run time. It first assembles a DOTQP token.  Then the string, terminated by another double quote, is assembled as a counted string. The  string is null-filled to the 32-bit word boundary, similar to what HEADER() does. 
-
-DOTQ()は、ランタイムに出力される文字列リテラルを開始します。これは最初にDOTQPトークンを組み立てる。 次に、もう1つの二重引用符で終端された文字列が、カウントされた文字列として組み立てられる。文字列は、HEADER()が行うのと同様に、32ビットのワード境界までヌルフィルされます。
-
+`DOTQ()`は、実行時に印字される文字列リテラルを開始します。これは最初に`DOTQP`トークンを書き込みます。 次に、もう1つの二重引用符で終端された文字列が、カウント付きの文字列として書き込まれる。文字列は、`HEADER()`が行うのと同様に、32ビットのワード境界までヌルフィルされます。
 ```
 void DOTQ(const char seq[]) {
     IP = P >> 2;
@@ -1297,9 +1310,7 @@ void DOTQ(const char seq[]) {
     //printf(seq);
 }
 ```
-STRQ()starts a string literal to be accessed at run time. When it executes, it leaves the address  of the count byte of this string on the data stack. Other Forth words will make use of this string,  knowing its count byte address. It first assembles a STRQP token. Then the string, terminated  by another double quote, is assembled as a counted string. The string is null-filled to the 32-bit  word boundary, similar to what HEADER() does. 
-
-STRQ()は、実行時にアクセスする文字列リテラルを開始します。実行時に、この文字列のカウント・バイトのアドレスをデータ・スタックに残します。他のForthワードは、この文字列のカウント・バイトのアドレスを知って、この文字列を使用します。まず、STRQPトークンをアセンブルします。次に、もう1つの二重引用符で終端された文字列が、カウントされた文字列として組み立てられる。文字列は、HEADER()が行うのと同様に、32ビットのワード境界までヌルフィルされます。
+`STRQ()`は、実行時にアクセスできる文字列リテラルを開始します。実行時に、この文字列のカウントバイトを指すアドレスをデータ・スタックに残します。他のForthワードは、この文字列のカウントバイトのアドレスを知って、この文字列を使用します。まず、`STRQP`トークンをアセンブルします。次に、2つめの二重引用符で終端された文字列が、カウント付きの文字列として書き込まれる。文字列は、`HEADER()`が行うのと同様に、32ビットのワード境界までヌルフィルされます。
 ```
 void STRQ(const char seq[]) {
     IP = P >> 2;
@@ -1316,9 +1327,7 @@ void STRQ(const char seq[]) {
     //printf(seq);
 }
 ```
-ABORQ()starts a string literal as a warning message to be printed out when Forth is aborted. It  first assembles a ABORQP token. Then the string, terminated by another double quote, is  assembled as a counted string. The string is null-filled to the 32-bit word boundary, similar to  what HEADER() does. 
-
-ABORQ()は、Forthが中断されたときに出力される警告メッセージとして、文字列リテラルを開始します。これはまずABORQPトークンを組み立てる。次に、もう1つの二重引用符で終端された文字列が、カウントされた文字列として組み立てられる。文字列は、HEADER()が行うのと同様に、32ビットのワード境界までヌルフィルされます。
+`ABORQ()`は、Forthが中断されたときに出力される警告メッセージとして、文字列リテラルを開始します。これはまず`ABORQP`トークンを書き込む。次に、2つ目の二重引用符で終端された文字列が、カウント付きの文字列として書き込まれる。文字列は、`HEADER()`が行うのと同様に、32ビットのワード境界までヌルフィルされます。
 ```
 void ABORQ(const char seq[]) {
     IP = P >> 2;
@@ -1335,9 +1344,7 @@ void ABORQ(const char seq[]) {
     //printf(seq);
 }
 ```
-CheckSum() dumps 32 bytes of memory to Serial Terminal, roughly in the Intel dump format.  First display 4 bytes of address and a space. Then 32 bytes of data, 2 hex characters to a byte.  Finally the sum of these 32 bytes is displayed in 2 hex characters. The checksums are very  useful for me to compare the dictionary assembled by this macro assembler against the  dictionary produced by my earlier F# metacompiler. 
-
-CheckSum()は、32バイトのメモリをシリアルターミナルにダンプします。おおよそIntelのダンプ形式です。 最初に4バイトのアドレスとスペースが表示されます。次に32バイトのデータを、1バイトに16進数で2文字表示します。 最後にこれら32バイトの合計が16進数2文字で表示される。このチェックサムは、このマクロアセンブラで組まれた辞書と、私が以前作ったF#メタコンパイラで作られた辞書を比較するのに非常に便利である。
+`CheckSum()`は、32バイトのメモリをシリアルターミナルにダンプします。おおよそIntelダンプ形式です。 最初に4バイトのアドレスとスペースが表示されます。次に32バイトのデータを、1バイトに16進数で2文字表示します。 最後にこれら32バイトの合計が16進数2文字で表示される。このチェックサムは、このマクロアセンブラで組まれた辞書と、私が以前作ったF#メタコンパイラで作られた辞書を比較するのに非常に便利である。
 ```
 void CheckSum() {
     int i;
@@ -1350,20 +1357,13 @@ void CheckSum() {
     printf(" %2X", sum & 0XFF);
 }
 ```
-The macro assembler is complete. The macros thus defined will be used to construct primitive  words and colon words to form a complete Forth dictionary for VFM to run. 
-
-マクロアセンブラが完成しました。こうして定義されたマクロは、プリミティブワードやコロンワードを構成して、VFMが実行するための完全なForth辞書を形成するために使用されます。
-
+以上によりマクロアセンブラが完成しました。こうして定義されたマクロは、プリミティブワードやコロンワードを構成して、VFMが実行するための完全なForth辞書を形成するために使用されます。
 
 # Chapter 5. Primitive Words
 
 ## Byte Code Mnemonic
 
-To facilitate the macro assembler to assemble consecutive byte code, individual byte code are  given mnemonic names so we don’t have to use hard numbers. Mnemonic names are simply  names of the corresponding primitive routines, prefixed with “as_”, to show that they are  assembly mnemonics. 
-
 マクロアセンブラが連続したバイトコードをアセンブルしやすいように、個々のバイトコードにニーモニック名をつけて、難しい数字を使わなくても済むようにしています。ニモニック名は、対応するプリミティブ・ルーチンの名前に、アセンブラのニモニックであることを示すために "as_"を付けただけのものです。
-
-
 ```
 // Byte Code Assembler
 int as_nop = 0;
@@ -1433,10 +1433,7 @@ int as_min = 63;
 ```
 ## Assembling Forth Dictionary
 
-The macro assembler run first in the main() loop required by Visual Studio: 
-
-マクロアセンブラは、Visual Studioが要求するmain()ループの中で最初に実行されます。
-
+マクロアセンブラは、Visual Studioが要求する`main()`ループの中で最初に実行されます。
 ```
 /*
 * Main Program
@@ -1447,26 +1444,15 @@ int main(int ac, char* av[])
     P = 512;
     R = 0;
 ```
-cData[] byte array must be aligned with data[] array, to allow bytes to be accessed in the  integer data[] array. 
+`cData[]`バイト配列は、整数の`data[]`配列でバイトをアクセスできるようにするために、`data[]`配列にアライメントする必要があります。
 
-The macros HEADER() and CODE() defined previously in the macro assembler are now used  to assemble the primitive words to the dictionary. The dictionary is divided in two sections, first  the primitive words as a kernel of FVM, and next are all the colon words, which constitutes the  bulk of Forth dictionary. 
+マクロアセンブラで先に定義したマクロHEADER()とCODE()を使って、プリミティブワードを辞書にアセンブルするようになりました。辞書は2つのセクションに分けられ、最初はFVMのカーネルとしてのプリミティブワード、次はForth辞書の大部分を構成するすべてのコロンワードである。
 
-The first 512 byte of the dictionary are allocated to a terminal input buffer, and an area storing  initial values of user variables. P is therefore initialized to 512. thread was already initialized  to 0, ready to build the linked records of the first Forth word. 
-
-`cData[]`バイト配列は、整数の`data[]`配列でバイトをアクセスできるようにするために、data[]配列にアライメントする必要があります。
-
-マクロアセンブラで先に定義したマクロHEADER()とCODE()を使って、プリミティブワードを辞書にアセンブルするようになりました。辞書は2つのセクションに分けられ、最初はFVMのカーネルとしての原始語、次はForth辞書の大部分を構成するすべてのコロンワードである。
-
-辞書の最初の512バイトは、端末の入力バッファとユーザー変数の初期値を格納する領域に割り当てられている。スレッドはすでに0に初期化されており、最初のForth語のリンクレコードを構築する準備ができている。
-
+辞書の最初の512バイトは、端末入力バッファ(terminal input buffer)とユーザー変数の初期値を格納する領域に割り当てられている。スレッドはすでに0に初期化されており、最初のForth語のリンクレコードを構築する準備ができている。
 
 ## User Variables
 
-User variables are in the area between 0x80-0xAC. They contain vital information for the Forth  interpreter to work properly.  
-
 ユーザー変数は、0x80-0xACの間の領域にあります。Forthインタプリタが正しく動作するための重要な情報が含まれています。 
-
-
 
 |User<br>Variable|Address|Initial<br>Value|Function
 |---|---|---|---|
@@ -2889,13 +2875,15 @@ A set of immediate words are defined in Forth to build control structures in col
 
 Forthでは、コロンワードで制御構造を構築するために、即値語のセットが定義されています。Forthで使用される制御構造は以下の通りです。 
 
-Conditional branch IF ... THEN  
-IF ... ELSE ... THEN  
-Finite loop FOR ... NEXT  
-FOR ... AFT ... THEN... NEXT  
-Infinite loop BEGIN ... AGAIN  
-Indefinite loop BEGIN ... UNTIL  
-BEGIN ... WHILE ... REPEAT  
+|||
+|--|--|
+|Conditional branch|`IF ... THEN`  
+||`IF ... ELSE ... THEN`  
+|Finite loop|`FOR ... NEXT`  
+||`FOR ... AFT ... THEN... NEXT`  
+|Infinite loop|`BEGIN ... AGAIN`  
+|Indefinite loop|`BEGIN ... UNTIL`  
+||`BEGIN ... WHILE ... REPEAT`  
 
 This set of words is more powerful than the ones in figForth model because they do not do error  checking and thus permit multiple entries into and exits from a control structure. However, it is  not recommended that you overlap the control structures. In the learning stage of Forth  language, it will do you good to remember that: 
 
@@ -2937,7 +2925,7 @@ int FORR = COLON(4, COMPI, TOR, HERE, EXITT);
 ```
 BEGIN ( -- a ) starts an infinite or indefinite loop structure. It does not compile anything,  but leave the current token address on data stack to resolve address literals compiled later. 
 
-BEGIN ( -- a ) は、無限または不定のループ構造を開始します。これは何もコンパイルしませんが、現在のトークンアドレスをデータスタックに残し、 後でコンパイルされるアドレスリテラルを解決します。
+BEGIN ( -- a ) は、不定回数ループ構造または定回数ループ構造を開始します。これは何もコンパイルしませんが、現在のトークンアドレスをデータスタックに残し、 後でコンパイルされるアドレスリテラルを解決します。
 ```
 HEADER(IMEDD + 5, "BEGIN");
 int BEGIN = COLON(2, HERE, EXITT);
@@ -2951,7 +2939,7 @@ int NEXT = COLON(4, COMPI, DONXT, COMMA, EXITT);
 ```
 UNTIL ( a -- ) terminate a BEGIN-UNTIL indefinite loop structure. It compiles a  QBRANCH address literal using the address on data stack. 
 
-UNTIL ( a -- ) は、BEGIN-UNTILの不定形ループ構造を終了させる。データスタック上のアドレスを用いてQBRANCHアドレスリテラルをコンパイルします。
+UNTIL ( a -- ) は、BEGIN-UNTILの不定回数ループ構造を終了させる。データスタック上のアドレスを用いてQBRANCHアドレスリテラルをコンパイルします。
 ```
 HEADER(IMEDD + 5, "UNTIL");
 int UNTIL = COLON(4, COMPI, QBRAN, COMMA, EXITT);
@@ -2979,7 +2967,7 @@ int AHEAD = COLON(7, COMPI, BRAN, HERE, DOLIT, 0, COMMA, EXITT);
 ```
 REPEAT ( A a -- ) terminates a BEGIN-WHILE-REPEAT indefinite loop structure. It  compiles a BRANCH address literal with address a left by BEGIN, and uses the address of next  token to resolve the address literal at A. 
 
-REPEAT ( A a -- ) は、BEGIN-WHILE-REPEATの不定形ループ構造を終了させる。BEGINによって残されたアドレスaを持つBRANCHアドレスリテラルをコンパイルし、次のトークンのアドレスを使用してアドレスリテラルをAで解決します。
+REPEAT ( A a -- ) は、BEGIN-WHILE-REPEATの不定回数ループ構造を終了させる。BEGINによって残されたアドレスaを持つBRANCHアドレスリテラルをコンパイルし、次のトークンのアドレスを使用してアドレスリテラルをAで解決します。
 ```
 HEADER(IMEDD + 6, "REPEAT");
 int REPEA = COLON(3, AGAIN, THENN, EXITT);
@@ -3235,5 +3223,7 @@ ceforth_33 システムの全体像を調べてみました。これは完全に
 霜刃未曾试。 The shining blade has never been tested.  
 今日把示君， Today I show it to you.  
 谁有不平事？ Is there any injustice to avenge?  
+
+<img width=350 src="img/postrude-swordman.png" style="display: block; margin: auto;">
 
 このceForthシステムに10年間磨きを掛けてきました。面倒なF#メタコンパイラが不要になったという点では、とても満足しています。気に入って活用していただければ幸いです。ご健闘を祈ります。
