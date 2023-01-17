@@ -874,96 +874,61 @@ ceForth_33 は、Virtual Forth Engine が使用する大きな配列 `data[16000
 
 これらのフィールドの先頭バイトのアドレスをそれぞれ、リンクフィールドアドレス(lfa)、ネームフィールドアドレス(nfa)、コードフィールドアドレス(cfa)、パラメータフィールドアドレス(pfa)と呼ぶ。本書では、これらのフィールドアドレスの略称を使用します。 
 
-Words have names of variable length. The name field is null-filled to the 32-bit word boundary.  Code field may also have variable number of byte code, and code field is also null-filled to the  word boundary. Tokens are 32-bit integers, and therefore the parameter field is always  terminated on word boundary. 
-
 ワードは可変長の名前を持つ。名前フィールドは32ビットのワード境界までヌルフィルされます。 コードフィールドも可変長のバイトコードを持つことができ、コードフィールドもワード境界までヌルフィルされる。トークンは32ビット整数であるため、パラメータフィールドは常にワード境界で終端される。
 
-All word records are linked in a uni-direction linked list, called a dictionary. The link field  contains a pointer pointing to the name field of the prior word. The link list starts at the last  word IMMEDIATE assembled in the dictionary. It is pointed to by a user variable CONTEXT.  
+すべてのワードレコードは、一方向リンクリストにリンクされ、辞書と呼ばれる。リンクフィールドには、前のワードの名前フィールドを指すポインタが含まれる。リンクリストは、辞書に最後に組まれたワードIMMEDIATEから始まる。これは、ユーザ変数CONTEXTによって指される。 
 
-すべてのワードレコードは、辞書と呼ばれる一方向リンクリストにリンクされる。リンクフィールドには、前のワードの名前フィールドを指すポインタが含まれる。リンクリストは、辞書に最後に組まれたワードIMMEDIATEから始まる。これは、ユーザ変数CONTEXTによって指される。 
-
-Word searching also starts here. The first word HLD, which terminates the list and stops  dictionary searching, has a zero in its link field, indicating the end of list. The threading of  records in a dictionary is shown in the following figure: 
-
-ワード検索もここから始まる。リストを終了させ、辞書検索を停止させる最初のワードHLDは、そのリンクフィールドに0を持ち、リストの終了を意味する。辞書内のレコードのスレッド化は、次の図に示すとおりである。
-
-ceForth_33 uses the 'Direct Thread Model'. Each word has a code field in its record. The code  field address (cfa) is considered the token of this word. The code field contains executable byte  code. In a primitive word, the code field contains a list of byte code, which may extends into  the parameter field, terminated by a special byte code next, which fetches the next token from  a token list and executes that token.  
+ワード検索もここから始まる。最初のワードHLDは、リンクフィールドの値が、そのリストの終了を意味する0であり、リストを終了させ辞書検索を停止させる。辞書内のレコードのスレッドは、次の図に示すとおりである。
 
 <img width=200 src="img/ch3-linked-list.png">
 
-ceForth_33は「ダイレクト・スレッド・モデル」を使用している。各ワードは、そのレコードにコードフィールドを持つ。コードフィールドのアドレス(cfa)は、このワードのトークンとみなされる。コードフィールドには、実行可能なバイトコードが格納されています。プリミティブワードでは、コードフィールドは、パラメータフィールドに伸びる可能性のあるバイトコードのリストを含み、特別なバイトコードnextで終了し、トークン一覧から次のトークンをフェッチしてそのトークンを実行する。 
-
-In a colon word, the code field contains a DOLST byte code, which process the contents of the  parameter field as a token list. The token list is generally terminated by a primitive word EXIT,  which un-nests a token list started by DOLST. The code fields and parameter fields of these  words are shown as the following figure: 
+ceForth_33は 'ダイレクト・スレッド・モデル' を使用している。各ワードは、そのレコードにコードフィールドを持つ。コードフィールドのアドレス(cfa)は、このワードのトークンとみなされる。コードフィールドには、実行可能なバイトコードが格納されています。プリミティブワードでは、コードフィールドは、パラメータフィールドに伸びる可能性のあるバイトコードのリストを含み、特別なバイトコードnextで終了し、そのトークンリストから次のトークンをフェッチすることによりそのトークンを実行する。 
 
 コロンワードでは、コードフィールドはDOLSTバイトコードを含み、これはパラメータフィールドの内容をトークンリストとして処理します。トークンリストは一般にプリミティブワードEXITで終了し、DOLSTで開始したトークンリストをアンネストする。これらのワードのコードフィールドとパラメータフィールドは、次の図のようになる。
 
-In the parameter field of a colon word, the token list generally contains tokens which are 32-bit  code field addresses of other words. However, there are many other kinds of information  embedded in a token list. In ceForth_33, there are integer literals, address literals, and string  literals. An integer literal is a token DOLIT followed by a 32-bit integer value. This integer will  be pushed on the data stack at run time. An address literal starts with a token BRAN, QBRAN or  DONXT, followed by a 32-bit address. This address will be used by BRAN, QBRAN oe DONXT to  branch to a new location in the token list containing these branching tokens. 
-
 <img width=400 src="img/ch3-primitive-and-colon-words.png">
 
-コロンワードのパラメータフィールドには，一般に他のワードの32ビットコードフィールドアドレスであるトークンが含まれる。しかし、トークン・リストには、他の多くの種類の情報が埋め込まれている。ceForth_33では、整数リテラル、アドレス・リテラル、文字列リテラルがある。整数リテラルは、トークンDOLITの後に32ビットの整数値が続くものである。この整数は、実行時にデータスタックにプッシュされる。アドレスリテラルは、BRAN、QBRAN、DONXTのいずれかのトークンと、32ビットアドレスで始まります。このアドレスは、BRAN、QBRAN、DONXTによって、これらの分岐トークンを含むトークンリスト内の新しい場所に分岐するために使用されます。
-
-The integer literal and address literals are shown in the following figure: 
+コロンワードのパラメータフィールドには、一般に他のワードの32ビットコードフィールドアドレスであるトークンが含まれる。しかし、トークン・リストには、他の多くの種類の情報が埋め込まれている。ceForth_33では、整数リテラル、アドレスリテラル、文字列リテラルがある。整数リテラルは、トークンDOLITの後に32ビットの整数値が続くものである。この整数は、実行時にデータスタックにプッシュされる。アドレスリテラルは、BRAN、QBRAN、DONXTのいずれかのトークンと、32ビットアドレスで始まります。このアドレスは、BRAN、QBRAN、DONXTによって、これらの分岐トークンを含むトークンリスト内の新しい場所に分岐するために使用されます。
 
 整数リテラルとアドレスリテラルを次の図に示します。
 
 <img width=400 src="img/ch3-literals.png">
 
-The address literals are used to build control structures in token lists. The following figure  shows how they are used in structures like IF-ELSE-THEN and BEGIN-WHILE-REPEAT. 
-
 アドレス・リテラルは、トークン・リスト内の制御構造を構築するために使用される。次の図は、IF-ELSE-THEN や BEGIN-WHILE-REPEAT などの構造で使用される様子を示しています。
-
-A string literal starts with a token, DOTQP, STRQP, or ABORQP, followed by a counted string  of ASCII characters, null-filled to the word boundary. They are used to print a string in runtime,  or make the string available for other words to use. They are used in the following ways: 
 
 <img width=500 src="img/ch3-branch-structure.png">
 
-文字列リテラルは、DOTQP、STRQP、ABORQPのいずれかのトークンで始まり、その後にASCII文字のカウント文字列が続き、ワード境界までヌルフィルされています。これらは、実行時に文字列を表示したり、他のワードが使用できるように文字列を作成するために使用されます。これらは次のように使用される。
+文字列リテラルは、DOTQP、STRQP、ABORQPのいずれかのトークンで始まり、その後にASCII文字のカウント付き文字列が続き、ワード境界までヌルフィルされています。これらは、実行時に文字列を表示したり、他のワードが使用できるように文字列を作成するために使用されます。これらは次のように使用される。
 ```
 .” print this message”
 $” push address of this string on stack”
 ABORT” compile only”
 ```
-These string literals are shown in the following figure:
-
 これらの文字列リテラルを下図に示します。
 
 <img width=300 src="img/ch3-three-types-of-strings.png">
 
-In ceForth_33, we have to build the entire Forth dictionary to work with the Virtual Forth  Machine. Native C compilers do not provide good tools to build variable length fields required  by an interpretive system like Forth. However, a set of macros can be defined in C as functions  to assemble all fields in all Forth words, and link them all into a searchable dictionary. In the  following Chapter, I will go through these macros and show you how to construct a dictionary  for a Virtual Forth Machine to run in Visual Studio 2019 Community. 
-
-ceForth_33では、Virtual Forth Machineで動作させるために、Forth辞書全体を構築する必要があります。ネイティブのCコンパイラは、Forthのようなインタプリタ型システムで必要とされる可変長フィールドを構築するための優れたツールを提供しません。しかし、C言語では、すべてのForth語のすべてのフィールドを組み立て、それらをすべて検索可能な辞書にリンクする関数として、一連のマクロを定義することができます。次のChapterでは、これらのマクロを確認しながら、Visual Studio 2019 Communityで実行するVirtual Forth Machineの辞書を構築する方法を紹介します。
+ceForth_33では、Virtual Forth Machineで動作できるようなForth辞書全体を構築する必要があります。ネイティブのCコンパイラは、Forthのようなインタプリタ型システムで必要とされる可変長フィールドを構築するための優れたツールを提供しません。しかし、C言語では、一連のマクロを定義することにより、すべてのForth語のすべてのフィールドを組み立て、それらをすべて検索可能な辞書にリンクする機能を実現できます。次のChapterでは、これらのマクロを確認しながら、Visual Studio 2019 Communityで実行するVirtual Forth Machineの辞書を構築する方法を紹介します。
 
 # Chapter 4. Macro Assembler for Forth in C
 
-For a long time, my Forth in C had to import the Forth dictionary as a header file. The header  file was produced by a Forth metacompiler, because I did not know how to generate the  dictionary in a C program. Although C does not provide data structures for variable length and  variable length parameter fields, one can write C code to place arbitrary byte and integer values  in a data array. Placing bytes and integers into consecutive locations in an array can be  orchestrated to build various fields and recorder in a dictionary. 
+長い間、私のForth in Cは、Forthの辞書をヘッダファイルとしてインポートしなければなりませんでした。このヘッダーファイルは、Forthのメタコンパイラが生成したもので、Cプログラムで辞書を生成する方法がわからなかったからです。C言語では、可変長や可変長のパラメータフィールドのデータ構造は提供されていないが、任意のバイトや整数の値をデータ配列に配置するC言語のコードを書くことができる。バイトや整数を配列の連続した位置に配置することで、辞書にさまざまなフィールドやレコーダを構築することができる。
 
-長い間、私のForth in Cは、Forthの辞書をヘッダーファイルとしてインポートしなければなりませんでした。このヘッダーファイルは、Forthのメタコンパイラが生成したもので、Cプログラムで辞書を生成する方法がわからなかったからです。C言語では、可変長や可変長のパラメータフィールドのデータ構造は提供されていないが、任意のバイトや整数の値をデータ配列に配置するC言語のコードを書くことができる。バイトや整数を配列の連続した位置に配置することで、辞書にさまざまなフィールドやレコーダを構築することができる。
-
-Way back when, before Windows, Microsoft gave us a macro assembler called MASM, which I  used to build the first eForth Model. I had a few macros to construct all 4 fields in a word  record, and linked all word records into a linked dictionary. This mechanism of macro  assembler can be realized in C to build my Forth dictionary. I first tried out this idea in Python,  because Python is interactive, and I could see the dictionary as I was building it. I wrote three  macros to build primitive words, colon worlds, and labels for partial token lists to allow  branching and looping. Once verified in Python, these macros were ported to C  straightforwardly. 
-
-昔、Windowsの前に、MicrosoftはMASMというマクロアセンブラを提供してくれましたが、私はそれを使って最初のeForth Modelを作りました。私はいくつかのマクロでワードレコードの4つのフィールドをすべて構築し、すべてのワードレコードをリンク辞書にリンクしていました。このマクロアセンブラの仕組みはC言語で実現でき、私のForth辞書を構築することができます。Pythonは対話的で、辞書を構築しながら見ることができるので、私はまずPythonでこのアイデアを試してみました。原始語、コロンワールド、部分トークンリストのラベルの3つのマクロを書き、分岐やループを可能にしました。Pythonで検証した後、これらのマクロは素直にCに移植しました。
-
-Label macros allow branching and looping. However, it was difficult to make forward  referencing working properly. MASM, as most other compilers, used 2 passes to resolve  forward referencing. On the other hand, Chuck Moore designed Forth with a beautiful one pass  compiler. It was not difficult to extend my macro assembler so that everything is compiled in a  single pass. This is the macro assembler you will see as I go through the C code in ceForth_33. 
+昔、Windowsの前に、MicrosoftはMASMというマクロアセンブラを提供していたので、私はそれを使って最初のeForth Modelを作りました。私はいくつかのマクロでワードレコードの4つのフィールドをすべて構築し、すべてのワードレコードをリンク辞書にリンクしていました。このマクロアセンブラの仕組みはC言語で実現でき、私のForth辞書を構築することができます。Pythonは対話的で、辞書を構築しながら見ることができるので、私はまずPythonでこのアイデアを試してみました。プリミティブワード、コロンワールド、ラベル部分のみからなるトークンリストの3つのマクロを書き、分岐やループを可能にしました。Pythonで検証した後、これらのマクロは素直にCに移植しました。
 
 ラベルマクロは分岐やループを可能にする。しかし、前方参照を正しく動作させるのは困難でした。MASMは他の多くのコンパイラと同様、前方参照を解決するために2パスを使っていました。一方、Chuck Mooreは美しい1パスコンパイラでForthを設計しました。私のマクロアセンブラを拡張して、すべてが1パスでコンパイルされるようにするのは難しいことではありませんでした。これは、私がceForth_33のCコードを見ていくときに見るマクロアセンブラです。
 
-
 ## Macro Assembler
-
-In the Virtual Forth Machine, the dictionary is stored in an integer array data[IP]. It is  aliased to a byte array cData[P], where IP is an integer pointer and P is a byte pointer. To  point to the same location in the dictionary, IP=P/4. To write consecutive bytes into the  dictionary, we can do the following: 
 
 Virtual Forth Machineでは、辞書は整数配列`data[IP]`に格納されます。これはバイト配列`cData[P]`にエイリアスされており、`IP`は整数ポインター、`P`はバイトポインターである。辞書の同じ位置を指すには、`IP=P/4`である。連続したバイトを辞書に書き込むには、次のようにすればよい。
 ```
 cData[P++]= char c;
 ```
-To write consecutive integers, do the following:
-
 連続した整数を書くには、次のようにします。
 ```
 data[IP++]=int n;
 ```
-IP=P/4のようにIPとPを同期させれば、Forthの辞書を構築するために何を書いてもよい。
-
-I first coded a simple macro assembler to build word records in the Forth dictionary. It  consisted of four macros: HEADER() to build link fields and name fields, CODE() to build  code fields for primitive words, COLON() to build code and parameter fields for colon words,  and LABEL() to extend token lists in colon words for branching and looping. These four  macros are as follows: 
+`IP=P/4`のように`IP`と`P`を同期させれば、Forthの辞書を構築するために何を書いてもよい。
 
 私はまず、Forth辞書のワードレコードを構築するための簡単なマクロアセンブラをコーディングした。それは、4つのマクロで構成されていた。`HEADER()`はリンクフィールドと名前フィールドを、`CODE()`は原始語のコードフィールドを、`COLON()`はコロンワードのコードとパラメータフィールドを、`LABEL()`はコロンワードのトークンリストを分岐やループのために拡張するためのものである。これら4つのマクロは次の通りである。
 ```
@@ -971,18 +936,12 @@ I first coded a simple macro assembler to build word records in the Forth dictio
 int IMEDD = 0x80;
 int COMPO = 0x40;
 ```
-`IMEDD` and `COMPO` designate lexicon bits in the length byte of name field. `IMEDD` as bit 7 is  called immediate bit, and it forces Forth compiler to execute this word instead of compiling its  token into the dictionary. All Forth words building control structures are immediate words.  COMPO as bit 6 is called compile-only bit. Many Forth words are dangerous. They may crash  the system if executed by Forth interpreter. These words are marked by COMPO as compile-only,  and they are only used by Forth compiler. 
-
 `IMEDD`と`COMPO`は、名前フィールドの長さバイトの辞書ビットを指定する。`IMEDD`はビット7として即時ビットと呼ばれ、Forthコンパイラにそのトークンを辞書にコンパイルする代わりに、このワードを実行するように強制します。制御構造を構築するすべてのForth語は即時ワードである。 第6ビットの`COMPO`は、コンパイル専用ビットと呼ばれる。多くのForth語は危険である。Forthインタプリタによって実行されると、システムをクラッシュさせる可能性があります。これらのワードは、COMPOによってコンパイル専用とマークされ、Forthコンパイラによってのみ使用されます。
 
 ```
 int BRAN=0, QBRAN=0, DONXT=0, DOTQP=0, STRQP=0, TOR=0, ABORQP=0; 
 ```
-BRAN, QBRAN, DONXT, DOTQP, STRQP, ABRQP, and TOR are forward references to  primitive words the macro assembler needs to build control structures and string structures in  colon words. They are initialized to 0 here, but will be resolved when these primitives are  assembled. 
-
 `BRAN`、`QBRAN`、`DONXT`、`DOTQP`、`STRQP`、`ABRQP`、`TOR`は、マクロアセンブラがコロンワードで制御構造や文字列構造を構築するために必要なプリミティブワードへの前方参照である。ここでは0に初期化されていますが、これらのプリミティブがアセンブルされるときに解決されます。
-
-HEADER() builds a link field and a name field for either a primitive or a colon word. A global  variable thread contains the name field address (nfa) of the prior word in the dictionary. This  address is first assembled as a 32-bit integer with data[IP++]=thread;. Now, P is  pointing at the name field of the current word. This P is saved back to thread.  In the name field, the first byte is a lexicon byte, in which the lower 5 bits stores the length of  the name, bit 6 indicates a compile-only word, and bit 7 indicates an immediate word. This  lexicon byte is assembled first in the name field, and then the name string. The name field is  then null-filled to the next 32-bit word boundary. Now, P is pointing to the code field, ready to  assemble byte code. 
 
 `HEADER()`はプリミティブまたはコロンワードのリンクフィールドとネームフィールドを構築する。グローバル変数`thread`には、辞書にある先行ワードの名前フィールドアドレス(nfa)が格納される。このアドレスは、まず`data[IP++]=thread;`で32ビット整数として組み立てられる。さて、`P`は現在のワードの名前フィールドを指している。このPは、threadに戻して保存される。 `name`フィールドでは、最初のバイトがレキシコンバイトで、下位5ビットが名前の長さ、ビット6がコンパイル専用ワード、ビット7が即時ワードを格納します。このレキシコンバイトをまず名前フィールドに組み入れてから、名前文字列を作成する。そして、nameフィールドは次の32ビットワード境界までヌルフィルされます。さて、Pはコードフィールドを指しており、バイトコードをアセンブルする準備ができています。
 
@@ -1008,11 +967,9 @@ void HEADER(int lex, const char seq[]) {
     printf(" %X", P);
 }
 ```
-CODE() builds a code field for a primitive word. After HEADER()finishes building a name  field, P has the code field address (cfa). This cfa is return and saved as an integer, which will be  used as a parameter by macro COLON()as a token. A sequence of byte code can now be  assembled by cData[P++]=c;. CODE() has a variable number of byte code as parameters.  This number must be the first parameter int len. In this implementation, the length len is  either 4 or 8. The code field will always be either 4 byte long or 8 byte long, and is always  aligned to 32-bit word boundary. 
+`CODE()`は、プリミティブワードのコードフィールドを構築する。`HEADER()`が名前フィールドを構築し終えると、`P`はコードフィールドアドレス(cfa)を持つ。このcfaは整数値として返され、マクロ`COLON()`のパラメータとしてトークンとして使用されることになる。これで、`cData[P++]=c;` でバイトコード列を組み立てることができる。`CODE()`はパラメータとして可変長のバイトコードを持っています。 この数は、最初のパラメータint lenで指定しなければならない。この実装では、長さ`len`は4または8のいずれかである。コードフィールドは、常に4バイト長または8バイト長であり、常に32ビットワード境界に整合される。
 
-`CODE()`は、プリミティブワードのコードフィールドを構築する。`HEADER()`が名前フィールドを構築し終えると、Pはコードフィールドアドレス(cfa)を持つ。このcfaは整数値として返され、マクロCOLON()のパラメータとしてトークンとして使用されることになる。これで、`cData[P++]=c;` でバイトコード列を組み立てることができる。`CODE()`はパラメータとして可変長のバイトコードを持っています。 この数は、最初のパラメータint lenでなければならない。この実装では、長さ`len`は4または8のいずれかである。コードフィールドは、常に4バイト長または8バイト長であり、常に32ビットワード境界にアラインされる。
-
-`CODE()`は、`HEADER()`と共に、Forth辞書にプリミティブワードのレコードを構築する。 これは、コロンワードのトークン・リストを構築するための整数トークンとして割り当てられるcfaを返します。
+`CODE()`は、`HEADER()`と共に、Forth辞書にプリミティブワードのレコードを構築する。 これは、コロンワードのトークンリストを構築するための整数トークンとして割り当てられるcfaを返します。
 ```
 int CODE(int len, ...) {
     int addr = P;
@@ -1027,9 +984,9 @@ int CODE(int len, ...) {
     return addr;
 }
 ```
-`COLON()`は、コロンワードのコードフィールドとパラメータフィールドを構築する。Pはコード・フィールド・アドレス(cfa)を持つ。このcfaは整数として保存され、他の`COLON()`マクロでトークンとしてパラメータに使われる。値6の`DOLST`バイトコードは、`data[IP++]=6;`で整数として組み立てられる。そして、パラメータとして可変数の整数トークンを組み立てる。この数値は、最初のパラメータ int len でなければならない。 
+`COLON()`は、コロンワードのコードフィールドとパラメータフィールドを構築する。Pはコード・フィールド・アドレス(cfa)を持つ。このcfaは整数として保存され、他の`COLON()`マクロでトークンとしてパラメータに使われる。値6の`DOLST`バイトコードは、`data[IP++]=6;`で整数として組み込まれる。そして、パラメータとして可変数の整数トークンを組み込む。トークンの数は、最初のパラメータ int len として指定しなければならない。 
 
-COLON()は、HEADER()と共に、Forth辞書にコロンワードのレコードを構築する。これは、後のコロンワードのトークンリストを構築するための整数トークンとして割り当てられるcfaを返します。
+`COLON()`は、`HEADER()`と共に、Forth辞書にコロンワードのレコードを構築する。これは、後のコロンワードのトークンリストを構築するための整数トークンとして割り当てられるcfaを返します。
 ```
 int COLON(int len, ...) {
     int addr = P;
@@ -1048,11 +1005,11 @@ int COLON(int len, ...) {
     return addr;
 }
 ```
-LABEL()は、分岐やループのために、コロン・ワードの中に部分的なトークン・リストを構築する。Pは現在のトークンアドレスを持つ。このアドレスは戻り値で整数として保存され、分岐トークンに続くアドレスとして使用される。そして、可変数の整数のトークンをパラメータとして組み立てます。この数は最初のパラメータint lenでなければなりません。 
+`LABEL()`は、分岐やループのために、コロン・ワードの中に部分的なトークン・リストを構築する。`P`は現在のトークンアドレスを持つ。このアドレスは戻り値で整数として保存され、分岐トークンに続くアドレスとして使用される。そして、可変数の整数のトークンをパラメータとして組み立てます。この数は最初のパラメータint lenでなければなりません。 
 
-LABEL()は、コロン・ワードの中で部分的なトークンリストを構築します。LABEL()は、トークンを分岐させるためのアドレスをターゲットアドレスとして返す。
+`LABEL()`は、コロン・ワードの中で部分的なトークンリストを構築します。`LABEL()`は、トークンを分岐させるためのアドレスをターゲットアドレスとして返す。
 
-LABEL()は、前方参照を扱うことができない。LABEL()のパラメータリストに含まれる全ての参照は有効でなければならない。 マクロアセンブラの最初のパスの後、すべての参照は解決され、有効なアドレスは最初に割り当てられた0を置き換えるためにコピーされる必要があります。この2回目のパスは手動で行う必要があります。
+`LABEL()`は、前方参照を扱うことができない。`LABEL()`のパラメータリストに含まれる全ての参照は有効でなければならない。 マクロアセンブラの最初のパスの後、すべての参照は解決され、有効なアドレスは最初に割り当てられた0を置き換えるためにコピーされる必要があります。この2回目のパスは手動で行う必要があります。
 ```
 int LABEL(int len, ...) {
     int addr = P;
@@ -1070,17 +1027,11 @@ int LABEL(int len, ...) {
     return addr;
 }
 ```
-Using LABEL()to mark all locations for branching and looping, I built and tested  esp32Forth_61. I checked the dictionary it produced byte-for-byte against the dictionary  generated by espForth_54. It proved that a C program could correctly build a Forth dictionary.  However, manually resolving forward references was not satisfactory, and a better set of macro  is needed to assemble Forth dictionary automatically. The new scheme was tried out in  esp32forth_62, and it was adapted in ceForth_33. 
-
-LABEL()を使って、分岐とループのためのすべての場所をマークし、私はesp32Forth_61をビルドしてテストしました。私は、それが生成した辞書をespForth_54によって生成された辞書と1バイトずつチェックしました。CプログラムがForth辞書を正しく構築できることが証明されました。 しかし、前方参照を手動で解決することは満足できるものではなく、Forth辞書を自動的に組み立てるためのより良いマクロのセットが必要である。この新しい方式はesp32forth_62で試され、ceForth_33で適応された。
+`LABEL()`を使って、分岐とループのためのすべての場所をマークし、私はesp32Forth_61をビルドしてテストしました。私は、それが生成した辞書をespForth_54によって生成された辞書と1バイトずつチェックしました。CプログラムがForth辞書を正しく構築できることを確認しました。 しかし、前方参照を手動で解決することは満足できるものではなく、Forth辞書を自動的に組み立てるためのより良いマクロのセットが必要である。この新しい方式はesp32forth_62で試され、ceForth_33で適応された。
 
 ### Macros for Structured Programming
 
-I could handle labels myself to demonstrate that a Forth dictionary could be built in C, but I  would not expect users to manually resolve forward references. Chuck Moore demonstrated  that all nested control structures could be compiled correctly in a single pass. It is certainly  possible to do it in this macro assembler. The way to do it is to write all the Forth immediate  words in macros to set up branch and loop structures and resolve all references, forward or  backward. 
-
 Forth辞書がCで構築できることを示すために、私自身はラベルを扱うことができたが、ユーザーが前方参照を手動で解決することは期待しない。Chuck Mooreは、すべてのネストされた制御構造が1回のパスで正しくコンパイルできることを実証しました。このマクロアセンブラでそれを行うことは確かに可能である。その方法は、Forthのすべての即値語をマクロで記述して、分岐やループ構造を設定し、前方や後方へのすべての参照を解決することだ。
-
-The macros we need are used to build the following structures: 
 
 必要なマクロは、次のような構造を構築するために使用されます。
 ```
@@ -1090,20 +1041,14 @@ The macros we need are used to build the following structures:
     IF...ELSE...THEN
     FOR...AFT...THEN...NEXT
 ```
-Some macros generally assemble a branch token with a branch address, followed by a variable  number of tokens. Other macros resolves a forward reference. The structures can be nested;  therefore, a stack is necessary to pass address field locations, and resolved addresses when they  are available. I draft the return stack mechanism to accomplish address parameter passing.  
-
-いくつかのマクロは、一般に分岐トークンを分岐アドレスでアセンブルし、その後に可変数のトークンが続く。他のマクロは、前方参照を解決する。構造体は入れ子にすることができるので、アドレスフィールドの位置、および解決されたアドレスが利用可能な場合はそれを渡すためにスタックが必要である。私は、アドレスパラメータ渡しを実現するために、リターンスタック機構を起草した。 
-
-Earlier I defined two replacement macros to clarify the return stack operations: 
+いくつかのマクロは、一般に分岐トークンを分岐アドレスでアセンブルし、その後に可変数のトークンが続く。他のマクロは、前方参照を解決する。構造体は入れ子にすることができるので、アドレスフィールドの位置、および解決されたアドレスが利用可能な場合はそれを渡すためにスタックが必要である。私は、アドレスパラメータ渡しを実現するために、リターンスタック機構を書き起こした。 
 
 以前、リターンスタックの操作を明確にするために、2つの置換マクロを定義した。
 ```
 # define popR rack[(unsigned char)R--]
 # define pushR rack[(unsigned char)++R]
 ```
-BEGIN()starts an indefinite loop. It first pushes the current word address IP on the return  stack, so that the loop terminating branch token can assemble the correct return address. It then  assemble a token list with the parameters passing to BEGIN() macro. Number of parameters is  indicated by the first parameter int len. 
-
-BEGIN()は不定形ループを開始します。ループを終了する分岐トークンが正しいリターンアドレスを組み立てられるように、まず、現在のワードアドレスIPをリターンスタックにプッシュします。次に、BEGIN()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
+`BEGIN()`は不定形ループを開始します。ループを終了する分岐トークンが正しいリターンアドレスを組み立てられるように、まず、現在のワードアドレス`IP`をリターンスタックにプッシュします。次に、`BEGIN()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 
 ```
 void BEGIN(int len, ...) {
@@ -1121,9 +1066,7 @@ void BEGIN(int len, ...) {
     va_end(argList);
 }
 ```
-AGAIN()closes an indefinite loop. It first assembles a BRAN token, and then assembles the  address BEGIN() left on the return stack to complete the loop structure. It then assemble a  token list with the parameters passing to AGAIN() macro. Number of parameters is indicated  by the first parameter int len. 
-
-AGAIN()は、不定形ループを閉じる。まず、BRAN トークンを組み立て、リターンスタックに残っている BEGIN() アドレスを組み立てて、ループ構造を完成させる。そして、AGAIN()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
+`AGAIN()`は不定形ループを閉じる。まず、`BRAN` トークンを書き込み、リターンスタックに残っている `BEGIN()` アドレスを書き込んでループ構造を完成させる。そして、`AGAIN()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 ```
 void AGAIN(int len, ...) {
     IP = P >> 2;
@@ -1141,9 +1084,7 @@ void AGAIN(int len, ...) {
     va_end(argList);
 }
 ```
-UNTIL()closes an indefinite loop. It first assembles a QBRAN token, and then assembles the  address BEGIN()left on the return stack to complete the loop structure. It then assemble a  token list with the parameters passing to AGAIN()macro. Number of parameters is indicated  by the first parameter int len. 
-
-UNTIL()は不定形ループを閉じる。最初にQBRANトークンを組み立て、次にリターンスタックに残されたアドレスBEGIN()を組み立てて、ループ構造を完成させる。そして、AGAIN()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
+`UNTIL()`は不定形ループを閉じる。最初に`QBRAN`トークンを書き込み、次にリターンスタックに残されたアドレス`BEGIN()`を書き込んでループ構造を完成させる。そして、`AGAIN()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 
 ```
 void UNTIL(int len, ...) {
@@ -1162,9 +1103,7 @@ void UNTIL(int len, ...) {
     va_end(argList);
 }
 ```
-WHILE()closes a always clause and starts a true clause in an indefinite loop. It first assembles  a QBRAN token with a null address. The words address after the null address is now pushed on  the return stack under the address left by BEGIN(). Two address on the return stack will be  used by REPEAT() macro to close the loop, and to resolve the address after QBRAN(). It then  assemble a token list with the parameters passing to WHILE()macro. Number of parameters is  indicated by the first parameter int len. 
-
-WHILE()は、always節を閉じ、true節を開始する不定形ループである。これは最初にヌルアドレスを持つQBRANトークンを組み立てる。NULLアドレスの後のワードアドレスは、BEGIN()によって残されたアドレスの下のリターンスタックにプッシュされる。リターンスタック上の2つのアドレスは、ループを閉じるためにREPEAT()マクロによって使用され、 QBRAN()の後のアドレスを解決する。そして、WHILE()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
+`WHILE()`は、always節を閉じ、true節を開始する不定形ループである。これは最初にヌルアドレスを持つ`QBRAN`トークンを組み立てる。ヌルアドレスの後のワードアドレスは、リターンスタックの`BEGIN()`によって残されたアドレスの下にプッシュされる。リターンスタックのこの2つのアドレスは、ループを閉じるために`REPEAT()`マクロによって使用され、 `QBRAN()`の後のアドレスを解決する。そして、`WHILE()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 
 ```
 void WHILE(int len, ...) {
@@ -1187,9 +1126,7 @@ void WHILE(int len, ...) {
     va_end(argList);
 }
 ```
-REPEAT()closes a BEGIN-WHILE-REPEAT indefinite loop. It first assembles a BRAN token  with the address left by BEGIN(). The words address after the BEGIN address is now stored  into the location whose address was left by WHILE() on the return stack. It then assemble a  token list with the parameters passing to REPEAT()macro. Number of parameters is indicated  by the first parameter int len. 
-
-REPEAT()は、BEGIN-WHILE-REPEATの不定形ループを閉じます。まず、BEGIN()が残したアドレスでBRANトークンを組み立てる。BEGINアドレスの後のワードアドレスは、リターンスタック上のWHILE()によって残されたアドレスの場所に格納されるようになりました。次に、REPEAT()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
+`REPEAT()`は、BEGIN-WHILE-REPEATの不定形ループを閉じます。まず、`BEGIN()`が残したアドレスで`BRAN`トークンを組み立てる。`BEGIN`アドレスの後のワードアドレスは、リターンスタック上の`WHILE()`によって残されたアドレスの場所に格納されるようになりました。次に、`REPEAT()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 
 ```
 void REPEAT(int len, ...) {
@@ -1209,9 +1146,7 @@ void REPEAT(int len, ...) {
     va_end(argList);
 }
 ```
-IF()starts a true clause in a branch structure. It first assembles a QBRAN token with a null  address. The words address of the null address field is now pushed on the return stack. The null  address field will be filled by ELSE() or THEN(), when they resolve the branch address. It  then assemble a token list with the parameters passing to IF()macro. Number of parameters is  indicated by the first parameter int len. 
-
-IF()は、分岐構造内の真節を開始する。それは最初にヌルアドレスを持つQBRANトークンを組み立てる。ヌルアドレスフィールドのワードアドレスは、現在リターンスタックにプッシュされています。ヌルアドレスフィールドは、ELSE()またはTHEN()が分岐アドレスを解決するときに埋められる。次に、IF()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
+`IF()`は、分岐構造内のtrue節を開始する。それは最初にヌルアドレスを持つ`QBRAN`トークンを書き込む。このとき、ヌルアドレスフィールドのワードアドレスはリターンスタックにプッシュされています。ヌルアドレスフィールドは、`ELSE()`または`THEN()`が分岐アドレスを解決するときに埋められる。次に、`IF()`マクロに渡すパラメータでトークンリストを書き込んでゆきます。パラメータの数は、最初のパラメータ int len で示されます。
 ```
 void IF(int len, ...) {
     IP = P >> 2;
@@ -1230,10 +1165,7 @@ void IF(int len, ...) {
     va_end(argList);
 }
 ```
-ELSE()closes a true clause and starts a false clause in an IF-ELSE-THEN branch structure. It  first assembles a BRAN token with a null address. The words address after the null address is  now used to resolve the branch address assembled by IF(). The address of the null address  field is pushed on the return stack to be used by THEN(). It then assemble a token list with the  parameters passing to ELSE()macro. Number of parameters is indicated by the first parameter  int len. 
-
-
-ELSE()は、IF-ELSE-THEN分岐構造で真節を閉じ、偽節を開始します。まず、ヌルアドレスを持つBRANトークンを組み立てる。ヌル・アドレスの後のワード・アドレスは、IF()で組み立てられたブランチ・アドレスを解決するために使用されます。ヌルアドレスフィールドのアドレスは、THEN()で使用するために、リターンスタックにプッシュされる。そして、ELSE()マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
+`ELSE()`は、IF-ELSE-THEN分岐構造のtrue節を閉じ、false節を開始します。まず、ヌルアドレスを持つ`BRAN`トークンを組み立てる。ヌル・アドレスの後のワード・アドレスは、`IF()`で組み立てられたブランチ・アドレスを解決するために使用されます。ヌルアドレスフィールドのアドレスは、`THEN()`で使用するために、リターンスタックにプッシュされる。そして、`ELSE()`マクロに渡すパラメータでトークンリストを組み立てる。パラメータの数は、最初のパラメータ int len で示されます。
 ```
 void ELSE(int len, ...) {
     IP = P >> 2;
@@ -2087,7 +2019,7 @@ int DOVAR = CODE(4, as_dovar, as_next, 0, 0);
 
 # Chapter 7. Colon Words
 
-HEADER()は、リンクフィールドと名前フィールドをコロンワードに組み立てる。COLON()は、ドルスト(dolst)バイトコードを追加してコードフィールドを形成する。COLON() は、可変長のトークンリストを作成する。トークンは、他のワードのcfaである。
+HEADER()は、リンクフィールドと名前フィールドをコロンワードに組み立てる。COLON()は、DOLSTバイトコードを追加してコードフィールドを形成する。COLON() は、可変長のトークンリストを作成する。トークンは、他のワードのcfaである。
 
 Complicated colon words contain control structures, integer literals, and string literals. The  macro assembler has all the macros to build these structures automatically in token lists. These  macros allowed me to transcribe almost literally original Forth code into listing in C. Common Words 
 
