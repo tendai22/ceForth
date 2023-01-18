@@ -392,8 +392,6 @@ void rfrom(void)
     push rack[(char)R--];
 }
 ```
-`rat ( -- n )` Copy a number off the return stack and pushes it on the return stack.  
-
 `rat ( -- n )` リターンスタックから数値をコピーして、リターンスタックにプッシュします。 
 ```
 void rat(void)
@@ -942,7 +940,7 @@ ceForth_33では、Virtual Forth Machineで動作できるようなForth辞書�
 
 ## Macro Assembler
 
-Virtual Forth Machineでは、辞書は整数配列`data[IP]`に格納されます。これはバイト配列`cData[P]`にエイリアスされており、`IP`は整数ポインター、`P`はバイトポインターである。辞書の同じ位置を指すには、`IP=P/4`である。連続したバイトを辞書に書き込むには、次のようにすればよい。
+Virtual Forth Machineでは、辞書は整数配列`data[IP]`に格納されます。これはバイト配列`cData[P]`にエイリアスされており、`IP`は整数ポインタ、`P`はバイトポインタである。辞書の同じ位置を指すには、`IP=P/4`である。連続したバイトを辞書に書き込むには、次のようにすればよい。
 ```
 cData[P++]= char c;
 ```
@@ -1053,7 +1051,7 @@ int LABEL(int len, ...) {
 
 ### Macros for Structured Programming
 
-Forth辞書がCで構築できることを示すために、私自身はラベルを扱うことができたが、ユーザーが前方参照を手動で解決することは期待しない。Chuck Mooreは、すべてのネストされた制御構造が1回のパスで正しくコンパイルできることを実証しました。このマクロアセンブラでそれを行うことは確かに可能である。その方法は、Forthのすべての即値語をマクロで記述して、分岐やループ構造を設定し、前方や後方へのすべての参照を解決することだ。
+Forth辞書がCで構築できることを示すために、私自身はラベルを扱うことができたが、ユーザーが前方参照を手動で解決することは期待しない。Chuck Mooreは、すべてのネストされた制御構造が1回のパスで正しくコンパイルできることを実証しました。このマクロアセンブラでそれを行うことは確かに可能である。その方法は、Forthのすべての即値ワードをマクロで記述して、分岐やループ構造を設定し、前方や後方へのすべての参照を解決することだ。
 
 必要なマクロは、次のような構造を構築するために使用されます。
 ```
@@ -1500,32 +1498,33 @@ Forthワードは、リンクフィールド、名前フィールド、コード
 カーネルワードは、このVFMがエミュレートしているeP32マイクロコントローラの32ビット的な性質を表しています。ほとんどのカーネルワードは、1バイトのコードを実行し、その後にリターンバイトのコードnext()を実行します。2つの空のバイトがヌルフィルされて32ビットワードを構成しています。上記のすべてのユーザー変数ワード、および定数のみを返す他の多くのワードでは、バイトコードはdocon()とnext()で、その後に2つのヌルバイトが続きます。定数値は次の32ビットワードに格納されます。docon()は、次の32ビットワードに格納されている定数値を読まなければなりません。
 
 // primitive words
-NOP ( -- ) 何もしない。FVMを解除し、Arduinoのloop()に戻る。 
+
+`NOP ( -- )` 何もしない。FVMを解除し、Arduinoのloop()に戻る。 
 ```
 HEADER(3, "NOP"); 
 int NOP = CODE(4, as_next, 0, 0, 0); 
 ```
-BYE ( -- ) Visual Studio OSに戻る。 
+`BYE ( -- )` Visual Studio OSに戻る。 
 ```
 HEADER(3, "BYE"); 
 int BYE = CODE(4, as_bye, as_next, 0, 0); 
 ```
-?RX ( -- c t | f ) 端末入力デバイスから文字を読み込む。文字cと、利用可能な場合はtrueフラグを返す。そうでなければ、偽フラグを返す。
+`?RX ( -- c t | f )` 端末入力デバイスから文字を読み込む。文字cと、利用可能な場合はtrueフラグを返す。そうでなければ、偽フラグを返す。
 ```
 HEADER(3, "?RX");
 int QRX = CODE(4, as_qrx, as_next, 0, 0);
 ```
-TX! ( c -- ) Windows コンソールに文字を送信します。
+`TX! ( c -- )` Windows コンソールに文字を送信します。
 ```
 HEADER(3, "TX!");
 int TXSTO = CODE(4, as_txsto, as_next, 0, 0);
 ```
-DOCON ( -- w) 次のトークンを定数としてデータスタックにプッシュする。 
+`DOCON ( -- w)` 次のトークンを定数としてデータスタックにプッシュする。 
 ```
 HEADER(5, "DOCON");
 int DOCON = CODE(4, as_docon, as_next, 0, 0);
 ```
-DOLIT ( -- w) 次のトークンを整数リテラルとしてデータスタックにプッシュします。これにより、数値はインラインリテラルとしてコンパイルされ、実行時にデータスタックにデータを供給することができる。 
+`DOLIT ( -- w)` 次のトークンを整数リテラルとしてデータスタックにプッシュします。これにより、数値はインラインリテラルとしてコンパイルされ、実行時にデータスタックにデータを供給することができる。 
 ```
 HEADER(5, "DOLIT");
 int DOLIT = CODE(4, as_dolit, as_next, 0, 0);
@@ -1586,7 +1585,7 @@ int CAT = CODE(4, as_cat, as_next, 0, 0);
 HEADER(2, "R>");
 int RFROM = CODE(4, as_rfrom, as_next, 0, 0);
 ```
-R@ ( -- n ) リターンスタックから数値をコピーして、リターンスタックにプッシュします。 
+`R@ ( -- n )` リターンスタックから数値をコピーして、リターンスタックにプッシュします。 
 ```
 HEADER(2, "R@");
 int RAT = CODE(4, as_rat, as_next, 0, 0);
@@ -1596,22 +1595,22 @@ int RAT = CODE(4, as_rat, as_next, 0, 0);
 HEADER(2, ">R");
 TOR = CODE(4, as_tor, as_next, 0, 0);
 ```
-DROP ( w -- ) スタックの一番上のアイテムを破棄します。
+`DROP ( w -- )` スタックの一番上のアイテムを破棄します。
 ```
 HEADER(4, "DROP");
 int DROP = CODE(4, as_drop, as_next, 0, 0);
 ```
-DUP ( w -- w w ) スタック最上段のアイテムを複製する。
+`DUP ( w -- w w )` スタック最上段のアイテムを複製する。
 ```
 HEADER(3, "DUP");
 int DUPP = CODE(4, as_dup, as_next, 0, 0);
 ```
-SWAP ( w1 w2 -- w2 w1 ) 上位2つのスタックアイテムを交換する。
+`SWAP ( w1 w2 -- w2 w1 )` 上位2つのスタックアイテムを交換する。
 ```
 HEADER(4, "SWAP");
 int SWAP = CODE(4, as_swap, as_next, 0, 0);
 ```
-OVER ( w1 w2 -- w1 w2 w1 ) 2 番目のスタックアイテムを先頭にコピーする。
+`OVER ( w1 w2 -- w1 w2 w1 )` 2 番目のスタックアイテムを先頭にコピーする。
 ```
 HEADER(4, "OVER");
 int OVER = CODE(4, as_over, as_next, 0, 0);
@@ -1879,8 +1878,6 @@ int EMIT = COLON(2, TXSTO, EXITT);
 HEADER(6, "WITHIN");
 int WITHI = COLON(7, OVER, SUBBB, TOR, SUBBB, RFROM, ULESS, EXITT); 
 ```
-`>CHAR ( c -- c )`is very important in converting a non-printable character to a harmless  'underscore' character (ASCII 95). As Forth is designed to communicate with you through a  serial I/O device, it is important that Forth will not emit control characters to the host and  causes unexpected behavior on the host computer. >CHAR thus filters the characters before they  are sent out by TYPE.  
-
 `>CHAR ( c -- c )`は、非印字可能文字を無害なアンダースコア文字(ASCII 95)に変換する際に非常に重要です。ForthはシリアルI/Oデバイスを通して通信するように設計されているので、Forthが制御文字をホストに出して、ホストコンピュータで予期せぬ動作を引き起こさないようにすることが重要なのです。`>CHAR`は、`TYPE`で送出される前に文字をフィルタリングします。 
 ```
 HEADER(5, ">CHAR");
@@ -1953,6 +1950,7 @@ BASEはシステム変数なので、コンピュータに数値を入力した�
 BASEは、Forth言語を作ったチャック・ムーアによる非常に重要な発明の一つであり、私たちに、その時々の目的に応じた自由な数値表現を与えてくれる。 
 
 // Number Conversions
+
 `DIGIT ( u -- c )`は、整数をASCIIの数字1桁に変換します。
 ```
 HEADER(5, "DIGIT");
@@ -2185,8 +2183,6 @@ int WORDD = COLON(5, PARSE, HERE, CELLP, PACKS, EXITT);
 
 ## Dictionary Search 
 
-In Forth, word records are linked into a dictionary which can be searched to find valid words. A  header contains four fields: a link field holding the name field address of the previous header, a  name field holding the name as a counted string, a code field holding execution address of the  word, and a parameter field holding data to be processed. The dictionary is a list linked through  the link fields and the name fields. The basic searching function is performed by the word  find. find scans the linked list to find a name which matches an input text string, and returns  the code field address and the name field address of an executable token, if a match is found.  
-
 Forthでは、ワードレコードは辞書にリンクされ、検索して有効なワードを見つけることができる。ヘッダは、前のヘッダの名前フィールドのアドレスを保持するリンクフィールド、名前をカウントした文字列を保持する名前フィールド、ワードの実行アドレスを保持するコードフィールド、および処理するデータを保持するパラメータフィールドの4つのフィールドを含む。辞書は、リンクフィールドと名前フィールドを経由してリンクされたリストである。`find`はリンクリストを走査して入力文字列と一致する名前を探し、一致するものがあればコードフィールドのアドレスと実行トークンの名前フィールドのアドレスを返すという基本的な検索機能を持つ。 
 
 `NAME> ( nfa - cfa)` ワードの名前フィールドアドレスからコードフィールドアドレスを返す。
@@ -2335,9 +2331,7 @@ BEGIN(3, TOKEN, DUPP, AT);
 WHILE(2, TEVAL, ATEXE);
 REPEAT(3, DROP, DOTOK, EXITT);
 ```
-QUIT ( -- ) is the operating system, or a shell, of the Forth system. It is an infinite loop  Forth will not leave. It uses QUERY to accept a line of text from the terminal and then let EVAL parse out the tokens and execute them. After a line is processed, it displays the top of data stack  and wait for the next line of text. When an error occurred during execution, it displays the  command which caused the error with an error message. After the error is reported, it re-initializes the system by jumping to ABORT. Because the behavior of EVAL can be changed by  storing either $INTERPRET or $COMPILE into 'EVAL, QUIT exhibits the dual nature of a  text interpreter and a compiler.  
-
-QUIT ( -- ) は、Forth システムのオペレーティング・システム、またはシェルです。Forthは無限ループから抜け出せません。QUERY を使ってターミナルからテキスト行を受け取り、EVAL にトークンを解析させ、それを実行させます。一行が処理されると、データスタックの先頭を表示し、次のテキスト行を待ちます。実行中にエラーが発生した場合は、エラーの原因となったコマンドをエラーメッセージとともに表示する。エラーが報告された後、ABORTにジャンプしてシステムを再初期化する。EVALに$INTERPRETまたは$COMPILEを格納することでEVALの動作を変更できるため、QUITはテキスト・インタプリタとコンパイラの二面性を持っている。 
+`QUIT ( -- )` は、Forth システムのオペレーティング・システム、またはシェルです。`QUIT`は無限ループであり、Forthはがそこから抜け出すことはありません。`QUERY` を使ってターミナルからテキスト1行を受け取り、`EVAL` にトークンを解析させ、それを実行させます。1行が処理されると、データスタックの先頭を表示し、次のテキスト行を待ちます。実行中にエラーが発生した場合は、エラーの原因となったコマンドをエラーメッセージとともに表示する。エラーを報告すると、`ABORT`にジャンプしてシステムを再初期化する。`'EVAL`に`$INTERPRET`または`$COMPILE`を格納することでEVALの動作を変更できるため、`QUIT`はテキストインタプリタとコンパイラの二面性を持っている。 
 ```
 HEADER(4, "QUIT");
 int QUITT = COLON(5, DOLIT, 0X100, TTIB, STORE, LBRAC);
@@ -2346,66 +2340,46 @@ AGAIN(0);
 ```
 # Chapter 9. Colon Compiler 
 
-After wading through the text interpreter, the Forth compiler will be an easy piece of cake,  because the compiler uses almost all the modules used by the text interpreter. What the compile  does, over and above the text interpreter, is to build various structures required by the new  words you add to the .data segment. Here is a list of these structures:  
+テキストインタープリタを一通り眺めた後では、Forthコンパイラは楽勝でしょう。なぜなら、コンパイラはテキストインタープリタが使用するモジュールをほとんどすべて使用しているからです。コンパイルがテキストインタプリタ以上に行うことは、あなたが `.data` セグメントに追加した新しいワードが必要とするさまざまな構造を構築することです。以下は、これらの構造のリストである。 
 
-テキスト・インタープリタを渉猟した後では、Forthコンパイラは楽勝でしょう。なぜなら、コンパイラはテキスト・インタープリタが使用するモジュールをほとんどすべて使用しているからです。なぜなら、コンパイラはテキスト・インタプリタが使用するモジュールをほとんどすべて使用しているからです。コンパイルがテキスト・インタプリタ以上に行うことは、あなたが.dataセグメントに追加した新しいワードが必要とするさまざまな構造を構築することです。以下は、これらの構造のリストである。 
+* コロンワード Colon words 
+* 定数 Constants 
+* 変数 Variables 
+* 整数リテラル Integer literals 
+* 文字列リテラル String literals 
+* アドレスリテラルと制御構造 Address literals and control structures 
 
-* Colon words 
-* Constants 
-* Variables 
-* Integer literals 
-* String literals 
-* Address literals and control structures 
+即値ワード(immediate words)という概念は、その特殊さゆえに、最初は理解するのが難しい。コロンワードの中に異なるデータや制御構造を構築する必要があるため、即値ワードがコンパイラに必要とされるのです。Forthコンパイラを完全に理解するためには、コンパイル時に行われる動作と実行時に行われる動作を区別し、関連付けることができなければならない。ひとたびこれらの概念が明確になれば、Forthのシステム全体が透明化されます。 
 
-A special concept of immediate words is difficult to grasp at first. It is required in the compiler  because of the needs in building different data and control structures in a colon word. To  understand the Forth compiler fully, you have to be able to differential and relate the actions  taken during compile time and actions taken during run time. Once these concepts are clear, the  whole Forth system will become transparent.  
+Forthコンパイラは、Forthテキストインタープリタの双子の兄弟です。両者は多くの共通特性を持ち、多くの共通コードを使用しています。Forthでは、コンパイラの実装は、この特別な二面性を明確に反映しています。2つの興味深いワード`[`と `]`によって、テキストインタープリタはコンパイラモードとインタープリタモードの間を行ったり来たりします。 
 
-即値語の特別な概念は、最初は理解するのが難しい。コロンワードの中に異なるデータや制御構造を構築する必要があるため、コンパイラに必要とされるのです。Forthコンパイラを完全に理解するためには、コンパイル時に行われる動作と実行時に行われる動作を区別し、関連付けることができなければならない。これらの概念が明確になれば、Forthのシステム全体が透明化されます。 
+`EVAL`の中で、テキスト行からパースされたトークンを処理するために'EVAL @EXECUTE`を使うので、`'EVAL`の内容がテキストインタプリタの動作を決定する。`'EVAL`に`$INTERPRET`を格納すると、`[` と同様に、トークンが実行または解釈されます。 `'EVAL`に`$COMPILE`を格納するために`[` を呼び出すと、トークンは実行されず、辞書の先頭にコンパイルされます。これはまさに、コロンワードコンパイラが辞書の新しいコロンワードのパラメータ・フィールドにトークンのリストを構築する際に望む動作である。 
 
-The Forth compiler is the twin brother of the Forth text interpreter. They share many common  properties and use lots of common code. In Forth, the implementation of the compiler clearly  reflects this special duality. Two interesting words [ and ] causes the text interpreter to switch  back and forth between the compiler mode and interpreter mode.  
-
-Forthコンパイラは、Forthテキスト・インタープリタの双子の兄弟です。両者は多くの共通特性を持ち、多くの共通コードを使用しています。Forthでは、コンパイラの実装は、この特別な二面性を明確に反映しています。2つの興味深い言葉[ and ]によって、テキスト・インタープリタはコンパイラ・モードとインタープリタ・モードの間を行ったり来たりします。 
-
-Since 'EVAL @EXECUTE is used in EVAL to process a token parsed out of a line of text, the  contents in 'EVAL determines the behavior of the text interpreter. If $INTERPRET is stored  in 'EVAL, as [ does, tokens are executed or interpreted. If we invoke ] to store $COMPILE  into 'EVAL, the token will not be executed, but compiled to the top of dictionary. This is  exactly the behavior desired by the colon word compiler in building a list of tokens in the  parameter field of a new colon word in dictionary.  
-
-EVALでは@EXECUTEがテキスト行からパースされたトークンを処理するために使われるので、'EVAL内の内容がテキストインタプリタの動作を決定する。EVALに$INTERPRETを格納すると、[ と同様に、トークンが実行または解釈されます。 EVALに$COMPILEを格納するために[ を呼び出すと、トークンは実行されず、辞書の先頭にコンパイルされます。これはまさに、コロンワードコンパイラが辞書の新しいコロンワードのパラメータ・フィールドにトークンのリストを構築する際に望む動作である。 
-
-$COMPILE normally adds a token to the dictionary. However, there are two exceptions it must  handle. If a string parsed out of the input stream is not a word in the dictionary, the string will  be converted to a number. If the string can be converted to an integer, the integer is then  compiled into the dictionary as an integer literal, which consists of a special token DOLIT followed by the integer. The other exception is that a token found in the dictionary could be an  immediate word, which must be executed immediately, not compiled to the dictionary.  Immediate words are used to compile structures in colon words.  
-
-通常、$COMPILEはトークンを辞書に追加します。しかし、2つの例外を処理する必要があります。入力ストリームから解析された文字列が辞書内のワードでない場合、その文字列は数値に変換されます。文字列が整数に変換できる場合、その整数は、特別なトークンDOLITと整数の続きからなる整数リテラルとして辞書にコンパイルされる。もう1つの例外は、辞書で見つかったトークンが、辞書にコンパイルされずにすぐに実行されなければならない即時ワードである可能性があることです。 即値語は、コロンワードの構造をコンパイルするために使用されます。 
+通常、`$COMPILE`はトークンを辞書に追加します。しかし、2つの例外を処理する必要があります。入力ストリームから解析された文字列が辞書内のワードでない場合、その文字列は数値に変換されます。文字列が整数に変換できる場合、その整数は、特別なトークン`DOLIT`とその次に整数を並べた整数リテラルとして辞書にコンパイルされる。もう1つの例外は、辞書で見つかったトークンが、辞書に書き込まれずにすぐに実行されなければならない即時ワードである可能性があることです。 即値ワードは、コロンワードの構造をコンパイルするために使用されます。 
 
 // Colon Word Compiler
 
-, (comma) ( w -- ) adds the execution address of a token on the top of the data stack to  the code dictionary, and thus compiles a token to the growing token list of the word currently  under construction.  
-
-, (コンマ) ( w -- ) は、データスタックの一番上にあるトークンの実行アドレスをコード辞書に追加し、それによって、現在構築中のワードの成長するトークンリストにトークンをコンパイルします。 
+`, (コンマ) ( w -- )` は、データスタックの一番上にあるトークンの実行アドレスをコード辞書に追加します。すなわち、現在構築中のワードのトークンリストにトークンをコンパイルし、リストを成長させます。 
 ```
 HEADER(1, ",");
 int COMMA = COLON(7, HERE, DUPP, CELLP, CP, STORE, STORE, EXITT); 
 ```
-LITERAL ( n -- ) compiles an integer literal to the current compound word under  construction. The integer literal is taken from the data stack, and is preceded by the token  DOLIT. When this compound word is executed, DOLIT will extract the integer from the token  list and push it back on the data stack. LITERAL compiles an address literal if the compiled  integer happens to be an execution address of a token. The address will be pushed on the data  stack at the run time by DOLIT.  
-
-LITERAL ( n -- ) は、現在構築中の複合語に整数リテラルをコンパイルします。整数リテラルはデータスタックから取り出され、その前にトークンであるDOLITが置かれる。この複合語が実行されると、DOLITはトークン・リストから整数を取り出し、データ・スタックにプッシュし直します。LITERALは、コンパイルされた整数がたまたまトークンの実行アドレスであった場合、アドレスリテラルをコンパイルします。このアドレスは、DOLITによって実行時にデータスタックにプッシュされる。 
+`LITERAL ( n -- )` は、現在構築中の複合語に整数リテラルをコンパイルします。整数リテラルはデータスタックから取り出され、その前にトークン`DOLIT`を置きます。この複合語が実行されると、`DOLIT`はトークンリストから整数を取り出し、データスタックにプッシュし戻します。`LITERAL`は、コンパイルされた整数がたまたまトークンの実行アドレスであった場合、アドレスリテラルをコンパイルします。このアドレスは、`DOLIT`によって実行時にデータスタックにプッシュされる。 
 ```
 HEADER(IMEDD + 7, "LITERAL");
 int LITER = COLON(5, DOLIT, DOLIT, COMMA, COMMA, EXITT);
 ```
-ALLOT ( n -- ) allocates n bytes of memory on the top of the dictionary. Once allocated,  the compiler will not touch the memory locations. It is possible to allocate and initialize this  array using the word’, (comma)’. 
-
-ALLOT ( n -- ) は、辞書の先頭にnバイトのメモリを確保する。一度割り当てられたら、コンパイラはそのメモリ位置に触れない。この配列の確保と初期化は、',(コンマ)'というワードを使って行うことができる。
+`ALLOT ( n -- )` は、辞書の先頭にnバイトのメモリを確保する。一度割り当てられたら、コンパイラはそのメモリ位置に触れない。この配列の確保と初期化は、`,(コンマ)`というワードを使って行うことができる。
 ```
 HEADER(5, "ALLOT");
 int ALLOT = COLON(4, ALIGN, CP, PSTOR, EXITT);
 ```
-`$,” ( -- )` extracts next word delimited by double quote. Compile it as a string literal. 
-
 `$," ( -- )` は、二重引用符で区切られた次のワードを取り出す。文字列リテラルとしてコンパイルする。
 ```
 HEADER(3, "$,\"");
 int STRCQ = COLON(9, DOLIT, 0X22, WORDD, COUNT, PLUS, ALIGN, CP, STORE, EXITT); 
 ```
-`?UNIQUE ( a -- a )`is used to display a warning message to show that the name of a new  word already existing in dictionary. Forth does not mind your reusing the same name for  different words. However, giving many words the same name is a potential cause of problems  in maintaining software projects. It is to be avoided if possible and ?UNIQUE reminds you of it.  HEADER(7, "?UNIQUE"); 
-
-`?UNIQUE ( a -- a )`は、新しいワードの名前がすでに辞書に存在することを示す警告メッセージを表示するために使用されます。Forthは、異なるワードに対して同じ名前を再利用することを気にしません。しかし、多くのワードに同じ名前をつけることは、ソフトウェア・プロジェクトを維持する上で問題の原因となる可能性があります。可能であれば避けるべきことであり、?UNIQUEはそれを思い出させてくれるのです。 
+`?UNIQUE ( a -- a )`は、新しいワードの名前がすでに辞書に存在することを示す警告メッセージを表示するために使用されます。Forthは、異なるワードに対して同じ名前を再利用することを気にしません。しかし、多くのワードに同じ名前をつけることは、ソフトウェアプロジェクトを維持する上で問題の原因となる可能性があります。可能であれば避けるべきことであり、`?UNIQUE`はそれをチェックしてあなたに教えてくれます。 
 ```
 HEADER(7, "?UNIQUE"); 
 int UNIQU = COLON(3, DUPP, NAMEQ, QDUP);
@@ -2413,41 +2387,31 @@ IF(6, COUNT, DOLIT, 0x1F, ANDD, SPACE, TYPES);
 DOTQ(" reDef");
 THEN(2, DROP, EXITT);
 ```
-`$,n ( a -- )`builds a new name field in dictionary using the name already moved to the top  of dictionary by PACK$. It pads the link field with the address stored in LAST. A new token can  now be built in the code dictionary.  
-
-`$,n ( a -- )` PACK$によってすでに辞書の先頭に移動された名前を使用して、辞書に新しい名前フィールドを構築する。リンク・フィールドには、LASTに格納されたアドレスをパッドします。これで、コード辞書に新しいトークンを構築することができます。 
+`$,n ( a -- )` `PACK$`によってすでに辞書の先頭に移動された名前を使用して、辞書に新しい名前フィールドを構築する。リンクフィールドには、`LAST`に格納されたアドレスを埋めます。これで、コード辞書に新しいトークンを構築することができます。 
 ```
 HEADER(3, "$,n"); 
 int SNAME = COLON(2, DUPP, AT); 
 IF(14, UNIQU, DUPP, NAMET, CP, STORE, DUPP, LAST, STORE, CELLM, CNTXT, AT, SWAP,  STORE, EXITT); 
 THEN(1, ERRORR); 
 ```
-`' (tick) ( -- cfa )`searches the next word in the input stream for a token in the  dictionary. It returns the code field address of the token if successful. Otherwise, it aborts and  displays an error message. 
-
-`' (tick) ( -- cfa )`は、入力ストリーム中の次のワードを、辞書中のトークンに対して検索します。成功すれば、トークンのコードフィールド・アドレスを返す。そうでなければ、エラーメッセージを表示する。
+`' (tick) ( -- cfa )`は、入力ストリーム中の次のワードを、辞書中のトークンに対して検索します。成功すれば、トークンのコードフィールドアドレスを返す。そうでなければ、エラーメッセージを表示しアボートする。
 ```
 HEADER(1, "'");
 int TICK = COLON(2, TOKEN, NAMEQ);
 IF(1, EXITT);
 THEN(1, ERRORR);
 ```
-`[COMPILE] ( -- ; <string> )`acts similarly, except that it compiles the next word immediately. It causes the following word to be compiled, even if the following word is usually  an immediate word which would otherwise be executed.  
-
-`[COMPILE] ( -- ; <string> )`は、次のワードを直ちにコンパイルすることを除いて、同じように動作する。次のワードが通常なら即座に実行されるワードであっても、次のワードをコンパイルさせる。 
+`[COMPILE] ( -- ; <string> )`は、次のワードを直ちにコンパイルすることを除いて、同じように動作する。通常なら実行される即時ワードであっても、次のワードをコンパイルする。 
 ```
 HEADER(IMEDD + 9, "[COMPILE]");
 int BCOMP = COLON(3, TICK, COMMA, EXITT);
 ```
-COMPILE ( -- ) is used in a compound word. It causes the next token after COMPILE to be  added to the top of the code dictionary. It therefore forces the compilation of a token at the run  time.  
-
-COMPILE ( -- ) は、複合語の中で使用されます。これは、COMPILEの次のトークンをコード辞書の先頭に追加させる。したがって、実行時にトークンを強制的にコンパイルすることになる。 
+`COMPILE ( -- )` は、複合語の中で使用されます。これは、`COMPILE`の次のトークンをコード辞書の先頭に追加します。したがって、実行時にトークンを強制的にコンパイルすることになる。 
 ```
 HEADER(7, "COMPILE");
 int COMPI = COLON(7, RFROM, DUPP, AT, COMMA, CELLP, TOR, EXITT); 
 ```
-$COMPILE ( a -- )builds the body of a new compound word. A complete compound word also requires a header in the name dictionary, and its code field must start with a dolist, byte code. These extra works are performed by : (colon). Compound words are the most  prevailing type of words in eForth. In addition, eForth has a few other defining words which  create other types of new words in the dictionary.  
-
-$COMPILE ( a -- )は、新しい複合語のボディを構築します。完全な複合語は、名前辞書のヘッダも必要で、そのコードフィールドはドーリスト、バイトコードで始まらなければなりません。これらの追加作業は : (コロン) によって行われる。複合語はeForthで最も一般的なタイプのワードである。さらに、eForthには、辞書に他のタイプの新しいワードを作成する定義語がいくつかある。 
+`$COMPILE ( a -- )`は、新しい複合語のボディを構築します。複合語を完成させるためには、名前辞書のヘッダも必要で、そのコードフィールドは`dolist`バイトコードで始まらなければなりません。これらの追加作業は `: (コロン)` によって行われる。複合語はeForthで最も一般的なタイプのワードである。さらに、eForthには、辞書に他のタイプの新しいワードを作成する定義語がいくつかある。 
 ```
 HEADER(8, "$COMPILE");
 int SCOMP = COLON(2, NAMEQ, QDUP);
@@ -2459,28 +2423,22 @@ THEN(1, NUMBQ);
 IF(2, LITER, EXITT);
 THEN(1, ERRORR);
 ```
-OVERT ( -- ) links a new word to the dictionary and thus makes it available for dictionary  searches.  
-
-OVERT ( -- ) は、新しいワードを辞書にリンクし、辞書検索に利用できるようにします。 
+`OVERT ( -- )` は、新しいワードを辞書にリンクし、辞書検索に利用できるようにします。 
 ```
 HEADER(5, "OVERT");
 int OVERT = COLON(5, LAST, AT, CNTXT, STORE, EXITT);
 ```
-] (right paren) ( -- ) turns the interpreter to a compiler. 
+`] (右括弧) ( -- )` インタプリタをコンパイラに変更します。
 ```
 HEADER(1, "]");
 int RBRAC = COLON(5, DOLIT, SCOMP, TEVAL, STORE, EXITT);
 ```
-`: (colon) ( -- ; <string> )` creates a new header and start a new compound word. It  takes the following string in the input stream to be the name of the new compound word, by  building a new header with this name in the name dictionary. It then compiles a dolist, byte  code at the beginning of the code field in the code dictionary. Now, the code dictionary is ready  to accept a token list. ] (right paren) is now invoked to turn the text interpreter into a  compiler, which will compile the following words in the input stream to a token list in the code  dictionary. The new compound word is terminated by ;, which compiles an EXIT to terminate  the token list, and executes [ (left paren) to turn the compiler back to text interpreter.  
-
-`: (コロン) ( -- ; <文字列> )` は、新しいヘッダーを作成し、新しい複合語を開始します。入力ストリーム中の次の文字列を新しい複合語の名前とし、名前辞書にこの名前を持つ新しいヘッダを構築する。そして、コード辞書のコードフィールドの先頭にdolistというバイトコードをコンパイルする。これで、コード辞書はトークンリストを受け入れる準備が整った。ここで、[ ](右括弧)が呼び出されて、テキスト インタープリタをコンパイラに変え、入力ストリーム内の次のワードをコード辞書内のトークン リストにコンパイルします。新しい複合語は ; で終了し、トークン・リストを終了させるために EXIT をコンパイルし、 [ (左の括弧) を実行してコンパイラをテキスト・インタープリタに戻した。 
+`: (コロン) ( -- ; <文字列> )` は、新しいヘッダを作成し、新しい複合語を開始します。入力ストリーム中の次の文字列を新しい複合語の名前とし、名前辞書にこの名前を持つ新しいヘッダを構築する。そして、コード辞書のコードフィールドの先頭に`dolist`というバイトコードをコンパイルする。これで、コード辞書はトークンリストを受け入れる準備が整った。ここで、`](右括弧)`が呼び出されて、テキストインタープリタをコンパイラに変え、入力ストリーム内の次のワードをコード辞書内のトークン リストにコンパイルします。新しい複合語は `;` で終了し、トークンリストを終了させるために EXIT をコンパイルし、 `[ (左括弧)` を実行してコンパイラをテキストインタープリタに戻す。 
 ```
 HEADER(1, ":");
 int COLN = COLON(7, TOKEN, SNAME, RBRAC, DOLIT, 0x6, COMMA, EXITT); 
 ```
-`; (semi-colon) ( -- )` terminates a compound word. It compiles an EXIT to the end of  the token list, links this new word to the dictionary, and then reactivates the interpreter.  
-
-`; (セミコロン) ( -- )` は複合語を終了させる。トークン・リストの最後にEXITをコンパイルし、この新しいワードを辞書にリンクし、インタープリタを再アクティブ化する。 
+`; (セミコロン) ( -- )` は複合語を終了させる。トークン・リストの最後に`EXIT`をコンパイルし、この新しいワードを辞書にリンクし、インタープリタを再アクティブ化する。 
 ```
 HEADER(IMEDD + 1, ";");
 int SEMIS = COLON(6, DOLIT, EXITT, COMMA, LBRAC, OVERT, EXITT); 
@@ -2488,17 +2446,11 @@ int SEMIS = COLON(6, DOLIT, EXITT, COMMA, LBRAC, OVERT, EXITT);
 
 # Debugging Tools
 
-eForth is a very small system and only a very small set of tools are provided in the system.  Nevertheless, this set of tools is powerful enough to help you debug new words you add to the  system. They are also very interesting programming examples on how to use the words in  eForth to build applications.  
-
 eForthは非常に小さなシステムであり、システムには非常に小さなツールセットしか提供されていません。 とはいえ、このツールセットは、システムに追加した新しい言葉をデバッグするのに十分強力です。また、eForthのワードを使ってどのようにアプリケーションを構築するかについて、非常に興味深いプログラミングの例となっています。 
 
-Generally, the tools presents the information stored in different parts of the memory in the  appropriate format to let the use inspect the results as he executes words in the eForth system  and words he defined himself. The tools are memory dump and dictionary dump.  
-
-一般に、ツールは、eForthシステム内のワードや自分で定義したワードを実行する際に、その結果を使用者が検査できるように、メモリの異なる部分に格納されている情報を適切な形式で提示する。メモリダンプと辞書ダンプがある。 
+一般に、ツールは、eForthシステム内のワードや自分で定義したワードを実行する際に、その結果を使用者が検査できるように、メモリの異なる部分に格納されている情報を適切な形式で提示する。このツールには、メモリダンプと辞書ダンプがある。 
 
 // Debugging Tools
-
-`dm+ ( b u – b+u )`dumps u bytes starting at address b to the terminal. It dumps 8 words. A  line begins with the address of the first byte, followed by 8 words shown in hex, and the same  data shown in ASCII. Non-printable characters by replaced by underscores. A new address b+u  is returned to dump the next line. 
 
 `dm+ ( b u - b+u )`は、アドレスbから始まるuバイトを端末にダンプする。8個のワードがダンプされます。1行は、最初のバイトのアドレスで始まり、8ワードを16進数で表し、同じデータをASCIIで表します。印字不可能な文字はアンダースコアに置き換えられる。次の行をダンプするために新しいアドレスb+uが返される。
 ```
@@ -2509,9 +2461,7 @@ AFT(6, DUPP, AT, DOLIT, 9, UDOTR, CELLP);
 THEN(0);
 NEXT(1, EXITT);
 ```
-DUMP ( b u -- )dumps u bytes starting at address b to the terminal. It dumps 8 words to a  line. A line begins with the address of the first byte, followed by 8 words shown in hex. At the  end of a line are the 32 bytes shown in ASCII code.  
-
-DUMP ( b u -- )は、アドレスbから始まるuバイトを端末にダンプします。1行に8ワードがダンプされます。行は最初のバイトのアドレスで始まり、その後に16進数で示された8ワードが続きます。行の終わりには、ASCIIコードで示された32バイトがあります。 
+`DUMP ( b u -- )`は、アドレスbから始まるuバイトを端末にダンプします。1行に8ワードがダンプされます。行は最初のバイトのアドレスで始まり、その後に16進数で示された8ワードが続きます。行の終わりには、ASCIIコードで示された32バイトがあります。 
 ```
 HEADER(4, "DUMP");
 int DUMP = COLON(10, BASE, AT, TOR, HEXX, DOLIT, 0x1F, PLUS, DOLIT, 0x20, SLASH); 
@@ -2520,9 +2470,7 @@ AFT(10, CR, DOLIT, 8, DDUP, DMP, TOR, SPACE, CELLS, TYPES, RFROM);
 THEN(0);
 NEXT(5, DROP, RFROM, BASE, STORE, EXITT);
 ```
-`>NAME ( cfa -- nfa | F )`finds the name field address of a token from its code field address. If the token does not exist in the dictionary, it returns a false flag. >NAME is the mirror  image of the word NAME>, which returns the code field address of a token from its name field address. Since the code field is right after the name field, whose length is stored in the lexicon  byte, NAME> is trivial. >NAME is more complicated because we have to search the dictionary to  acertain the name field address.  
-
-`>NAME ( cfa -- nfa | F )`は、トークンのコード・フィールド・アドレスから、トークンの名前フィールド・アドレスを見つける。トークンが辞書に存在しない場合、偽フラグを返す。`>NAME`は`NAME>`の鏡像であり、名前フィールドのアドレスからトークンのコードフィールドのアドレスを返します。コードフィールドは名前フィールドの直後にあり、その長さはレキシコンバイトに格納されているので、NAME>は些細なものです。>NAMEは、名前フィールドのアドレスを特定するために辞書を検索しなければならないので、より複雑である。 
+`>NAME ( cfa -- nfa | F )`は、トークンのコードフィールドアドレスから、トークンの名前フィールドアドレスを見つける。トークンが辞書に存在しない場合、falseフラグを返す。`>NAME`は`NAME>`の鏡像であり、`NAME>`は名前フィールドのアドレスからトークンのコードフィールドのアドレスを返します。コードフィールドは名前フィールドの直後にあり、その長さはレキシコンバイトに格納されているので、`NAME>`は自明ですが、`>NAME`は、名前フィールドのアドレスを特定するために辞書を検索しなければならないので、より複雑です。 
 ```
 HEADER(5, ">NAME");
 int TNAME = COLON(1, CNTXT);
@@ -2533,16 +2481,12 @@ ELSE(3, SWAP, DROP, EXITT);
 THEN(0);
 REPEAT(3, SWAP, DROP, EXITT);
 ```
-`.ID ( a -- )`displays the name of a token, given its name field address. It also replaces non-printable characters in a name by under-scores.  
-
 `.ID ( a -- )`は、トークンの名前フィールドのアドレスに対応するトークンの名前を表示します。また、名前に含まれる印字不可能な文字をアンダースコアに置き換えます。 
 ```
 HEADER(3, ".ID");
 int DOTID = COLON(7, COUNT, DOLIT, 0x1F, ANDD, TYPES, SPACE, EXITT); 
 ```
-WORDS ( -- )displays all the names in the dictionary. The order of words is reversed from the  compiled order. The last defined word is shown first.  
-
-WORDS ( -- )は、辞書に登録されているすべての名前を表示します。ワードの順序は、コンパイルされた順序とは逆になる。最後に定義されたワードが最初に表示される。 
+`WORDS ( -- )`は、辞書に登録されているすべての名前を表示します。ワードの順序は、コンパイルされた順序とは逆になる。最後に定義されたワードが最初に表示される。 
 ```
 HEADER(5, "WORDS");
 int WORDS = COLON(6, CR, CNTXT, DOLIT, 0, TEMP, STORE);
@@ -2553,18 +2497,14 @@ ELSE(5, CR, DOLIT, 0, TEMP, STORE);
 THEN(0);
 REPEAT(1, EXITT);
 ```
-FORGET ( -- , <name>)searches the dictionary for a name following it. If it is a valid word,  trim dictionary below this word. Display an error message if it is not a valid word. 
-
-FORGET ( -- , <name> )は、その後に続く名前を辞書で検索する。有効なワードであれば、このワードの下の辞書を切り詰める。有効なワードでない場合は、エラーメッセージを表示する。
+`FORGET ( -- , <name> )`は、その後に続く名前を辞書で検索する。有効なワードであれば、このワードの下の辞書を切り詰める。有効なワードでない場合は、エラーメッセージを表示する。
 ```
 HEADER(6, "FORGET");
 int FORGT = COLON(3, TOKEN, NAMEQ, QDUP);
 IF(12, CELLM, DUPP, CP, STORE, AT, DUPP, CNTXT, STORE, LAST, STORE, DROP, EXITT); 
 THEN(1, ERRORR);
 ```
-COLD ( -- )is a high level word executed upon power-up. It sends out sign-on message, and  then falls into the text interpreter loop through QUIT.  
-
-COLD ( -- )は、電源投入時に実行される上位ワードです。サインオン・メッセージを送り、QUITを経てテキスト・インタープリタのループに落ちます。 
+`COLD ( -- )`は、電源投入時に実行される上位ワードです。サインオン・メッセージを送り、QUITを経てテキストインタープリタのループに至ります。 
 ```
 HEADER(4, "COLD");
 int COLD = COLON(1, CR);
@@ -2574,9 +2514,7 @@ int DOTQ1 = LABEL(2, CR, QUITT);
 
 # Control Structures 
 
-A set of immediate words are defined in Forth to build control structures in colon words. The  control structures used in Forth are the following:  
-
-Forthでは、コロンワードで制御構造を構築するために、即値語のセットが定義されています。Forthで使用される制御構造は以下の通りです。 
+Forthでは、コロンワードで制御構造を構築するために、即値ワードのセットが定義されています。Forthで使用される制御構造は以下の通りです。 
 
 |||
 |--|--|
@@ -2588,144 +2526,99 @@ Forthでは、コロンワードで制御構造を構築するために、即値
 |Indefinite loop|`BEGIN ... UNTIL`  
 ||`BEGIN ... WHILE ... REPEAT`  
 
-This set of words is more powerful than the ones in figForth model because they do not do error  checking and thus permit multiple entries into and exits from a control structure. However, it is  not recommended that you overlap the control structures. In the learning stage of Forth  language, it will do you good to remember that: 
-
-この語群は、エラーチェックを行わないため、制御構造への複数の入出力を許容するため、figForthモデルの語群より強力です。しかし、制御構造を重ねることはお勧めしません。Forth言語の学習段階では、それを覚えておくとよいでしょう。
+これらのワード群は、エラーチェックを行わないため、また、制御構造への入出口を複数持つことができるため、figForthモデルのワード群より強力です。しかし、制御構造を重ねる(overlap)ことはお勧めしません。Forth言語の学習段階では、それを覚えておくとよいでしょう。
 
 ### Control structures can be nested, but not overlapped.
 
-A control structure contains one or more address literals, which causes execution to branch out  of the normal linear sequence. Control structure words are immediate words which compile  address literals and resolve branch addresses.  
-
 制御構造は1つ以上のアドレスリテラルを含み、通常の線形シーケンスから実行を分岐させる。制御構造ワードは、アドレスリテラルをコンパイルし、ブランチアドレスを解決する即時ワードです。 
 
-One should note that BEGIN and THEN do not compile any code. They executes during  compilation to set up and to resolve branch addresses in address literals. IF, ELSE, WHILE,  UNTIL, and AGAIN do compile address literals with BRANCH and ?BRANCH tokens. To set  up a counted loop, FOR compiles >R to begin the loop, and NEXT compiles a DONXT address  literal to terminate the loop. There are many excellent examples using COMPILE and  [COMPILE], and they are worthy of your attention.  
+注意すべきは、`BEGIN`と`THEN`はコードをコンパイルしないことです。コンパイル時に実行され、アドレスリテラル内の分岐アドレスを設定し、解決します。`IF`、`ELSE`、`WHILE`、`UNTIL`、`AGAIN`は、`BRANCH`と`?BRANCH`トークンとともにアドレスリテラルをコンパイルします。カウントされたループを設定するには、`FOR`はループを開始するために`>R`をコンパイルし、`NEXT`はループを終了するために`DONXT`アドレスリテラルをコンパイルします。`COMPILE`と`[COMPILE]`を使った優れた例はたくさんあり、注目に値します。 
 
-注意すべきは、BEGINとTHENはコードをコンパイルしないことです。コンパイル時に実行され、アドレスリテラル内の分岐アドレスを設定し、解決します。IF、ELSE、WHILE、UNTIL、AGAINは、BRANCHと?BRANCHトークンを持つアドレス・リテラルをコンパイルします。カウントされたループを設定するには、FORはループを開始するために>Rをコンパイルし、NEXTはループを終了するためにDONXTアドレス・リテラルをコンパイルします。COMPILEと[COMPILE]を使った優れた例はたくさんあり、注目に値します。 
+このマクロアセンブラは、前方参照と後方参照を解決するために、リターンスタックを使用します。したがって、スタックの絵は、実行時に使用されるデータスタックではなく、リターンスタックを指します。大文字のAは、正しい分岐先アドレスで埋められるべきアドレスリテラルへのポインタを意味します。小文字のaは、アセンブルされる分岐アドレスを意味します。
 
-This macro assembler uses the return stack to resolve forward and backward reference. The  stack picture thus refers to return stack, not the data stack used at run time. Upper case A means  a pointer to an address literal to be filled with the correct branch address. Lower case a means  the a branch address to be assemble. 
-
-このマクロアセンブラは、前方参照と後方参照を解決するために、リターンスタックを使用します。したがって、スタックの絵は、実行時に使用されるデータスタックではなく、リターンスタックを指します。大文字のAは、正しい分岐先アドレスで埋められるアドレスリテラルへのポインタを意味します。小文字のaは、アセンブルされる分岐アドレスを意味します。
-
-In the stack comments of the following control structure words, I will use a lower case ‘a’ to  indicate a pointer to the address field in an address literal. The address field is initialized to 0,  and will be filled later when the target address is known. I will use a upper case ‘A’ to indicate  a target address which will be used to fill the address field in an address literal. 
-
-以下の制御構造ワードのスタックコメントでは、アドレスリテラル内のアドレスフィールドへのポインタを示すために小文字の「a」を使用することにする。アドレスフィールドは0に初期化され、後でターゲットアドレスが判明したときに埋められる。大文字の'A'は、アドレスリテラルのアドレスフィールドを埋めるために使用されるターゲットアドレスを示すために使用されます。
+以下の制御構造ワードのスタックコメントでは、アドレスリテラル内のアドレスフィールドへのポインタを示すために小文字の`a`を使用することにする。アドレスフィールドは0に初期化され、後でターゲットアドレスが判明したときに埋められる。大文字の`A`は、アドレスリテラルのアドレスフィールドを埋めるために使用されるターゲットアドレスを示すために使用されます。
 
 // Structure Compiler
 
-THEN ( A -- ) terminates a conditional branch structure. It uses the address of next token to  resolve the address literal at A left by IF or ELSE. 
-
-THEN ( A -- ) は、条件分岐構造を終了させる。IFまたはELSEによって残されたAのアドレスリテラルを解決するために、次のトークンのアドレスを使用します。
+`THEN ( A -- )` は、条件分岐構造を終了させる。`IF`または`ELSE`によって残されたAのアドレスリテラルを解決するために、次のトークンのアドレスを使用します。
 ```
 HEADER(IMEDD + 4, "THEN");
 int THENN = COLON(4, HERE, SWAP, STORE, EXITT);
 ```
-FOR ( -- a ) starts a FOR-NEXT loop structure in a colon definition. It compiles >R, which  pushes a loop count on return stack. It also leaves the address of next token on data stack, so  that NEXT will compile a DONEXT address literal with the correct branch address. 
-
-FOR ( -- a ) は、コロン定義でFOR-NEXTループ構造を開始します。これは >R をコンパイルし、リターンスタックにループカウントをプッシュします。また、次のトークンのアドレスをデータスタックに残し、NEXTが正しい分岐アドレスを持つDONEXTアドレスリテラルをコンパイルするようにします。
+`FOR ( -- a )` は、コロン定義でFOR-NEXTループ構造を開始します。これは `>R` をコンパイルし、リターンスタックにループカウントをプッシュします。また、次のトークンのアドレスをデータスタックに残し、`NEXT`が正しい分岐アドレスを持つ`DONEXT`アドレスリテラルをコンパイルできるようにします。
 ```
 HEADER(IMEDD + 3, "FOR");
 int FORR = COLON(4, COMPI, TOR, HERE, EXITT);
 ```
-BEGIN ( -- a ) starts an infinite or indefinite loop structure. It does not compile anything,  but leave the current token address on data stack to resolve address literals compiled later. 
-
-BEGIN ( -- a ) は、不定回数ループ構造または定回数ループ構造を開始します。これは何もコンパイルしませんが、現在のトークンアドレスをデータスタックに残し、 後でコンパイルされるアドレスリテラルを解決します。
+`BEGIN ( -- a )` は、不定回数ループ構造または定回数ループ構造を開始します。これは何もコンパイルしませんが、現在のトークンアドレスをデータスタックに残し、 後でコンパイルされるアドレスリテラルを解決します。
 ```
 HEADER(IMEDD + 5, "BEGIN");
 int BEGIN = COLON(2, HERE, EXITT);
 ```
-NEXT ( a -- ) Terminate a FOR-NEXT loop structure, by compiling a DONEXT address  literal, branch back to the address A on data stack. 
-
-NEXT ( a -- ) FOR-NEXTループ構造を終了し、DONEXTアドレスリテラルをコンパイルして、データスタック上のAアドレスにブランチバックします。
+`NEXT ( a -- )` FOR-NEXTループ構造を終了し、`DONEXT`アドレスリテラルをコンパイルして、データスタック上のAアドレスにブランチバックします。
 ```
 HEADER(IMEDD + 4, "NEXT");
 int NEXT = COLON(4, COMPI, DONXT, COMMA, EXITT);
 ```
-UNTIL ( a -- ) terminate a BEGIN-UNTIL indefinite loop structure. It compiles a  QBRANCH address literal using the address on data stack. 
-
-UNTIL ( a -- ) は、BEGIN-UNTILの不定回数ループ構造を終了させる。データスタック上のアドレスを用いてQBRANCHアドレスリテラルをコンパイルします。
+`UNTIL ( a -- )` は、BEGIN-UNTILの不定回数ループ構造を終了させる。データスタック上のアドレスを用いて`QBRANCH`アドレスリテラルをコンパイルします。
 ```
 HEADER(IMEDD + 5, "UNTIL");
 int UNTIL = COLON(4, COMPI, QBRAN, COMMA, EXITT);
 ```
-AGAIN ( a -- ) terminate a BEGIN-AGAIN infinite loop structure. . It compiles a BRANCH address literal using the address on data stack. 
-
-AGAIN ( a -- ) BEGIN-AGAIN 無限ループ構造を終了させる。. データスタック上のアドレスを使ってBRANCHアドレスリテラルをコンパイルします。
+`AGAIN ( a -- )` BEGIN-AGAIN 無限ループ構造を終了させる。. データスタック上のアドレスを使って`BRANCH`アドレスリテラルをコンパイルします。
 ```
 HEADER(IMEDD + 5, "AGAIN");
 int AGAIN = COLON(4, COMPI, BRAN, COMMA, EXITT);
 ```
-IF ( -- A ) starts a conditional branch structure. It compiles a QBRANCH address literal,  with a 0 in the address field. It leaves the address of this address field on data stack. This  address will later be resolved by ELSE or THEN in closing the true clause in the branch  structure. 
-
-IF ( -- A ) は、条件分岐構造を開始します。QBRANCHアドレスリテラルをコンパイルし、アドレスフィールドに0を設定します。このアドレス・フィールドのアドレスはデータ・スタックに残されます。このアドレスは、後にELSEまたはTHENによって、分岐構造の真の節を閉じるときに解決されます。
+IF ( -- A ) は、条件分岐構造を開始します。`QBRANCH`アドレスリテラルをコンパイルし、アドレスフィールドに0を設定します。このアドレスフィールドのアドレスはデータスタックに残されます。このアドレスは、後にELSEまたはTHENによって、分岐構造のtrue節を閉じるときに解決されます。
 ```
 HEADER(IMEDD + 2, "IF");
 int IFF = COLON(7, COMPI, QBRAN, HERE, DOLIT, 0, COMMA, EXITT); 
 ```
-AHEAD ( -- A ) starts a forward branch structure. It compiles a BRANCH address literal,  with a 0 in the address field. It leaves the address of this address field on data stack. This  address will later be resolved when the branch structure is closed. 
-
-AHEAD ( -- A ) は、前方分岐構造を開始します。BRANCHアドレスリテラルをコンパイルし、そのアドレスフィールドに0を設定します。このアドレス・フィールドのアドレスは、データ・スタックに残されます。このアドレスは、後に分岐構造を閉じるときに解決されます。
+`AHEAD ( -- A )` は、前方分岐構造を開始します。`BRANCH`アドレスリテラルをコンパイルし、そのアドレスフィールドに0を設定します。このアドレスフィールドのアドレスがデータスタックに残されます。このアドレスは、後に分岐構造を閉じるときに解決されます。
 ```
 HEADER(IMEDD + 5, "AHEAD");
 int AHEAD = COLON(7, COMPI, BRAN, HERE, DOLIT, 0, COMMA, EXITT); 
 ```
-REPEAT ( A a -- ) terminates a BEGIN-WHILE-REPEAT indefinite loop structure. It  compiles a BRANCH address literal with address a left by BEGIN, and uses the address of next  token to resolve the address literal at A. 
-
-REPEAT ( A a -- ) は、BEGIN-WHILE-REPEATの不定回数ループ構造を終了させる。BEGINによって残されたアドレスaを持つBRANCHアドレスリテラルをコンパイルし、次のトークンのアドレスを使用してアドレスリテラルをAで解決します。
+`REPEAT ( A a -- )` は、BEGIN-WHILE-REPEATの不定回数ループ構造を終了させる。`BEGIN`によって残されたアドレスaを持つ`BRANCH`アドレスリテラルをコンパイルし、次のトークンのアドレスを使用してAが指す位置にあるアドレスリテラルを解決します。
 ```
 HEADER(IMEDD + 6, "REPEAT");
 int REPEA = COLON(3, AGAIN, THENN, EXITT);
 ```
-AFT ( a -- a A ) jumps to THEN in a FOR-AFT-THEN-NEXT loop the first time through. It compiles a BRANCH address literal and leaves its address field on stack. This address will be  resolved by THEN. It also replaces address A left by FOR by the address of next token so that  NEXT will compile a DONEXT address literal to jump back here at run time. 
-
-AFT ( a -- a A ) は、FOR-AFT-THEN-NEXTループの1回目でTHENにジャンプします。これは、BRANCHアドレスリテラルをコンパイルし、そのアドレスフィールドをスタックに残します。このアドレスはTHENで解決されます。また、FORが残したアドレスAを次のトークンのアドレスで置き換え、NEXTが実行時にここに戻ってジャンプするためにDONEXTアドレスリテラルをコンパイルするようにします。
+`AFT ( a -- a A )` は、FOR-AFT-THEN-NEXTループの1回目で`THEN`にジャンプします。これは、`BRANCH`アドレスリテラルをコンパイルし、そのアドレスフィールドをスタックに残します。このアドレスは`THEN`で解決されます。また、`FOR`が残したアドレス`A`を次のトークンのアドレスで置き換え、`NEXT`が実行時にジャンプしてここに戻るための`DONEXT`アドレスリテラルをコンパイルするようにします。
 ```
 HEADER(IMEDD + 3, "AFT");
 int AFT = COLON(5, DROP, AHEAD, HERE, SWAP, EXITT);
 ```
-ELSE ( A -- A ) starts the false clause in an IF-ELSE-THEN structure. It compiles a  BRANCH address literal. It uses the current token address to resolve the branch address in A,  and replace A with the address of its address literal. 
-
-ELSE ( A -- A ) は、IF-ELSE-THEN構造で偽の句を開始します。これは、BRANCHアドレス・リテラルをコンパイルする。現在のトークン・アドレスを使用してA内の分岐アドレスを解決し、Aをそのアドレス・ リテラルのアドレスに置き換える。
+`ELSE ( A -- A )` は、IF-ELSE-THEN構造で偽の句を開始します。これは、`BRANCH`アドレスリテラルをコンパイルする。現在のトークンアドレスを使用して`A`内の分岐アドレスを解決し、`A`をそのアドレスリテラルのアドレスに置き換える。
 ```
 HEADER(IMEDD + 4, "ELSE");
 int ELSEE = COLON(4, AHEAD, SWAP, THENN, EXITT);
 ```
-WHEN ( a – a A a ) compiles a QBRANCH address literal. The address a of this address  literal is copies over A. 
-
-WHEN ( a - a A a ) は、QBRANCHアドレスリテラルをコンパイルします。このアドレスリテラルのアドレスaは、A以上のコピーです。
+`WHEN ( a -- a A a )` は、`QBRANCH`アドレスリテラルをコンパイルします。このアドレスリテラルのアドレスaは、Aを越えるコピーです。
 ```
 HEADER(IMEDD + 4, "WHEN");
 int WHEN = COLON(3, IFF, OVER, EXITT);
 ```
-WHILE ( a -- A a ) compiles a QBRANCH address literal in a BEGIN-WHILE-REPEAT  loop. The address A of this address literal is swapped with address a left by BEGIN, so that  REPEAT will resolve all loose ends and build the loop structure correctly. 
-
-WHILE ( a -- A a ) は、BEGIN-WHILE-REPEATループでQBRANCHアドレスリテラルをコンパイルします。このアドレスリテラルのアドレスAは、BEGINによって残されたアドレスaとスワップされ、REPEATがすべての未解決部分を解決し、ループ構造を正しく構築するようにします。
+`WHILE ( a -- A a )` は、BEGIN-WHILE-REPEATループで`QBRANCH`アドレスリテラルをコンパイルします。このアドレスリテラルのアドレス`A`は、`BEGIN`によって残されたアドレス`a`とスワップされ、`REPEAT`がすべての未解決部分を解決し、ループ構造を正しく構築するようにします。
 ```
 HEADER(IMEDD + 5, "WHILE");
 int WHILEE = COLON(3, IFF, SWAP, EXITT);
 ```
 # String Literals 
 
-Character strings are very important data structures for the program to communicate with you.  Error messages, appropriate warnings and suggestions must be displayed to help you using the  system in a friendly way. Character strings are compiled in the colon words as string literals.  Each string literal consists of a string token which will use the compiled string to do things, and  a counted string. The first byte in a counted string is the length of the string. Thus a string may  have 0 to 255 characters in it.  
+文字列は、プログラムがあなたとコミュニケーションをとるための非常に重要なデータ構造です。 エラーメッセージ、適切な警告や提案を表示することで、システムを使いやすくする必要があります。文字列は、文字列リテラルとしてコロンワードでコンパイルされます。 各文字列リテラルは、コンパイルされた文字列を使用して処理を行う文字列トークンと、カウント付きの文字列から構成されます。カウント付きの文字列の最初のバイトは文字列の長さである。したがって、文字列は0から255文字まで持つことができます。 
 
-文字列は、プログラムがあなたとコミュニケーションをとるための非常に重要なデータ構造です。 エラーメッセージ、適切な警告や提案を表示することで、システムを使いやすくする必要があります。文字列は、文字列リテラルとしてコロンワードでコンパイルされます。 各文字列リテラルは、コンパイルされた文字列を使用して処理を行う文字列トークンと、カウントされた文字列から構成されます。カウントされた文字列の最初のバイトは文字列の長さである。したがって、文字列は0から255文字まで持つことができます。 
-
-ABORT" compiles an error message. This error message is display if top item on the stack is  non-zero. The rest of the words in the word is skipped and Forth resets to ABORT. If top of  stack is 0, ABORT” skips over the error message and continue executing the following token list. 
-
-ABORT "はエラーメッセージをコンパイルする。このエラーメッセージは、スタックの先頭の項目が0でない場合に表示される。残りのワードはスキップされ、ForthはABORTにリセットされます。スタックの先頭が0であれば、ABORTはエラーメッセージをスキップして、次のトークンリストの実行を継続する。
-
+`ABORT"`はエラーメッセージをコンパイルする。このエラーメッセージは、スタックの先頭の項目が0でない場合に表示される。残りのワードはスキップされ、Forthは`ABORT`にリセットされます。スタックの先頭が0であれば、`ABORT"`はエラーメッセージをスキップして、次のトークンリストの実行を継続する。
 ```
 HEADER(IMEDD + 6, "ABORT\"");
 int ABRTQ = COLON(6, DOLIT, ABORQP, HERE, STORE, STRCQ, EXITT); 
 ```
-`$" ( -- ; <string> )` compiles a character string. When it is executed, only the address of  the string is left on the data stack. You will use this address to access the string and individual  characters in the string as a string array.  
-
 `$" ( -- ; <string> )` は、文字列をコンパイルする。実行されたとき、データスタックには文字列のアドレスだけが残ります。このアドレスを使って、文字列や文字列中の個々の文字に文字列配列としてアクセスすることになります。 
 ```
 HEADER(IMEDD + 2, "$\"");
 int STRQ = COLON(6, DOLIT, STRQP, HERE, STORE, STRCQ, EXITT);
 ```
-`." (dot-quot) ( -- ; <string> )` compiles a character string which will be displayed  when the word containing it is executed in the runtime. This is the best way to present messages  to the user.  
-
 `." (dot-quot) ( -- ; <string> )` は、それを含むワードがランタイムで実行されたときに表示される文字列をコンパイルします。これはユーザーへのメッセージを表示するのに最適な方法である。 
 ```
 HEADER(IMEDD + 2, ".\"");
@@ -2733,38 +2626,26 @@ int DOTQQ = COLON(6, DOLIT, DOTQP, HERE, STORE, STRCQ, EXITT);
 ```
 # Defining Words 
 
-The concept of defining word is a very unique feature of Forth, in that it allows you to define  new classes of words which can make specific use of data stored in their parameter fields. Each  class of words share the same interpreter encoded in its code field.  
+ワードを定義するというコンセプトはForthの非常にユニークな機能で、パラメータフィールドに格納されたデータを特定の用途に使用できる新しいクラスのワードを定義することができるのです。各ワードのクラスは、そのコードフィールドにエンコードされた同じインタープリタを共有します。 
 
-ワードを定義するというコンセプトはForthの非常にユニークな機能で、パラメータ・フィールドに格納されたデータを特定の用途に使用できる新しいクラスのワードを定義することができるのです。各ワードのクラスは、そのコードフィールドにエンコードされた同じインタープリタを共有します。 
+ceForth_33では、次のような定義語を用意しています。 `CODE`、 `CREATE`、 `CONSTANT`、 `VARIABLE`です。`CREATE` と`VARIABLE` は同じ内部インタプリタ `DOVAR` を使用し、 `CONSTANT` は `DOCON` を使用します。`CONSTANT` と `VARIABLE`は、パラメータフィールドに4バイトしか割り当てられません。 しかし、`CREATE` はパラメータフィールドの大きさを指定することができます。
 
-In ceForth_33, I provide the following defining words: , CODE, CREATE, CONSTANT and  VARIABLE. CREATE and VARIABLE use the same inner interpreter DOVAR, and CONSTANT uses DOCON. CONSTANT and VARIABLE allocate only 4 bytes for their parameter fields.  CRATE, however, let you specific the size of parameter field. 
-
-ceForth_33では、次のような定義語を用意しています。CODE、CREATE、CONSTANT、VARIABLEです。CREATEとVARIABLEは同じ内部インタプリタDOVARを使用し、CONSTANTはDOCONを使用します。CONSTANTとVARIABLEは、パラメータフィールドに4バイトしか割り当てられません。 しかし、CRATEはパラメータフィールドの大きさを指定することができます。
-
-CODE ( -- ; <string> ) creates a word header, ready to accept byte code for a new  primitive word. Without a byte code assembler, you can use the word , (comma) to add words  with byte code in them. 
-
-CODE ( -- ; <string> ) はワードヘッダを作り、新しいプリミティブワードのためのバイトコードを受け入れる準備をします。バイトコードアセンブラがなければ、 , (コンマ) を使ってバイトコードのあるワードを追加することができます。
+`CODE ( -- ; <string> )` はワードヘッダを作り、新しいプリミティブワードのためのバイトコードを受け入れる準備をします。バイトコードアセンブラがなければ、 `, (コンマ)` を使ってバイトコードのあるワードを追加することができます。
 ```
 HEADER(4, "CODE");
 int CODE = COLON(4, TOKEN, SNAME, OVERT, EXITT);
 ```
-CREATE ( -- ; <string> ) creates a new array without allocating memory. Memory is  allocated using ALLOT.  
-
-CREATE ( -- ; <string> ) は、メモリを割り当てずに新しい配列を作成します。メモリはALLOTで確保されます。 
+`CREATE ( -- ; <string> )` は、メモリを割り当てずに新しい配列を作成します。メモリはALLOTを使って確保します。 
 ```
 HEADER(6, "CREATE");
 int CREAT = COLON(5, CODE, DOLIT, 0x203D, COMMA, EXITT);
 ```
-VARIABLE ( -- ; <string> ) creates a new variable, initialized to 0.  
-
-VARIABLE ( -- ; <string> ) は新しい変数を作成し、0に初期化する。 
+`VARIABLE ( -- ; <string> )` は新しい変数を作成し、0に初期化する。 
 ```
 HEADER(8, "VARIABLE");
 int VARIA = COLON(5, CREAT, DOLIT, 0, COMMA, EXITT);
 ```
-CONSTANT ( n -- ; <string> ) creates a new constant, initialized to the value on top of  stack. 
-
-CONSTANT ( n -- ; <string> ) 新しい定数を作成し、スタックの一番上の値で初期化されます。
+`CONSTANT ( n -- ; <string> )` 新しい定数を作成し、スタックの一番上の値で初期化します。
 ```
 HEADER(8, "CONSTANT");
 int CONST = COLON(6, CODE, DOLIT, 0x2004, COMMA, COMMA, EXITT); 
@@ -2772,26 +2653,18 @@ int CONST = COLON(6, CODE, DOLIT, 0x2004, COMMA, COMMA, EXITT);
 
 ## Comments
 
-Comments are strings ignored by the interpreter and the compiler. They serve as reminders to  ourself about the code we wrote. 
-
 コメントとは、インタープリタやコンパイラが無視する文字列のことです。これは、私たちが書いたコードについて、私たち自身に注意を喚起する役割を果たします。
 
-`.( (dot-paren) ( -- ; <string> )` types the following string till the next ). It is used  CONSTANT ( n -- ; <string> ) creates a new constant, initialized to the value on top of  stack. 
-
-`.( (ドットパレン) ( -- ; <string> )` は次の文字列を次の ) までタイプします。CONSTANT ( n -- ; <string> ) 新しい定数を作り、スタックの一番上の値で初期化されます。
+`.( (ドットパレン) ( -- ; <string> )` は次の文字列を次の `)` までタイプします。
 ```
 HEADER(IMEDD + 2, ".(");
 int DOTPR = COLON(5, DOLIT, 0X29, PARSE, TYPES, EXITT);
 ```
-`\ (back-slash) ( -- ; <string> )` ignores all characters till end of input buffer. It is  used to insert comment lines in text.  
-
 `\ (back-slash) ( -- ; <string> )` 入力バッファの終わりまですべての文字を無視します。テキストにコメント行を挿入するのに使用します。 
 ```
 HEADER(IMEDD + 1, "\\");
 int BKSLA = COLON(5, DOLIT, 0xA, WORDD, DROP, EXITT);
 ```
-`( (paren) ( -- ; <string> )` ignores the following string till the next ). It is used to  place comments in source text.  
-
 `( (paren) ( -- ; <string> )` は、次の文字列まで無視する。) ソーステキストにコメントを入れるのに使う。 
 ```
 HEADER(IMEDD + 1, "(");
@@ -2800,20 +2673,14 @@ int PAREN = COLON(5, DOLIT, 0X29, PARSE, DDROP, EXITT);
 
 ## Lexicon Bits
 
-Remember bits 6 and 7 of the length byte in a name field? They are called lexicon bits, which  request special treatment by Forth interpreter and Forth compiler. Bit 7 is called immediate bit,  and it forces Forth compiler to execute this word instead of compiling its token into the  dictionary. All Forth words building control structures are immediate words. Bit 6 is called  compile-only bit. Many Forth words are dangerous. They may crash the system if executed by  Forth interpreter. These words are marked compile-only, and they can only be used by Forth  compiler. 
+名前フィールドの長さバイトの6ビットと7ビットを覚えていますか？これらはレキシコンビットと呼ばれ、ForthインタープリタとForthコンパイラに特別な扱いを要求するものです。ビット7は即時ビットと呼ばれ、Forthコンパイラに、そのトークンを辞書にコンパイルする代わりに、このワードを実行するように強制します。制御構造を構築するすべてのForthワードは即時ワードです。ビット6はコンパイルオンリービットと呼ばれます。危険なForthワードが多数存在します。Forthインタプリタによって実行されると、システムをクラッシュさせる可能性があります。これらのワードはコンパイル専用とマークされ、Forthコンパイラによってのみ使用することができる。
 
-名前フィールドの長さバイトの6ビットと7ビットを覚えていますか？これらはレキシコンビットと呼ばれ、ForthインタープリタとForthコンパイラに特別な扱いを要求するものです。ビット7は即時ビットと呼ばれ、Forthコンパイラに、そのトークンを辞書にコンパイルする代わりに、このワードを実行するように強制します。制御構造を構築するすべてのForth語は即時ワードです。ビット6はコンパイルオンリービットと呼ばれます。多くのForth語は危険です。Forthインタプリタによって実行されると、システムをクラッシュさせる可能性があります。これらのワードはコンパイル専用とマークされ、Forthコンパイラによってのみ使用することができる。
-
-COMPILE-ONLY ( -- ) sets the compile-only lexicon bit in the name field of the new word just compiled. When the interpreter encounters a word with this bit set, it will not execute this  word, but spit out an error message. This bit prevents structure words to be executed  accidentally outside of a compound word. 
-
-COMPILE-ONLY ( -- ) は、コンパイルされた新しいワードの名前フィールドにコンパイル専用レキシコンビットを設定します。インタープリタは、このビットが設定されたワードに遭遇した場合、このワードを実行せず、エラーメッセージを吐き出します。このビットは、複合語の外側で構造語が誤って実行されるのを防ぎます。
+`COMPILE-ONLY ( -- )` は、コンパイルされたばかりの新しいワードの名前フィールドにコンパイル専用レキシコンビットを設定します。インタープリタは、このビットが設定されたワードに遭遇した場合、このワードを実行せず、エラーメッセージを吐き出します。このビットは、複合ワードの外側で構造ワード(structure word)が誤って実行されるのを防ぎます。
 ```
 HEADER(12, "COMPILE-ONLY");
 int ONLY = COLON(6, DOLIT, 0x40, LAST, AT, PSTOR, EXITT);
 ```
-IMMEDIATE ( -- ) sets the immediate lexicon bit in the name field of the new word just  compiled. When the compiler encounters a word with this bit set, it will not compile this word into the token list under construction, but execute the token immediately. This bit allows  structure words to build special structures in a compound word, and to process special  conditions when the compiler is running.  
-
-IMMEDIATE ( -- ) は、コンパイルされたばかりの新しいワードの名前フィールドに、即時レキシコンビットを設定します。コンパイラは、このビットが設定されたワードに出会ったとき、このワードを構築中のトークン・リストにコンパイルせず、直ちにトークンを実行する。このビットは、構造ワードが複合語の中で特別な構造を構築し、コンパイラの実行時に特別な条件を処理することを可能にする。 
+`IMMEDIATE ( -- )` は、コンパイルされたばかりの新しいワードの名前フィールドに、即時レキシコンビットを設定します。コンパイラは、このビットが設定されたワードに出会ったとき、このワードを構築中のトークン・リストにコンパイルせず、直ちにトークンを実行する。このビットは、構造ワードが複合ワードの中で特別な構造を構築し、コンパイラの実行時に特別な条件を処理することを可能にする。 
 ```
 HEADER(9, "IMMEDIATE");
 int IMMED = COLON(6, DOLIT, 0x80, LAST, AT, PSTOR, EXITT);
@@ -2821,50 +2688,34 @@ int ENDD = P;
 ```
 ## Checking Macro Assembler
 
-You might have noticed that all the macro calls are placed inside the main() loop, and they  are executed when main() starts. The Forth dictionary is build at runtime, not compiled into  the data[] array. The macros have printf() statements which are commented out. If you  like to see what the macro assembler assembles into the data[] array, un-comment some of  these printf() statements. I used these printf() statements to verify that the macros behave  correctly.  
+すべてのマクロ呼び出しが`main()`ループ内に配置され、`main()`の開始時に実行されることにお気づきかもしれません。Forth辞書は実行時に構築され、`data[]`配列にはコンパイルされません。マクロには`printf()`文があり、コメントアウトされています。マクロのアセンブラが`data[]`配列に何を組み込んでいるかを見たい場合は、これらの`printf()`文の一部をアンコメントしてください。私は、これらの`printf()`ステートメントを使用して、マクロが正しく動作することを確認しました。 
 
-すべてのマクロ呼び出しがmain()ループ内に配置され、main()の開始時に実行されることにお気づきかもしれません。Forth辞書は実行時に構築され、`data[]`配列にはコンパイルされません。マクロにはprintf()文があり、コメントアウトされています。マクロのアセンブラがdata[]配列に何を組み込んでいるかを見たい場合は、これらのprintf()文の一部をアンコメントしてください。私は、これらのprintf()ステートメントを使用して、マクロが正しく動作することを確認しました。 
-
-In the release version of ceForth_33, I only asked HEADER() to print out names and cfa’s of  words it assembles. After Forth dictionary is completed, its size is printed for your information.  It also prints out the return stack pointer, which has to be 0 if all the control structures are  constructed properly. 
-
-ceForth_33のリリース版では、HEADER()にアセンブルしたワードの名前とcfaを出力させるだけにしています。Forth辞書が完成した後、参考までにそのサイズがプリントされます。 また、すべての制御構造が正しく構築されていれば0になるはずの戻りスタックポインタも出力されます。
-
-There is an option to dump the contents in the dictionary in Intel-Dump-like format, with  checksums calculated for every 16 bytes of data. I used the checksums to verify that this  dictionary is identical to the dictionary I used in ceForth_23 system. It is a good exercise for  you to read this dictionary dump to see the records of Forth words, and the fields in these word  records. 
+ceForth_33のリリース版では、`HEADER()`がアセンブルしたワードの名前とcfaを出力させるだけにしています。Forth辞書が完成した後、参考までにそのサイズがプリントされます。 また、リターンスタックポインタの値も出力します。これは、すべての制御構造が正しく構築されていれば0になるはずです。
 
 辞書の内容をIntel-Dumpのような形式でダンプするオプションがあり、16バイトのデータごとにチェックサムが計算される。私はこのチェックサムを使って、この辞書がceForth_23システムで使った辞書と同一であることを確認しました。この辞書ダンプを読んで、Forthのワードのレコードと、そのワードのレコードのフィールドを確認するのは、良い練習になります。
 
 // Boot Up
 
-Print sized of Forth dictionary, and the return stack pointer to verify that the macro assembler  works properly. 
-
 Forth辞書の大きさ、リターンスタックのポインタを出力し、マクロアセンブラが正常に動作することを確認する。
 ```
     printf("\n\nIP=%X R-stack=%X", P, (popR << 2));
 ```
-Set up the Reset Vector at memory location 0 to DOLST COLD.
-
-メモリ位置0にあるリセットベクターをDOLST COLDに設定する。
+メモリ位置0にあるリセットベクターを`DOLST` `COLD`に設定する。
 ```
     P = 0;
     int RESET = LABEL(2, 6, COLD);
 ```
-Set up the user variables at memory location 0x90 to 0xAC to make Forth interpreter to work  correctly. 
-
 Forthインタプリタが正しく動作するように、メモリ位置0x90〜0xACにユーザ変数を設定します。
 ```
     P = 0x90;
     int USER = LABEL(8, 0X100, 0x10, IMMED - 12, ENDD, IMMED - 12, INTER, QUITT, 0); 
 ```
-Optionally dump the dictionary in Intel Dump Format to verify its contents. Unfortunately,  Windows console is not big enough to show the entire dump. Do this to see the second half of  the dictionary. To see the first half, limit len to 0x100. 
-
 オプションとして、Intel Dump Formatで辞書をダンプし、その内容を確認します。残念ながら、Windowsコンソールはダンプ全体を表示するのに十分な大きさではありません。辞書の後半を表示するには、この操作を行います。前半を見るには、lenを0x100に制限してください。
 ```
     // dump dictionary
     //P = 0;
     //for (len = 0; len < 0x200; len++) { CheckSum(); }
 ```
-Now, initialized all the most important registers in VFM, and the Finite State Machine brings  up ceForth. 
-
 さて、VFMの最も重要なレジスタをすべて初期化し、Finite State MachineはceForthを立ち上げる。
 ```
     P = 0;
@@ -2881,27 +2732,17 @@ Now, initialized all the most important registers in VFM, and the Finite State M
 ```
 ## Finite State Machine
 
-Originally, ceForth was designed to emulate a 32-bit Forth microcontroller eP32, which read  and writes only 32-bit words. A Finite State Machine (FSM) executes 8-bit machine  instructions stored in 32-bit words. In State0, FSM fetches a 32-bit word from memory. In  state1-4, it executes 4 byte codes in this word. CALL and JMP instructions only execute in  State1, and force FSM to State 0, fetching next program word from memory. RET may execute  in any of State1-4, and then forces FSM to State 0. 
-
-もともとceForthは、32ビットワードしか読み書きできない32ビットForthマイクロコントローラeP32をエミュレートするために設計されました。Finite State Machine(FSM)は、32ビットワードに格納された8ビットマシン命令を実行する。State0では、FSMはメモリから32ビットワードをフェッチする。ステート1～4では、このワードの中の4バイトコードを実行する。CALLとJMP命令はState1でのみ実行され、FSMを強制的にState0にし、メモリから次のプログラムワードをフェッチします。RETはState1-4のいずれかで実行され、FSMを強制的にState0にすることができる。
-
-Implement ceForth on a byte oriented machine, FSM was greatly simplified since VFM can  fetch and execute consecutive bytes. In C, FSM can be written simply as: 
+もともとceForthは、32ビットワードしか読み書きできない32ビットForthマイクロコントローラeP32をエミュレートするために設計されました。Finite State Machine(FSM)は、32ビットワードに格納された8ビットマシン命令を実行する。State0では、FSMはメモリから32ビットワードをフェッチする。ステート1～4では、このワードの中の4バイトコードを実行する。CALLとJMP命令はState1でのみ実行され、FSMを強制的にState0にし、メモリから次のプログラムワードをフェッチします。RETはState1-4のいずれでも実行可能であり、FSMを強制的にState0にすることができる。
 
 バイト指向のマシンにceForthを実装すると、VFMは連続したバイトをフェッチして実行できるため、FSMは大幅に簡素化されました。C言語では、FSMは次のように簡単に書くことができる。
 ```
 primitives[cData[P++]]();
 ```
-This FSM implies two states. In State0 a byte code is fetched from memory, and in State1, the  byte code is executed. P is post-incremented, which can be done in either State0 or State1.  However, it is useful to keep the concept of FSM, as the Virtual Forth Machine must first fetch  a byte code and then execute it. 
-
 このFSMは2つの状態を意味する。State0ではバイトコードがメモリからフェッチされ、State1ではそのバイトコードが実行される。Pはポストインクリメントされますが、これはState0でもState1でもかまいません。 しかし、Virtual Forth Machineでは、まずバイトコードをフェッチしてから実行しなければならないので、FSMの概念を残しておくと便利である。
 
-An interesting question I used to ask myself was that is it possible for the FSM to fetch a non-existing byte code in the virtual memory, outside of the code fields of existing primitive words?  The answer is Never, Ever! I set up a trap to catch FSM executing an invalid byte code, and had  never caught anything. When the Forth dictionary is constructed correctly, FSM will always  fetch and execute byte code in some code fields. Only very experienced Forth programmers or a  complete idiot can crash a Forth system by forcing its FSM to go outside a code field. 
+以前、面白い質問を自分自身に投げかけたことがある。FSMは、既存のプリミティブワードのコードフィールドの外、仮想メモリに存在しないバイトコードをフェッチすることが可能なのだろうか、ということだ。 答えは、Never, Ever! 私は、FSMが不正なバイトコードを実行するのを捕らえるトラップを仕掛けたが、一度もキャッチされたことがありません。Forthの辞書が正しく構築されていれば、FSMは必ずいずれかのコードフィールドのバイトコードをフェッチして実行します。FSMにコードフィールドの外に出ることを強制してForthシステムをクラッシュさせることができるのは、非常に経験豊富なForthプログラマか、完全な馬鹿者だけです。
 
-以前、面白い質問をしたことがある。FSMは、既存のプリミティブワードのコードフィールドの外、仮想メモリに存在しないバイトコードをフェッチすることが可能なのだろうか、ということだ。 答えは、Never, Ever! 私は、FSMが不正なバイトコードを実行するのを捕らえる罠を仕掛けたが、一度も捕まったことがない。Forthの辞書が正しく構築されていれば、FSMは必ずいくつかのコードフィールドのバイトコードをフェッチして実行します。FSMがコードフィールドの外に出ることを強制してForthシステムをクラッシュさせることができるのは、非常に経験豊富なForthプログラマか、完全な馬鹿だけです。
-
-We have gone through the ceforth_33 system in its entirety. It is in an cpp file written  completely in C. We started with a Virtual Forth Machine with 64 byte code. Using these byte  code, we assemble 80 primitive words. With these primitive words, we assembler or compile a  complete Forth language interpreter and compiler, in 110 colon words. It is a complete and  unambiguous specification of Forth as a programming language, and as an operating system.  Since it is written in C, it can be easily implemented on computers and microcontrollers with a  standard C compiler. 
-
-ceforth_33 システムの全体像を調べてみました。これは完全にCで書かれたcppファイルの中にあります。私たちは64バイトのコードでVirtual Forth Machineから始めました。このバイトコードを使って、80個のプリミティブワードを組み立てます。このプリミティブワードを使って、110コロンの完全なForth言語インタプリタとコンパイラをアセンブラまたはコンパイルする。これは、プログラミング言語としてのForthと、オペレーティングシステムとしてのForthの完全かつ明確な仕様である。 C言語で書かれているので、標準的なCコンパイラーを備えたコンピュータやマイクロコントローラーに簡単に実装することができる。
+以上で、ceforth_33 システムの全体像を調べ切りました。これはcppファイルではありますが、完全にC言語で記述されています。私たちは64個のバイトコードでVirtual Forth Machineから始めました。このバイトコードを使って、80個のプリミティブワードを組み立てます。このプリミティブワードを使って、110個のコロンワードを構成し、完全なForth言語インタプリタとコンパイラをアセンブラまたはコンパイルしました。これは、プログラミング言語としてのForthと、オペレーティングシステムとしてのForthの完全かつ明確な仕様といえます。 C言語で書かれているので、標準的なCコンパイラを備えたコンピュータやマイクロコントローラに簡単に実装することができる。
 
 # あとがき(Postlude)
 
@@ -2912,8 +2753,8 @@ ceforth_33 システムの全体像を調べてみました。これは完全に
 * C言語で書かれたForthは、現代の高度なマイクロコントローラをプログラミングする上で価値がある。
 * 32ビットマイクロコントローラeP32を忠実にエミュレートしている。
 * Forthの辞書は、コードセグメントに書き込めない、データセグメントでコードを実行できないというC言語の基本的な制限を回避するために、仮想メモリ配列に格納されています。
-* リターンスタックやデータスタックには円形バッファが最適です。オーバーフローやアンダーフローを起こさない。 メンテナンスが不要。 
-* 仮想Forthマシンは、バイトコードで実装できる。
+* リターンスタックやデータスタックには循環バッファが最適です。オーバーフローやアンダーフローを起こさない。 メンテナンスが不要です。 
+* 仮想Forthマシンは、バイトコードで実装できます。
 * VFMのバイトコードを実行する有限状態機械は、次のような1行のCコードに縮小することができる。`while(TRUE) {primitives[cData[P++]]();}` 
 * ワンパスマクロアセンブラをForth辞書のアセンブラとして使用することができます。
 * Forthは、大規模なアプリケーションやOSから呼び出し可能なモジュールとして簡単に構成することができる。
