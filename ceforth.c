@@ -27,7 +27,7 @@
 # include <stdlib.h>
 # include <stdio.h>
 # ifndef __APPLE__
-#  include <tchar.h>
+//#  include <tchar.h>
 # endif
 # include <stdarg.h>
 # include <string.h>
@@ -57,6 +57,8 @@ typedef uint64_t udword_t;
 # define TOBYTES(x) ((x) << 3)
 # define UpperMask  ((uword_t)0x5F5F5F5F5F5F5F5FULL)
 # define VaType     word_t
+# define FX 		"%lX"
+# define FX04		"%04lX"
 
 # elif BPW==4
 
@@ -68,6 +70,8 @@ typedef uint64_t udword_t;
 # define TOBYTES(x) ((x) << 2)
 # define UpperMask  ((uword_t)0x5F5F5F5FUL)
 # define VaType     word_t
+# define FX 		"%X"
+# define FX04		"%04X"
 
 # elif BPW==2
 
@@ -79,6 +83,8 @@ typedef uint32_t udword_t;
 # define TOBYTES(x) ((x) << 1)
 # define UpperMask  ((uword_t)0x5F5FU)
 # define VaType     int
+# define FX 		"%usX"
+# define FX04		"%04usX"
 
 # else
 # error Unknown word size!
@@ -114,7 +120,6 @@ typedef uint32_t udword_t;
 
 # define        CODEALIGN   while (P & (BPW-1)) { cData[P++] = 0; }
 # define        SYSVARS     0X80
-
 
 word_t  IZ, thread;
 
@@ -268,7 +273,7 @@ PRIMITIVE(sys)
 # ifdef _WIN32
                 top = (word_t) GetProcAddress(GetModuleHandle(NULL), (char *)top);
 # else
-                top = (word_t) dlsym(RTLD_DEFAULT, (char *)top);
+//                top = (word_t) dlsym(RTLD_DEFAULT, (char *)top);
 # endif
                 break;
         case sys_callc: /* (CALL) ( argN ... arg1 N fn -- ret ) */ {
@@ -300,7 +305,7 @@ PRIMITIVE(sys)
                 push(word_t) ret;
                 } break;
         default:
-                printf("unknown SYS %X\n", WP);
+                printf("unknown SYS "FX"\n", WP);
         }
 PEND
 PRIMITIVE(next)
@@ -695,7 +700,7 @@ void HEADER(int lex, const char seq[]) {
         CODEALIGN;
 	printf("\n");
 	printf("%s",seq);
-	printf(" %X", P);
+	printf(" "FX, P);
 }
 void C0MMA(word_t j) {
         IP = TOWORDS(P);
@@ -855,7 +860,7 @@ void ABORQ(const char seq[]) {
 void CheckSum() {
 	int i;
 	char sum = 0;
-	printf("\n%04X ", P);
+	printf("\n"FX04" ", P);
 	for (i = 0; i < 16; i++) {
 		sum += cData[P];
 		printf("%02X", cData[P++]);
@@ -874,7 +879,7 @@ void save (void)
 
         fout = fopen ("eforth.new", "wb");
         size = TOWORDS(IZ);
-        printf ("writing eforth.new size = %04X\n", IZ);
+        printf ("writing eforth.new size = "FX04"\n", IZ);
         fwrite (&size, sizeof(uword_t), 1, fout);
         fwrite (data, sizeof(word_t), size, fout);
 /*
@@ -904,7 +909,7 @@ void load (void)
                 exit (1);
         }
         fread (&size, sizeof(uword_t), 1, fin);
-        printf ("loading eforth.img size = %04X\n", sizeof(word_t) * size);
+        printf ("loading eforth.img size = "FX"\n", sizeof(word_t) * size);
         fread (data, sizeof(word_t), size, fin);
         fclose (fin);
 }
@@ -1485,7 +1490,7 @@ int main(int ac, char* av[])
 
 	// Boot Up
 
-	printf("\n\nIZ=%X R-stack=%X", P, (I << 2)); popR;
+	printf("\n\nIZ="FX" R-stack="FX, P, (I << 2)); popR;
         IZ = P;
 	P = 0;
 	word_t RESET = LABEL(2, as_dolist, COLD);
