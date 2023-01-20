@@ -51,6 +51,7 @@ Microsoft Visual Studio Community 2017の下でC++に移行し、最新のWindow
 
 その後、ceForth_23は新しいマクロアセンブラを搭載してceForth_33にバージョンアップしました。Forthシステムを試してもらうのに、1つのファイルを配布するだけで良いのはとても良いことです。また、F#のメタコンパイラをドキュメント化し、Forthに詳しくない人に説明する手間も省ける。ForthをForthで説明するのは愚かなことです。Forthを説明するためには、C言語やアセンブリなど、他の言語を使わなければならないのです。これが、当初のeForth Modelの意図でした。
 
+<div class="page"/>
 
 # Chapter 2. Running ceForth
 
@@ -131,6 +132,8 @@ WORDSと入力すると、ceForthの完全なシステムを表すワード名�
 
 
 これでceForthは完全に機能するようになりました。
+
+<div class="page"/>
 
 # Chapter 3. ceForth Virtual Forth Engine
 
@@ -846,6 +849,8 @@ int main(int ac, char* av[])
 ```
 `while(TRUE)`ループは永遠にループする。各ループを通過するごとに、有限状態マシンは `P` が指す次のバイトコードを読み込みます。次のバイトコードが読み込まれ、実行される。といった具合です。これは、メモリに格納された機械命令を順番に実行していく本物のコンピュータと同じように動作します。
 
+<div class="page"/>
+
 # Chapter 3. Forth Dictionary
 
 Forthはコンピュータをプログラムするためのプログラミング言語ですが、英語のような自然言語に非常によく似ています。Forthには、英語のワードと同じようなワードがあります。したがって、Forthのワードはワードと呼ばれます。Forthの文法規則は非常に単純で、ワードは空白で区切られます。Forthのコンピュータは、ワードのリストを処理し、左から右へワードを実行していく。英語と同じで、文章を左から右へ読んでいくのです。 
@@ -929,6 +934,8 @@ ABORT” compile only”
 <img width=300 src="img/ch3-three-types-of-strings.png">
 
 ceForth_33では、Virtual Forth Machineで動作できるようなForth辞書全体を構築する必要があります。ネイティブのCコンパイラは、Forthのようなインタプリタ型システムで必要とされる可変長フィールドを構築するための優れたツールを提供しません。しかし、C言語では、一連のマクロを定義することにより、すべてのForth語のすべてのフィールドを組み立て、それらをすべて検索可能な辞書にリンクする機能を実現できます。次のChapterでは、これらのマクロを確認しながら、Visual Studio 2019 Communityで実行するVirtual Forth Machineの辞書を構築する方法を紹介します。
+
+<div class="page"/>
 
 # Chapter 4. Macro Assembler for Forth in C
 
@@ -1353,6 +1360,8 @@ void CheckSum() {
 ```
 以上によりマクロアセンブラが完成しました。こうして定義されたマクロは、プリミティブワードやコロンワードを構成して、VFMが実行するための完全なForth辞書を形成するために使用されます。
 
+<div class="page"/>
+
 # Chapter 5. Primitive Words
 
 ## Byte Code Mnemonic
@@ -1450,18 +1459,18 @@ int main(int ac, char* av[])
 
 |User<br>Variable|Address|Initial<br>Value|Function
 |---|---|---|---|
-|HLD|0x80|0|Pointer to text buffer for number output.
-|SPAN|0x84|0|Number of input characters.
-|>IN|0x88|0|Pointer to next character to be interpreted.
-|#TIB|0x8C|0|Number of characters received in terminal input buffer.
-|'TIB|0x90|0|Pointer to Terminal Input Buffer.
-|BASE|0x94|0x10|Number base for hexadecimal numeric conversions.
-|CONTEXT|0a98|0x1DDC|Pointer to name field of last word in dictionary. 
-|CP|0x9C|0x1DE8|Pointer to top of dictionary, first free memory  location to add new words. It is saved by "`h  forth_@`" on top of the source code page. 
-|LAST|0xA0|0x1DDC|Pointer to name field of last word.
-|'EVAL|0xA4|0x13D4|Execution vector of text interpreter, initialized to  point to `$INTERPRET`. It may be changed to  point to `$COMPILE` in compiling mode. 
-|'ABORT|0xA8|0x1514|Pointer to `QUIT` word to handle error conditions.
-|tmp|0xAC|0|Scratch pad. 
+|HLD|0x80|0|数値出力用テキストバッファへのポインタ。
+|SPAN|0x84|0|入力文字数。
+|>IN|0x88|0|次に解釈される文字へのポインタ。
+|#TIB|0x8C|0|端末入力バッファで受信した文字数。
+|'TIB|0x90|0|端子入力バッファへのポインタ。
+|BASE|0x94|0x10|数値変換のための基数。
+|CONTEXT|0a98|0x1DDC|辞書の最後(最新)の単語の名前フィールドへのポインタ。 
+|CP|0x9C|0x1DE8|辞書の先頭へのポインタ、新しい単語を追加するための最初の空きメモリ位置。ソースコードページの先頭の"`h forth_@`"で保存される。 
+|LAST|0xA0|0x1DDC|最後の単語の名前フィールドへのポインタ。
+|'EVAL|0xA4|0x13D4|テキストインタープリタの実行ベクトル。`$INTERPRET`を指すように初期化される。コンパイルモードでは `$COMPILE` を指すように変更することができる。 
+|'ABORT|0xA8|0x1514|エラー状態を処理するための `QUIT` ワードへのポインタ。
+|tmp|0xAC|0|スクラッチパッド 
 
 ```
 // Kernel
@@ -1845,6 +1854,8 @@ int ONEM = CODE(8, as_docon, as_subb, as_next, 0, 1, 0, 0, 0);
 HEADER(5, "DOVAR");
 int DOVAR = CODE(4, as_dovar, as_next, 0, 0);
 ```
+
+<div class="page"/>
 
 # Chapter 7. Colon Words
 
@@ -2338,6 +2349,9 @@ int QUITT = COLON(5, DOLIT, 0X100, TTIB, STORE, LBRAC);
 BEGIN(2, QUERY, EVAL);
 AGAIN(0);
 ```
+
+<div class="page"/>
+
 # Chapter 9. Colon Compiler 
 
 テキストインタープリタを一通り眺めた後では、Forthコンパイラは楽勝でしょう。なぜなら、コンパイラはテキストインタープリタが使用するモジュールをほとんどすべて使用しているからです。コンパイルがテキストインタプリタ以上に行うことは、あなたが `.data` セグメントに追加した新しいワードが必要とするさまざまな構造を構築することです。以下は、これらの構造のリストである。 
