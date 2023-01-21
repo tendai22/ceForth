@@ -1293,7 +1293,7 @@ int main(int ac, char* av[])
 	word_t TAP = COLON(6, DUPP, EMIT, OVER, CSTOR, ONEP, EXITT);
 	HEADER(4, "kTAP");
 	word_t KTAP = COLON(9, DUPP, DOLIT, 0XD, XORR, OVER, DOLIT, 0XA, XORR, ANDD);
-	IF(3, DOLIT, 8, XORR);
+	IF(3, DOLIT, 0x7f, XORR);
 	IF(2, BLANK, TAP);
 	ELSE(1, HATH);
 	THEN(1, EXITT);
